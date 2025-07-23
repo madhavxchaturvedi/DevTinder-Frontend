@@ -59,7 +59,7 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="flex justify-center pt-20 items-center h-full bg-cover bg-center relative">
+    <div className="flex justify-center pt-5 items-center h-full bg-cover bg-center relative">
       {/* <div className="absolute inset-0 bg-black/40"></div> */}
 
       <div className="relative z-10 w-full max-w-4xl mx-auto rounded-3xl overflow-hidden shadow-lg bg-white/10">

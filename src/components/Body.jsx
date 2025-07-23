@@ -34,8 +34,8 @@ const Body = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <div className="flex-1" style={{ backgroundImage: `url(${bgImage})` }}>
+        <Header />
         <Outlet />
       </div>
       {/* <Footer /> */}

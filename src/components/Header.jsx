@@ -25,7 +25,7 @@ const Header = () => {
   };
 
   return (
-    <div className="navbar bg-transparent shadow-none px-6 absolute w-full z-50">
+    <div className="navbar bg-transparent shadow-none px-6 w-full z-50">
       <div className="flex-1">
         <Link
           to="/"
