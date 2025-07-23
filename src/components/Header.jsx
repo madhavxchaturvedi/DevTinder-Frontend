@@ -1,5 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const user = useSelector((store) => store.user);
@@ -7,9 +8,12 @@ const Header = () => {
   return (
     <div className="navbar bg-transparent shadow-none px-6 absolute w-full z-50">
       <div className="flex-1">
-        <a className="text-2xl font-bold bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] via-30% to-[#fe6d27] inline-block text-transparent bg-clip-text">
+        <Link
+          to="/"
+          className="text-2xl font-bold bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] via-30% to-[#fe6d27] inline-block text-transparent bg-clip-text"
+        >
           DevTinder
-        </a>
+        </Link>
       </div>
       {user && (
         <>
@@ -33,10 +37,10 @@ const Header = () => {
                 className="menu menu-sm dropdown-content bg-base-100 rounded-box z-10 mt-3 w-52 p-2 shadow"
               >
                 <li>
-                  <a className="justify-between">
+                  <Link to="/profile" className="justify-between">
                     Profile
                     <span className="badge">New</span>
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <a>Settings</a>

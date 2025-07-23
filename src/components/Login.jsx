@@ -4,6 +4,7 @@ import bgImage from "../assets/bg-image.png";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { addUser } from "../redux/userSlice";
+import { BASE_URL } from "../utils/constants";
 
 const LoginForm = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const LoginForm = () => {
       //   body: JSON.stringify(bodyData),
       // });
 
-      const res = await axios.post("http://localhost:8000/login", bodyData, {
+      const res = await axios.post(BASE_URL + "/login", bodyData, {
         withCredentials: true,
       });
       dispatch(addUser(res.data));
