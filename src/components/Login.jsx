@@ -54,7 +54,7 @@ const LoginForm = () => {
       //   setIsLogin(true);
       // }
     } catch (err) {
-      setError(err.message);
+      setError(err?.message?.data || "Something went wrong!");
     }
   };
 
