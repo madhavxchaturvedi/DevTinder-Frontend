@@ -1,57 +1,69 @@
 import { motion, useMotionValue, useTransform } from "framer-motion";
-import { useState } from "react";
+import React from "react";
 
 const UserCard = ({ user }) => {
-  const { firstName, lastName, photoUrl, age, gender, about } = user;
-
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-20, 20]);
-  const [isDragging, setIsDragging] = useState(false);
 
   const handleDragEnd = (_, info) => {
     if (info.offset.x > 150) {
-      console.log("Liked", firstName);
+      console.log("❤️ Liked", user.firstName);
     } else if (info.offset.x < -150) {
-      console.log("Disliked", firstName);
+      console.log("✖ Disliked", user.firstName);
     }
-    setIsDragging(false);
   };
 
+  if (!user) return null;
+
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden px-4">
+    <div className="flex flex-col items-center">
+      {/* Card with Motion */}
       <motion.div
-        className="w-[320px] h-[460px] bg-white/10 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden relative flex flex-col justify-start"
-        style={{ x, rotate }}
+        className="relative w-[340px] h-[500px] rounded-3xl overflow-hidden shadow-xl"
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
-        onDragStart={() => setIsDragging(true)}
+        style={{ x, rotate }}
         onDragEnd={handleDragEnd}
-        whileTap={{ scale: 1.05 }}
+        whileTap={{ scale: 1.03 }}
       >
+        {/* Background Image */}
         <img
-          src={photoUrl}
-          alt={firstName}
-          className="h-60 w-full object-cover"
+          src={user.photoUrl}
+          alt={user.firstName}
+          className="w-full h-full object-cover"
         />
 
-        <div className="p-4 pb-20 text-white">
-          <h2 className="text-xl font-bold">{firstName + " " + lastName}</h2>
-          {age && gender && (
-            <p className="text-sm text-gray-500">{age + "," + gender}</p>
-          )}
-          <p className="text-sm mt-2 text-gray-700">{about}</p>
-        </div>
-
-        {/* Overlapping Buttons */}
-        <div className="absolute bottom-4 w-full flex justify-center gap-6 z-10">
-          <button className="btn btn-circle bg-red-500 text-white hover:bg-red-600 text-xl shadow-md">
-            ✕
-          </button>
-          <button className="btn btn-circle bg-green-500 text-white hover:bg-green-600 text-xl shadow-md">
-            ❤️
-          </button>
+        {/* Gradient & Content */}
+        <div className="absolute bottom-0 w-full h-[30%] bg-gradient-to-t from-black via-black/50 to-transparent p-5">
+          <h2 className="text-white text-xl font-bold">
+            {user.firstName}, {user.age}
+          </h2>
+          <p className="text-white text-sm">{user.jobTitle}</p>
+          <div className="mt-2">
+            <p className="text-white font-semibold">Skills</p>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {user.skills.map((skill, index) => (
+                <span
+                  key={index}
+                  className="bg-white/20 text-white text-xs px-2 py-1 rounded-full"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </motion.div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-center gap-10 mt-6">
+        <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition">
+          <span className="text-red-500 text-xl">✖</span>
+        </button>
+        <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition">
+          <span className="text-orange-500 text-xl">❤️</span>
+        </button>
+      </div>
     </div>
   );
 };
