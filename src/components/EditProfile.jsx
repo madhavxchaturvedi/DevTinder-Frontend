@@ -198,7 +198,7 @@ const EditProfile = ({ user }) => {
               <button
                 type="submit"
                 onClick={saveProfile}
-                className="w-full bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] to-[#fe5a33] text-white font-semibold py-3 rounded-xl shadow-lg shadow-[#fe0142]/40 transition"
+                className="w-full cursor-pointer bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] to-[#fe5a33] text-white font-semibold py-3 rounded-xl shadow-lg shadow-[#fe0142]/40 transition"
               >
                 Save Changes
               </button>

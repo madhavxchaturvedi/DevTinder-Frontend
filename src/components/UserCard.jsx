@@ -16,7 +16,7 @@ const UserCard = ({ user }) => {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col pt-16 items-center">
       {/* Card with Motion */}
       <motion.div
         className="relative w-[340px] h-[500px] rounded-3xl overflow-hidden shadow-xl"
@@ -38,7 +38,7 @@ const UserCard = ({ user }) => {
           <h2 className="text-white text-xl font-bold">
             {user.firstName}, {user.age}
           </h2>
-          <p className="text-white text-sm">{user.jobTitle}</p>
+          <p className="text-white text-sm">{user.about}</p>
           <div className="mt-2">
             <p className="text-white font-semibold">Skills</p>
             <div className="flex flex-wrap gap-2 mt-1">
