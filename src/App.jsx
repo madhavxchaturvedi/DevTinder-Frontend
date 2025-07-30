@@ -3,6 +3,7 @@ import Body from "./components/Body";
 import Login from "./components/Login";
 import Feed from "./components/Feed";
 import Profile from "./components/Profile";
+import ConnectionsPage from "./components/ConnectionsPage";
 
 const App = () => {
   return (
@@ -10,8 +11,9 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Body />}>
           <Route path="/" element={<Feed />} />
-          <Route path="/login" element={<Login />}/>
-          <Route path="/profile" element={<Profile />}/>
+          <Route path="/login" element={<Login />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/connections" element={<ConnectionsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
