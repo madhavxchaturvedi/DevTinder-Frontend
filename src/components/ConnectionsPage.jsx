@@ -29,13 +29,6 @@ const ConnectionsPage = () => {
 
   if (connections.length === 0) return <h1>No Connections Found!</h1>;
   return (
-    // <div className="min-h-screen p-8">
-    //   <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 justify-items-center">
-    //     {connections.map((connection) => (
-    //       <ConnectionCard key={connection._id} user={connection} />
-    //     ))}
-    //   </div>
-    // </div>
     <div className="max-h-screen relative">
       {/* Content wrapper */}
       <div className="relative z-10">

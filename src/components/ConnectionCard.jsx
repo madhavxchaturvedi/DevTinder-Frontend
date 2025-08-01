@@ -13,7 +13,7 @@ const ConnectionCard = ({ user }) => {
           <img
             src={user.photoUrl || "https://via.placeholder.com/80"}
             alt="profile"
-            className="absolute -top-7 left-4 w-18 h-18 rounded-full border-4 border-white object-cover shadow-md"
+            className="absolute -top-7 left-4 w-18 h-18 rounded-full object-cover shadow-lg shadow-black/60"
           />
 
           {/* Name and Tags */}
@@ -22,7 +22,7 @@ const ConnectionCard = ({ user }) => {
               {user.firstName} {user.lastName}
             </h2>
             <div className="flex gap-2 mt-1">
-              {user.skills?.map((tag, i) => (
+              {(user.skills || []).slice(0, 3).map((tag, i) => (
                 <span
                   key={i}
                   className={`text-xs px-2 rounded-full ${
@@ -31,7 +31,7 @@ const ConnectionCard = ({ user }) => {
                       : "bg-yellow-100 text-yellow-700"
                   }`}
                 >
-                  {tag}
+                  {tag || "No skills"}
                 </span>
               ))}
             </div>
