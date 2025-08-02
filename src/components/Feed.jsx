@@ -11,7 +11,8 @@ const Feed = () => {
     firstName: "Jessica",
     age: 26,
     jobTitle: "Frontend Developer",
-    photoUrl: "https://i.pinimg.com/originals/8e/21/29/8e2129f44804db65316ed3db92cf8552.jpg",
+    photoUrl:
+      "https://i.pinimg.com/originals/8e/21/29/8e2129f44804db65316ed3db92cf8552.jpg",
     skills: ["JavaScript", "React", "Node.js", "Python"],
   };
   const dispatch = useDispatch();
@@ -33,10 +34,15 @@ const Feed = () => {
     getFeed();
   }, []);
 
+  if (!feed) return;
+
+  if (feed.length <= 0)
+    return <h1 className="text-center text-white mt-20 text-5xl">No User Found!</h1>;
+
   return (
     feed && (
       <div>
-        <UserCard user={feed2} />
+        <UserCard user={feed[0]} />
       </div>
     )
   );
