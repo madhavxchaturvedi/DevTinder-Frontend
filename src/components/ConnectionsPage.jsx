@@ -32,11 +32,11 @@ const ConnectionsPage = () => {
     <div className="max-h-screen relative">
       {/* Content wrapper */}
       <div className="relative z-10">
-        <h1 className="text-3xl text-white font-bold mb-12 text-center">
+        <h1 className="text-3xl text-white font-bold mb-16 text-center">
           My Connections
         </h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 justify-items-center">
+        <div className="flex flex-wrap gap-5 mx-16  justify-center items-center">
           {connections.map((user, i) => (
             <ConnectionCard key={i} user={user} />
           ))}

@@ -7,7 +7,7 @@ import { BASE_URL } from "../utils/constants";
 import { addUser } from "../redux/userSlice";
 import { useEffect } from "react";
 import axios from "axios";
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from "react-hot-toast";
 
 const Body = () => {
   const userData = useSelector((store) => store.user);
@@ -34,10 +34,16 @@ const Body = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1" style={{ backgroundImage: `url(${bgImage})` }}>
+    <div className="min-h-screen flex flex-col relative">
+      {/* Fixed background image behind everything */}
+      <div
+        className="fixed top-0 left-0 w-full h-full bg-no-repeat bg-cover bg-center -z-10"
+        style={{ backgroundImage: `url(${bgImage})` }}
+      ></div>
+
       <Toaster />
-        <Header />
+      <Header />
+      <div className="flex-1">
         <Outlet />
       </div>
       {/* <Footer /> */}

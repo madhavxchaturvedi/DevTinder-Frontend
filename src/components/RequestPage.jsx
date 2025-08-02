@@ -58,7 +58,7 @@ const RequestPage = () => {
           My Requests
         </h1>
 
-        <div className="flex">
+        <div className="flex flex-col gap-5">
           {requests.map((user, i) => (
             // <ConnectionCard key={i} user={user.fromUserId} />
             <RequestCard
