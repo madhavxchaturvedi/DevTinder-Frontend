@@ -15,7 +15,6 @@ const LoginForm = () => {
     firstName: "",
     lastName: "",
     emailId: "",
-    username: "",
     password: "",
   });
 
@@ -28,33 +27,23 @@ const LoginForm = () => {
     setError("");
 
     try {
-      // const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
+      const endpoint = isLogin ? "/login" : "/signup";
       const bodyData = isLogin
         ? { emailId: formData.emailId, password: formData.password }
         : formData;
-      // const res = await fetch(`http://localhost:5000${endpoint}`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(bodyData),
-      // });
 
-      const res = await axios.post(BASE_URL + "/login", bodyData, {
+      const res = await axios.post(BASE_URL + endpoint, bodyData, {
         withCredentials: true,
       });
-      dispatch(addUser(res.data));
-      navigate("/");
-      // if (!res.ok) {
-      //   const data = await res.json();
-      //   throw new Error(data.message || "Failed");
-      // }
-
-      // if (isLogin) {
-      //   const data = await res.json();
-      // } else {
-      //   setIsLogin(true);
-      // }
+      if (!isLogin) {
+        dispatch(addUser(res.data?.data));
+        navigate("/profile");
+      } else {
+        dispatch(addUser(res.data));
+        navigate("/");
+      }
     } catch (err) {
-      setError(err?.message?.data || "Something went wrong!");
+      setError(err?.response?.data || "Something went wrong!");
     }
   };
 
@@ -84,10 +73,10 @@ const LoginForm = () => {
             <div className="w-full max-w-sm mx-auto space-y-8">
               <div>
                 <h2 className="text-4xl font-bold text-gray-800">
-                  {!isLogin ? "Sign In" : "Sign Up"}
+                  {isLogin ? "Log In" : "Sign Up"}
                 </h2>
                 <p className="text-gray-500 mt-2">
-                  {!isLogin
+                  {isLogin
                     ? "Welcome back to devTinder"
                     : "Create your devTinder account"}
                 </p>
@@ -96,33 +85,6 @@ const LoginForm = () => {
               <form className="space-y-6" onSubmit={handleSubmit}>
                 {isLogin ? (
                   <>
-                    <div className="flex space-x-4">
-                      <input
-                        type="text"
-                        name="firstName"
-                        placeholder="First Name"
-                        onChange={handleChange}
-                        required
-                        className="w-1/2 px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-1 focus:ring-rose-500"
-                      />
-                      <input
-                        type="text"
-                        name="lastName"
-                        placeholder="Last Name"
-                        onChange={handleChange}
-                        required
-                        className="w-1/2 px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-1 focus:ring-rose-500"
-                      />
-                    </div>
-
-                    <input
-                      type="text"
-                      name="username"
-                      placeholder="Username"
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-1 focus:ring-rose-500"
-                    />
                     <input
                       type="email"
                       name="emailId"
@@ -142,6 +104,23 @@ const LoginForm = () => {
                   </>
                 ) : (
                   <>
+                    <div className="flex space-x-4">
+                      <input
+                        type="text"
+                        name="firstName"
+                        placeholder="First Name"
+                        onChange={handleChange}
+                        required
+                        className="w-1/2 px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                      />
+                      <input
+                        type="text"
+                        name="lastName"
+                        placeholder="Last Name"
+                        onChange={handleChange}
+                        className="w-1/2 px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                      />
+                    </div>
                     <input
                       type="email"
                       name="emailId"
@@ -165,14 +144,14 @@ const LoginForm = () => {
                   type="submit"
                   className="w-full bg-gradient-to-l font-semibold from-[#fe5a33] via-[#fe0142] via-30% to-[#fe6d27] text-white py-3 rounded-md"
                 >
-                  {!isLogin ? "Sign In" : "Sign Up"}
+                  {isLogin ? "Log In" : "Sign Up"}
                 </button>
 
                 {error && <p className="text-red-500 text-center">{error}</p>}
               </form>
 
               <p className="text-center text-sm text-gray-600">
-                {!isLogin ? (
+                {isLogin ? (
                   <>
                     Don’t have an account?{" "}
                     <span
@@ -189,7 +168,7 @@ const LoginForm = () => {
                       onClick={() => setIsLogin(!isLogin)}
                       className="text-rose-500 cursor-pointer hover:underline"
                     >
-                      Sign In
+                      Log In
                     </span>
                   </>
                 )}
