@@ -1,4 +1,4 @@
-# 💘 DevTinder – Frontend  
+# DevTinder – Frontend  
 
 DevTinder is a Tinder-like platform built for developers to **connect, collaborate, and grow together**. The frontend is developed using **React, Redux, TailwindCSS, and DaisyUI**, providing a smooth and responsive user experience.  
 
