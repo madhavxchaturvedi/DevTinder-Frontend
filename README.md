@@ -1,12 +1,48 @@
-# React + Vite
+# 💘 DevTinder – Frontend  
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+DevTinder is a Tinder-like platform built for developers to **connect, collaborate, and grow together**. The frontend is developed using **React, Redux, TailwindCSS, and DaisyUI**, providing a smooth and responsive user experience.  
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features  
+- 🔄 **Swipe Functionality** – Like or skip developers  
+- 🤝 **Connection Requests** – Send, accept, or reject requests  
+- 💬 **Real-time Messaging** – Integrated with Socket.io  
+- 💳 **Razorpay Payment Integration** – Premium features for users  
+- 📝 **Editable Profiles** – Update profile details anytime  
+- 🔐 **JWT Authentication** – Secure login and session handling  
+- 📧 **Email Integration (AWS SES)** – For verification and notifications  
+- ☁️ **Deployed on AWS** – Scalable and production-ready  
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Tech Stack  
+- **Frontend:** React, Redux, Tailwind CSS, DaisyUI  
+- **Backend (separate repo):** Node.js, Express.js, MongoDB  
+- **Real-time:** Socket.io  
+- **Authentication:** JWT  
+- **Payments:** Razorpay  
+- **Deployment:** AWS  
+
+---
+
+## 📂 Folder Structure  
+```bash
+devtinder-frontend/
+│── src/
+│   ├── components/   # Reusable UI components  
+│   ├── pages/        # Page-level components  
+│   ├── redux/        # State management  
+│   ├── utils/        # Helper functions  
+│   └── App.js        # Main app component  
+│
+└── public/           # Static assets  
+```
+##  Getting Started  
+
+Follow these steps to run the project locally:  
+
+### 1. Clone the repo  
+```bash
+git clone https://github.com/your-username/devtinder-frontend.git
+cd devtinder-frontend
