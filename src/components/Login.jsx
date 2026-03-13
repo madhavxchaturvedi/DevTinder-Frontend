@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import bgImage from "../assets/bg-image.png";
 import axios from "axios";
 import { useDispatch } from "react-redux";
@@ -40,7 +40,7 @@ const LoginForm = () => {
         navigate("/profile");
       } else {
         dispatch(addUser(res.data));
-        navigate("/");
+        navigate("/feed");
       }
     } catch (err) {
       setError(err?.response?.data || "Something went wrong!");
@@ -49,7 +49,17 @@ const LoginForm = () => {
 
   return (
     <div className="flex justify-center pt-5 items-center h-full bg-cover bg-center relative">
-      {/* <div className="absolute inset-0 bg-black/40"></div> */}
+      <div
+        className="fixed top-0 left-0 w-full h-full bg-no-repeat bg-cover bg-center -z-10"
+        style={{ backgroundImage: `url(${bgImage})` }}
+      />
+
+      <Link
+        to="/"
+        className="absolute left-6 top-6 z-20 text-3xl font-bold bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] via-30% to-[#fe6d27] inline-block text-transparent bg-clip-text"
+      >
+        DevTinder
+      </Link>
 
       <div className="relative z-10 w-full max-w-4xl mx-auto rounded-3xl overflow-hidden shadow-lg bg-white/10">
         <div className="relative w-[900px] h-[600px] rounded-3xl overflow-hidden shadow-lg bg-white/10">

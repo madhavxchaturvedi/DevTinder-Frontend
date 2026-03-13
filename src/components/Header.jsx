@@ -15,7 +15,7 @@ const Header = () => {
       const res = await axios.post(
         BASE_URL + "/logout",
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
       dispatch(removeUser());
       return Navigate("/login");
@@ -28,7 +28,7 @@ const Header = () => {
     <div className="navbar bg-transparent shadow-none px-6 w-full z-50">
       <div className="flex-1">
         <Link
-          to="/"
+          to={user ? "/feed" : "/"}
           className="text-2xl font-bold bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] via-30% to-[#fe6d27] inline-block text-transparent bg-clip-text"
         >
           DevTinder
