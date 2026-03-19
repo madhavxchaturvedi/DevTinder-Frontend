@@ -6,6 +6,7 @@ import Profile from "./components/Profile";
 import ConnectionsPage from "./components/ConnectionsPage";
 import RequestPage from "./components/RequestPage";
 import LandingPage from "./components/LandingPage";
+import Premium from "./components/Premium";
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/connections" element={<ConnectionsPage />} />
           <Route path="/requests" element={<RequestPage />} />
+          <Route path="/premium" element={<Premium />} />
         </Route>
       </Routes>
     </BrowserRouter>
