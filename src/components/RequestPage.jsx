@@ -6,11 +6,14 @@ import { addRequest, removeRequest } from "../redux/requestSlice";
 import RequestCard from "./RequestCard";
 import { SkeletonRequestCard } from "./Skeletons";
 import toast from "react-hot-toast";
+import MatchSplash from "./MatchSplash";
+import { AnimatePresence } from "framer-motion";
 
 const RequestPage = () => {
   const requests = useSelector((store) => store.requests);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
+  const [matchedUser, setMatchedUser] = useState(null);
 
   const fetchRequests = async () => {
     if (requests && requests.length > 0) return;
@@ -28,7 +31,7 @@ const RequestPage = () => {
     }
   };
 
-  const reviewRequest = async (status, _id) => {
+  const reviewRequest = async (status, _id, reqUser) => {
     try {
       await axios.post(
         BASE_URL + "/request/review/" + status + "/" + _id,
@@ -36,9 +39,12 @@ const RequestPage = () => {
         { withCredentials: true }
       );
       dispatch(removeRequest(_id));
-      toast.success(
-        status === "accepted" ? "Connection accepted! 🎉" : "Request declined"
-      );
+      
+      if (status === "accepted") {
+        setMatchedUser(reqUser);
+      } else {
+        toast.success("Request declined");
+      }
     } catch (err) {
       toast.error("Something went wrong. Please try again.");
       console.log(err);
@@ -92,12 +98,21 @@ const RequestPage = () => {
             <RequestCard
               key={req._id || i}
               user={req.fromUserId}
-              onAccept={() => reviewRequest("accepted", req._id)}
-              onReject={() => reviewRequest("rejected", req._id)}
+              onAccept={() => reviewRequest("accepted", req._id, req.fromUserId)}
+              onReject={() => reviewRequest("rejected", req._id, null)}
             />
           ))}
         </div>
       </div>
+      
+      <AnimatePresence>
+        {matchedUser && (
+          <MatchSplash 
+            matchedUser={matchedUser} 
+            onClose={() => setMatchedUser(null)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

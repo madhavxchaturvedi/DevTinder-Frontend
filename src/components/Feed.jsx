@@ -58,9 +58,9 @@ const Feed = () => {
 
   return (
     <div className="flex flex-col items-center">
-      {/* ── Filter Bar ────────────────────────────────────────────── */}
+      {/* ── Filter Bar ──────────────────────────────────────────────
       <div className="w-full max-w-sm mt-6 mb-2 px-4 z-10">
-        <form 
+        {/* <form 
           onSubmit={handleApplyFilter} 
           className="relative flex items-center w-full"
         >
@@ -89,18 +89,18 @@ const Feed = () => {
           >
             Apply
           </button>
-        </form>
+        </form> */}
         
         {/* Active skills indicator */}
-        {activeSkills && (
+        {/* {activeSkills && (
           <div className="mt-3 flex justify-center items-center gap-2 text-xs text-white/50">
             Showing results for: 
             <span className="text-[#fe5a33] font-medium px-2 py-0.5 rounded-full bg-[#fe5a33]/10 border border-[#fe5a33]/20">
               {activeSkills}
             </span>
           </div>
-        )}
-      </div>
+        )} */}
+      {/* </div> */}
 
       {/* ── Feed Content ────────────────────────────────────────── */}
       {loading ? (
@@ -126,8 +126,11 @@ const Feed = () => {
           )}
         </div>
       ) : (
-        <div className="-mt-10 relative z-0">
-          <UserCard user={feed[0]} />
+        <div className="-mt-10 relative z-0 flex justify-center w-full max-w-sm h-[600px]">
+          {feed.slice(0, 2).reverse().map((user) => {
+            const isFront = user._id === feed[0]._id;
+            return <UserCard key={user._id} user={user} isFront={isFront} />;
+          })}
         </div>
       )}
     </div>
