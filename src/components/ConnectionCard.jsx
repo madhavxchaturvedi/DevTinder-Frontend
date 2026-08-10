@@ -1,5 +1,5 @@
 import React from "react";
-
+import { Link } from "react-router-dom";
 const ConnectionCard = ({ user }) => {
   return (
     <div className="relative rounded-[40px]  backdrop-blur-lg shadow-[0_0_30px_rgba(254,1,66,0.4)]">
@@ -18,9 +18,11 @@ const ConnectionCard = ({ user }) => {
 
           {/* Name and Tags */}
           <div className="ml-20">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {user.firstName} {user.lastName}
-            </h2>
+            <Link to={`/user/${user._id}`}>
+              <h2 className="text-lg font-semibold text-gray-900 hover:underline cursor-pointer">
+                {user.firstName} {user.lastName}
+              </h2>
+            </Link>
             <div className="flex gap-2 mt-1">
               {(user.skills || []).slice(0, 3).map((tag, i) => (
                 <span
@@ -39,14 +41,16 @@ const ConnectionCard = ({ user }) => {
 
           {/* Bio */}
           <p className="text-sm text-gray-500 mt-2 pr-4 leading-snug">
-            {user.bio || "This user hasn't written a bio yet."}
+            {user.about || "This user hasn't written a bio yet."}
           </p>
 
           {/* Actions */}
           <div className="flex items-end mt-4 justify-start  gap-4">
-            <button className="bg-gradient-to-b w-full from-black/80 to-[#2e2e2e] text-white py-3 rounded-full text-sm font-medium shadow-md">
-              Message
-            </button>
+            <Link to={"/chat/" + user._id}>
+              <button className="bg-gradient-to-b w-full from-black/80 to-[#2e2e2e] text-white py-3 px-4 rounded-full text-sm font-medium shadow-md">
+                Message
+              </button>
+            </Link>
             {/* <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-lg shadow">
               ✉️
             </div>

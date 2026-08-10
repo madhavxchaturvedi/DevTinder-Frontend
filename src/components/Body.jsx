@@ -1,6 +1,5 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import Header from "./Header";
-import Footer from "./Footer";
 import bgImage from "../assets/bg-image.png";
 import { useDispatch, useSelector } from "react-redux";
 import { BASE_URL } from "../utils/constants";
@@ -8,6 +7,8 @@ import { addUser } from "../redux/userSlice";
 import { useEffect } from "react";
 import axios from "axios";
 import { Toaster } from "react-hot-toast";
+import { getSocket } from "../utils/socket";
+import { addNotification, setNotifications } from "../redux/notificationSlice";
 
 const Body = () => {
   const userData = useSelector((store) => store.user);
@@ -29,9 +30,42 @@ const Body = () => {
     }
   };
 
+  // Fetch existing notifications from DB on mount
+  const fetchNotifications = async () => {
+    try {
+      const res = await axios.get(BASE_URL + "/notifications", {
+        withCredentials: true,
+      });
+      dispatch(setNotifications(res.data));
+    } catch (err) {
+      // Silent — not critical
+      console.log("Could not fetch notifications:", err?.message);
+    }
+  };
+
   useEffect(() => {
     fetchUser();
   }, []);
+
+  // Set up socket connection and listen for real-time notifications
+  // Only after the user is known to be logged in
+  useEffect(() => {
+    if (!userData) return;
+
+    fetchNotifications();
+
+    const socket = getSocket();
+
+    const handleNewNotification = (notification) => {
+      dispatch(addNotification(notification));
+    };
+
+    socket.on("newNotification", handleNewNotification);
+
+    return () => {
+      socket.off("newNotification", handleNewNotification);
+    };
+  }, [userData]);
 
   return (
     <div className="min-h-screen flex flex-col relative">

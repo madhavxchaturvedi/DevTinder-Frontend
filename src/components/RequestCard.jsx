@@ -1,5 +1,5 @@
-import axios from "axios";
 import React from "react";
+import { Link } from "react-router-dom";
 
 const RequestCard = ({ user, onAccept, onReject }) => {
   return (
@@ -7,15 +7,19 @@ const RequestCard = ({ user, onAccept, onReject }) => {
       {/* Left Galaxy Info Block */}
       <div className="flex-1 relative rounded-2xl bg-white/10 shadow-[0_0_20px_rgba(255,255,255,0.4)] p-2 backdrop-blur-md bg-opacity-60 border border-white/30 flex items-center gap-4">
         {/* Optional star overlay or blur effect background can be done via absolute if needed */}
-        <img
-          src={user.photoUrl || "https://via.placeholder.com/80"}
-          alt="Profile"
-          className="w-20 h-20 shadow-lg shadow-black/60 rounded-full border-4  object-cover"
-        />
+        <Link to={`/user/${user._id}`} className="flex-shrink-0">
+          <img
+            src={user.photoUrl || "https://via.placeholder.com/80"}
+            alt="Profile"
+            className="w-20 h-20 shadow-lg shadow-black/60 rounded-full border-4 object-cover hover:ring-2 hover:ring-[#fe0142] transition"
+          />
+        </Link>
         <div>
-          <h2 className="text-xl font-semibold text-white">
-            {user.firstName} {user.lastName}
-          </h2>
+          <Link to={`/user/${user._id}`}>
+            <h2 className="text-xl font-semibold text-white hover:underline">
+              {user.firstName} {user.lastName}
+            </h2>
+          </Link>
           <p className="text-white text-sm     opacity-90">
             {user.about || "This developer hasn't added an about yet."}
           </p>

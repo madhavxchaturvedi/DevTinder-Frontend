@@ -7,6 +7,8 @@ import ConnectionsPage from "./components/ConnectionsPage";
 import RequestPage from "./components/RequestPage";
 import LandingPage from "./components/LandingPage";
 import Premium from "./components/Premium";
+import Chat from "./components/Chat";
+import UserProfilePage from "./components/UserProfilePage";
 
 const App = () => {
   return (
@@ -20,6 +22,8 @@ const App = () => {
           <Route path="/connections" element={<ConnectionsPage />} />
           <Route path="/requests" element={<RequestPage />} />
           <Route path="/premium" element={<Premium />} />
+          <Route path="/chat/:targetId" element={<Chat />} />
+          <Route path="/user/:userId" element={<UserProfilePage />} />
         </Route>
       </Routes>
     </BrowserRouter>
