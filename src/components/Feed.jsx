@@ -111,10 +111,10 @@ const Feed = () => {
       ) : (!feed || feed.length === 0) ? (
         <div className="flex flex-col items-center justify-center mt-16 gap-4 text-center px-4">
           <p className="text-6xl">{activeSkills ? "🔍" : "🎉"}</p>
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="text-3xl font-black text-[#0a0a0a]">
             {activeSkills ? "No matches found" : "You're all caught up!"}
           </h1>
-          <p className="text-white/50 text-sm max-w-xs">
+          <p className="text-gray-600 font-medium text-sm max-w-xs">
             {activeSkills 
               ? "Try adjusting your skill filters to discover more developers."
               : "No more developers to discover right now. Check back later."}
@@ -122,7 +122,7 @@ const Feed = () => {
           {activeSkills && (
             <button
               onClick={handleClearFilter}
-              className="mt-4 px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition"
+              className="mt-4 neo-btn-secondary"
             >
               Clear Filters
             </button>

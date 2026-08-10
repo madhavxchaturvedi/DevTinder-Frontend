@@ -55,40 +55,52 @@ const Premium = () => {
   };
 
   return isPremium ? (
-    <div className="flex flex-col items-center gap-4">
-      <h1 className="font-bold text-3xl">You are a Premium Member!</h1>
-      <p className="text-lg">Enjoy all the exclusive features and benefits.</p>
+    <div className="flex flex-col items-center justify-center mt-20 gap-4 neo-card p-12 max-w-md mx-auto bg-[#ccff00]">
+      <span className="text-6xl mb-2">⭐</span>
+      <h1 className="font-black text-3xl text-center">You are a Premium Member!</h1>
+      <p className="text-lg font-bold text-gray-800 text-center">Enjoy all the exclusive features and benefits.</p>
     </div>
   ) : (
-    <div className="flex justify-center">
-      <div className="flex w-4/5 flex-col gap-8 lg:flex-row">
-        <div className="card bg-base-300 rounded-box h-[350px] grow place-items-center">
-          <h1 className="font-bold text-3xl my-8">Silver Membership</h1>
-          <ul>
-            <li>-Access to basic features</li>
-            <li>-Limited profile visibility</li>
-            <li>-Standard support</li>
-            <li>-Ad-supported experience</li>
+    <div className="flex justify-center w-full px-4 pt-10">
+      <div className="flex w-full max-w-5xl flex-col gap-8 lg:flex-row">
+        {/* Silver Membership */}
+        <div className="neo-card p-10 flex flex-col items-center flex-1 bg-[#f4f4f5] border-4">
+          <div className="w-16 h-16 bg-white border-4 border-[#0a0a0a] rounded-full flex items-center justify-center mb-6 shadow-[4px_4px_0px_#0a0a0a]">
+            <span className="text-2xl font-black text-gray-500">S</span>
+          </div>
+          <h1 className="font-black text-3xl mb-8 text-center">Silver Membership</h1>
+          <ul className="text-gray-700 font-bold space-y-4 mb-10 w-full text-center">
+            <li className="flex items-center justify-center gap-2">✓ Access to basic features</li>
+            <li className="flex items-center justify-center gap-2">✓ Limited profile visibility</li>
+            <li className="flex items-center justify-center gap-2">✓ Standard support</li>
+            <li className="flex items-center justify-center gap-2 text-gray-400">✗ Ad-supported experience</li>
           </ul>
           <button
             onClick={() => handleBuyClick("silver")}
-            className="btn btn-primary mt-6"
+            className="neo-btn-secondary w-full mt-auto"
           >
             Upgrade to Silver
           </button>
         </div>
-        <div className="divider lg:divider-horizontal">OR</div>
-        <div className="card bg-base-300 rounded-box h-[350px] grow place-items-center">
-          <h1 className="font-bold text-3xl my-8">Gold Membership</h1>
-          <ul>
-            <li>-Access to all features</li>
-            <li>-Unlimited profile visibility</li>
-            <li>-Priority support</li>
-            <li>-Ad-free experience</li>
+
+        {/* Gold Membership */}
+        <div className="neo-card-dark p-10 flex flex-col items-center flex-1 border-4 border-[#0a0a0a]">
+          <div className="absolute top-0 right-8 bg-[#a855f7] text-white font-black px-4 py-1 rounded-b-lg border-x-2 border-b-2 border-[#0a0a0a] text-sm">
+            RECOMMENDED
+          </div>
+          <div className="w-16 h-16 bg-[#ccff00] border-4 border-[#0a0a0a] rounded-full flex items-center justify-center mb-6 shadow-[4px_4px_0px_#0a0a0a] mt-4">
+            <span className="text-2xl font-black text-[#0a0a0a]">G</span>
+          </div>
+          <h1 className="font-black text-3xl mb-8 text-[#ccff00] text-center">Gold Membership</h1>
+          <ul className="text-gray-300 font-bold space-y-4 mb-10 w-full text-center">
+            <li className="flex items-center justify-center gap-2 text-white">✓ Access to all features</li>
+            <li className="flex items-center justify-center gap-2 text-white">✓ Unlimited profile visibility</li>
+            <li className="flex items-center justify-center gap-2 text-white">✓ Priority support</li>
+            <li className="flex items-center justify-center gap-2 text-white">✓ Ad-free experience</li>
           </ul>
           <button
             onClick={() => handleBuyClick("gold")}
-            className="btn btn-primary mt-6"
+            className="neo-btn-primary w-full mt-auto"
           >
             Upgrade to Gold
           </button>

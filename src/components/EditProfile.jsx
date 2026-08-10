@@ -68,7 +68,7 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
       {/* Clickable photo circle */}
       <div
         className={`relative w-28 h-28 rounded-full cursor-pointer group transition-all duration-200 ${
-          dragOver ? "scale-105 ring-4 ring-[#fe0142]/60" : ""
+          dragOver ? "scale-105 ring-4 ring-emerald-500/60" : ""
         }`}
         onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -79,7 +79,7 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
         <img
           src={preview || "https://geographyandyou.com/images/user-profile.png"}
           alt="Profile"
-          className="w-28 h-28 rounded-full object-cover ring-4 ring-[#fe0142]/30 group-hover:ring-[#fe0142]/60 transition-all"
+          className="w-28 h-28 rounded-full object-cover border-4 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] bg-white group-hover:border-[#ccff00] transition-all"
         />
 
         {/* Hover overlay */}
@@ -95,9 +95,9 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#0e0e0e] rounded-full flex items-center justify-center border-2 border-[#fe0142]/40"
+              className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#0e0e0e] rounded-full flex items-center justify-center border-2 border-emerald-500/40"
             >
-              <div className="w-4 h-4 border-2 border-[#fe0142] border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
             </motion.div>
           )}
           {uploadState === "success" && (
@@ -129,7 +129,7 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploadState === "uploading"}
-          className="flex items-center gap-1.5 text-xs text-[#fe5a33] hover:text-[#fe0142] transition font-medium disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-[#0a0a0a] font-bold transition disabled:opacity-50"
         >
           <FiUploadCloud size={13} />
           {uploadState === "uploading" ? "Uploading..." : "Upload new photo"}
@@ -216,28 +216,25 @@ const EditProfile = ({ user }) => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="backdrop-blur-xl bg-[#0e0e0e]/80 border border-[#fe0142]/20 shadow-xl shadow-[#fe0142]/20 rounded-3xl px-6 py-6 w-full max-w-2xl"
+          className="bg-white border-4 border-[#0a0a0a] shadow-[8px_8px_0px_#0a0a0a] rounded-[32px] px-8 py-8 w-full max-w-2xl"
         >
           {/* Header */}
           <motion.div
             initial={{ y: -16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.5 }}
-            className="text-center mb-6"
+            className="text-center mb-8"
           >
-            <h2 className="text-3xl font-extrabold text-white flex justify-center items-center gap-2">
+            <h2 className="text-4xl font-black text-[#0a0a0a] flex justify-center items-center gap-3 tracking-tight">
               <motion.span
-                animate={{ opacity: [1, 0.4, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 3 }}
               >
-                <FaUserEdit className="text-[#fe0142]" />
+                <FaUserEdit className="text-[#a855f7]" />
               </motion.span>
-              Edit{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] to-[#fe5a33]">
-                Profile
-              </span>
+              Edit Profile
             </h2>
-            <p className="text-sm text-gray-400 mt-1">Keep your profile fresh!</p>
+            <p className="text-sm font-bold text-gray-500 mt-2">Keep your profile fresh!</p>
           </motion.div>
 
           {/* ── Photo Upload ──────────────────────────────────── */}
@@ -246,10 +243,10 @@ const EditProfile = ({ user }) => {
             onUploadSuccess={handlePhotoUploaded}
           />
 
-          <div className="border-t border-white/10 mb-6" />
+          <div className="border-t-2 border-[#0a0a0a] mb-8 w-1/2 mx-auto" />
 
           {/* ── Form Fields ───────────────────────────────────── */}
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-5 text-white">
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {fields.map((field, i) => (
               <motion.div
                 key={field.name}
@@ -258,7 +255,7 @@ const EditProfile = ({ user }) => {
                 transition={{ delay: 0.2 + i * 0.07, duration: 0.35 }}
                 className={field.type === "textarea" ? "md:col-span-2" : ""}
               >
-                <label className="block text-xs font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                <label className="block text-[10px] font-black text-gray-600 mb-2 uppercase tracking-widest">
                   {field.label}
                 </label>
 
@@ -267,7 +264,7 @@ const EditProfile = ({ user }) => {
                     name={field.name}
                     value={formData[field.name] || ""}
                     onChange={handleChange}
-                    className="w-full bg-[#1a1a1a] text-white px-3 py-2.5 rounded-xl border border-white/10 focus:ring-2 focus:ring-[#fe0142] outline-none transition text-sm"
+                    className="w-full bg-[#f4f4f5] text-[#0a0a0a] font-bold px-4 py-3 rounded-xl border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] focus:shadow-[4px_4px_0px_#ccff00] focus:bg-white outline-none transition-all text-sm appearance-none"
                   >
                     <option value="">Select Gender</option>
                     {field.options.map((opt) => (
@@ -281,9 +278,9 @@ const EditProfile = ({ user }) => {
                     name={field.name}
                     value={formData[field.name] || ""}
                     onChange={handleChange}
-                    rows={3}
+                    rows={4}
                     placeholder={field.placeholder}
-                    className="w-full bg-[#1a1a1a] text-white px-3 py-2.5 rounded-xl border border-white/10 focus:ring-2 focus:ring-[#fe0142] outline-none transition placeholder:text-gray-600 resize-none text-sm"
+                    className="w-full bg-[#f4f4f5] text-[#0a0a0a] font-bold px-4 py-3 rounded-xl border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] focus:shadow-[4px_4px_0px_#ccff00] focus:bg-white outline-none transition-all placeholder:text-gray-400 resize-none text-sm"
                   />
                 ) : (
                   <input
@@ -296,7 +293,7 @@ const EditProfile = ({ user }) => {
                     }
                     onChange={handleChange}
                     placeholder={field.placeholder}
-                    className="w-full bg-[#1a1a1a] text-white px-3 py-2.5 rounded-xl border border-white/10 focus:ring-2 focus:ring-[#fe0142] outline-none transition placeholder:text-gray-600 text-sm"
+                    className="w-full bg-[#f4f4f5] text-[#0a0a0a] font-bold px-4 py-3 rounded-xl border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] focus:shadow-[4px_4px_0px_#ccff00] focus:bg-white outline-none transition-all placeholder:text-gray-400 text-sm"
                   />
                 )}
               </motion.div>
@@ -312,7 +309,7 @@ const EditProfile = ({ user }) => {
               <button
                 type="submit"
                 onClick={saveProfile}
-                className="w-full cursor-pointer bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] to-[#fe5a33] text-white font-semibold py-3 rounded-xl shadow-lg shadow-[#fe0142]/30 hover:shadow-[#fe0142]/50 hover:scale-[1.01] active:scale-[0.99] transition-all"
+                className="w-full neo-btn-primary py-4 mt-4"
               >
                 Save Changes
               </button>

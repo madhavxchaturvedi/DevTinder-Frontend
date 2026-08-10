@@ -1,66 +1,54 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+
 const ConnectionCard = ({ user }) => {
+  if (!user) return null;
+
   return (
-    <div className="relative rounded-[40px]  backdrop-blur-lg shadow-[0_0_30px_rgba(254,1,66,0.4)]">
-      {/* Outer Gradient Background */}
-      <div className="relative w-[318px] h-[240px] bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] via-30% to-[#fe6d27] rounded-[40px] flex items-end pb-2 justify-center overflow-hidden">
-        {/* 🔲 Transparent Black Layer */}
-        <div className="absolute inset-0 rounded-[40px] bg-black/35 z-0" />
-        {/* Inner White Card */}
-        <div className="relative w-[300px] h-[150px] bg-white rounded-[40px] px-6 py-1 shadow-md z-10">
-          {/* Profile Image */}
+    <Link to={`/chat/${user._id}`}>
+      <motion.div 
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white border-2 border-transparent hover:border-[#0a0a0a] hover:shadow-[4px_4px_0px_#0a0a0a] transition-all cursor-pointer group mb-2"
+      >
+        {/* Avatar */}
+        <div className="relative flex-shrink-0">
           <img
-            src={user.photoUrl || "https://via.placeholder.com/80"}
-            alt="profile"
-            className="absolute -top-7 left-4 w-18 h-18 rounded-full object-cover shadow-lg shadow-black/60"
+            src={user.photoUrl || "https://geographyandyou.com/images/user-profile.png"}
+            alt={user.firstName}
+            className="w-16 h-16 rounded-full object-cover shadow-sm border-2 border-[#0a0a0a] group-hover:border-[#ccff00] transition-all"
           />
+          <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#ccff00] rounded-full border-2 border-[#0a0a0a]"></div>
+        </div>
 
-          {/* Name and Tags */}
-          <div className="ml-20">
-            <Link to={`/user/${user._id}`}>
-              <h2 className="text-lg font-semibold text-gray-900 hover:underline cursor-pointer">
-                {user.firstName} {user.lastName}
-              </h2>
-            </Link>
-            <div className="flex gap-2 mt-1">
-              {(user.skills || []).slice(0, 3).map((tag, i) => (
-                <span
-                  key={i}
-                  className={`text-xs px-2 rounded-full ${
-                    i === 0
-                      ? "bg-purple-100 text-purple-700"
-                      : "bg-yellow-100 text-yellow-700"
-                  }`}
-                >
-                  {tag || "No skills"}
-                </span>
-              ))}
-            </div>
+        {/* Info */}
+        <div className="flex-1 min-w-0 pb-2">
+          <div className="flex justify-between items-center mb-1">
+            <h2 className="text-lg font-black text-[#0a0a0a] truncate">
+              {user.firstName} {user.lastName}
+            </h2>
           </div>
-
-          {/* Bio */}
-          <p className="text-sm text-gray-500 mt-2 pr-4 leading-snug">
-            {user.about || "This user hasn't written a bio yet."}
-          </p>
-
-          {/* Actions */}
-          <div className="flex items-end mt-4 justify-start  gap-4">
-            <Link to={"/chat/" + user._id}>
-              <button className="bg-gradient-to-b w-full from-black/80 to-[#2e2e2e] text-white py-3 px-4 rounded-full text-sm font-medium shadow-md">
-                Message
-              </button>
-            </Link>
-            {/* <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-lg shadow">
-              ✉️
-            </div>
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-lg shadow">
-              🔔
-            </div> */}
+          
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-[#a855f7] font-bold truncate">
+              Tap to chat with your match!
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 mt-2">
+            {(user.skills || []).slice(0, 3).map((tag, i) => (
+              <span
+                key={i}
+                className="text-[10px] px-2 py-0.5 rounded-full bg-[#0a0a0a] text-white font-bold"
+              >
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </Link>
   );
 };
 

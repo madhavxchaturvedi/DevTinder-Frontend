@@ -59,7 +59,7 @@ const RequestPage = () => {
     return (
       <div className="max-h-screen relative px-6">
         <div className="relative z-10">
-          <h1 className="text-3xl text-white font-bold mb-10 text-center">
+          <h1 className="text-3xl text-[#0a0a0a] font-black mb-10 text-center">
             Connection Requests
           </h1>
           <div className="flex flex-col max-w-3xl mx-auto">
@@ -76,8 +76,8 @@ const RequestPage = () => {
     return (
       <div className="flex flex-col items-center justify-center mt-24 gap-4 text-center px-4">
         <p className="text-6xl">📭</p>
-        <h1 className="text-3xl font-bold text-white">No pending requests</h1>
-        <p className="text-white/50 text-sm max-w-xs">
+        <h1 className="text-3xl font-black text-[#0a0a0a]">No pending requests</h1>
+        <p className="text-gray-600 font-bold text-sm max-w-xs">
           When someone swipes right on you, their request will appear here.
         </p>
       </div>
@@ -87,13 +87,13 @@ const RequestPage = () => {
   return (
     <div className="max-h-screen relative px-6">
       <div className="relative z-10">
-        <h1 className="text-3xl text-white font-bold mb-10 text-center">
+        <h1 className="text-3xl text-[#0a0a0a] font-black mb-10 text-center">
           Connection Requests
-          <span className="ml-3 text-base font-normal text-white/40">
+          <span className="ml-3 text-base font-bold text-gray-400">
             ({requests.length})
           </span>
         </h1>
-        <div className="flex flex-col max-w-3xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 max-w-6xl mx-auto">
           {requests.map((req, i) => (
             <RequestCard
               key={req._id || i}

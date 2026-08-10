@@ -18,7 +18,7 @@ const MatchSplash = ({ matchedUser, onClose }) => {
         recycle={false} 
         numberOfPieces={400} 
         gravity={0.15}
-        colors={['#fe0142', '#fe5a33', '#ffffff', '#ffd700', '#ffb6c1']}
+        colors={['#ccff00', '#a855f7', '#0a0a0a', '#ffffff']}
       />
       
       <motion.div 
@@ -26,12 +26,12 @@ const MatchSplash = ({ matchedUser, onClose }) => {
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.8, opacity: 0, y: 20 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        className="w-full max-w-sm bg-[#0f0f0f] border border-white/10 rounded-[32px] p-8 flex flex-col items-center shadow-2xl shadow-black/80 relative overflow-hidden"
+        className="w-full max-w-sm neo-card p-8 flex flex-col items-center relative overflow-hidden"
       >
-        {/* Glow behind avatars */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#fe0142]/20 rounded-full blur-[60px]" />
+        {/* Abstract background shape */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#ccff00] rounded-full border-4 border-[#0a0a0a] shadow-[8px_8px_0px_#0a0a0a] opacity-20" />
 
-        <h2 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#fe5a33] to-[#fe0142] mb-8 text-center italic tracking-wider uppercase drop-shadow-sm relative z-10">
+        <h2 className="text-4xl font-black text-[#a855f7] mb-8 text-center uppercase tracking-wider drop-shadow-[2px_2px_0px_#0a0a0a] relative z-10">
           It's a Match!
         </h2>
 
@@ -42,7 +42,7 @@ const MatchSplash = ({ matchedUser, onClose }) => {
             transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
             src={currentUser.photoUrl}
             alt="You"
-            className="w-28 h-28 rounded-full object-cover ring-[6px] ring-[#0f0f0f] shadow-xl z-10"
+            className="w-28 h-28 rounded-full object-cover border-4 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] z-10 bg-white"
           />
           <motion.img
             initial={{ x: 80, opacity: 0, rotate: 15 }}
@@ -50,24 +50,24 @@ const MatchSplash = ({ matchedUser, onClose }) => {
             transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
             src={matchedUser.photoUrl}
             alt={matchedUser.firstName}
-            className="w-28 h-28 rounded-full object-cover ring-[6px] ring-[#0f0f0f] shadow-xl z-0"
+            className="w-28 h-28 rounded-full object-cover border-4 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] z-0 bg-white"
           />
         </div>
 
-        <p className="text-white/80 text-center mb-10 text-[15px] font-medium leading-relaxed relative z-10">
-          You and <span className="text-white font-bold">{matchedUser.firstName}</span> have connected and can now start chatting.
+        <p className="text-gray-700 text-center mb-10 text-[15px] font-bold leading-relaxed relative z-10">
+          You and <span className="text-[#0a0a0a]">{matchedUser.firstName}</span> have connected and can now start chatting.
         </p>
 
         <div className="w-full flex flex-col gap-3 relative z-10">
           <button
             onClick={() => navigate(`/chat/${matchedUser._id}`)}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#fe5a33] via-[#fe0142] to-[#fe6d27] text-white font-bold shadow-lg shadow-[#fe0142]/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+            className="neo-btn-primary w-full"
           >
             Send Message
           </button>
           <button
             onClick={onClose}
-            className="w-full py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 font-semibold transition-all"
+            className="neo-btn-secondary w-full"
           >
             Keep Swiping
           </button>

@@ -83,11 +83,11 @@ const Header = () => {
   };
 
   return (
-    <div className="navbar bg-transparent shadow-none px-6 w-full z-50">
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl bg-white border-2 border-[#0a0a0a] shadow-[6px_6px_0px_#0a0a0a] rounded-full px-6 py-3 flex justify-between items-center z-50 transition-all duration-300">
       <div className="flex-1">
         <Link
           to={user ? "/feed" : "/"}
-          className="text-2xl font-bold bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] via-30% to-[#fe6d27] inline-block text-transparent bg-clip-text"
+          className="text-2xl font-black tracking-tight text-[#0a0a0a] inline-block hover:scale-[1.02] transition-transform"
         >
           DevTinder
         </Link>
@@ -95,7 +95,7 @@ const Header = () => {
 
       {user && (
         <div className="flex items-center gap-3">
-          <p className="text-white pt-1 px-2 text-lg font-medium hidden sm:block">
+          <p className="text-[#0a0a0a] pt-1 px-2 text-lg font-bold hidden sm:block">
             Hello, {user.firstName}
           </p>
 
@@ -103,7 +103,7 @@ const Header = () => {
           <div className="relative" ref={notifRef}>
             <button
               onClick={handleOpenNotifications}
-              className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+              className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#0a0a0a] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
             >
               {/* Bell icon */}
               <svg
@@ -114,7 +114,7 @@ const Header = () => {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="w-5 h-5 text-white/80"
+                className="w-5 h-5 text-[#0a0a0a]"
               >
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -125,7 +125,7 @@ const Header = () => {
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-[#fe5a33] to-[#fe0142] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg shadow-[#fe0142]/50"
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#ccff00] text-[#0a0a0a] border-2 border-[#0a0a0a] text-[10px] font-bold rounded-full flex items-center justify-center shadow-[2px_2px_0px_#0a0a0a]"
                 >
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </motion.span>
@@ -140,15 +140,15 @@ const Header = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.96 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-12 w-80 bg-[#0f0f0f]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden z-50"
+                  className="absolute right-0 top-12 w-80 bg-white border-2 border-[#0a0a0a] shadow-[6px_6px_0px_#0a0a0a] rounded-2xl overflow-hidden z-50"
                 >
                   {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-                    <span className="text-white font-semibold text-sm">
+                  <div className="flex items-center justify-between px-4 py-3 border-b-2 border-[#0a0a0a] bg-[#f4f4f5]">
+                    <span className="text-[#0a0a0a] font-black text-sm uppercase tracking-wide">
                       Notifications
                     </span>
                     {unreadCount === 0 && notifications.length > 0 && (
-                      <span className="text-xs text-white/30">All caught up</span>
+                      <span className="text-xs font-bold text-gray-500">All caught up</span>
                     )}
                   </div>
 
@@ -157,7 +157,7 @@ const Header = () => {
                     {notifications.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-10 gap-2">
                         <span className="text-3xl">🔔</span>
-                        <p className="text-white/40 text-sm">No notifications yet</p>
+                        <p className="text-gray-500 font-bold text-sm">No notifications yet</p>
                       </div>
                     ) : (
                       notifications.map((n) => (
@@ -165,8 +165,8 @@ const Header = () => {
                           key={n._id}
                           to={notificationLink(n)}
                           onClick={() => setNotifOpen(false)}
-                          className={`flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer border-b border-white/5 last:border-0 ${
-                            !n.read ? "bg-[#fe0142]/5" : ""
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-100 transition-colors cursor-pointer border-b-2 border-[#0a0a0a] last:border-0 ${
+                            !n.read ? "bg-[#ccff00]/20" : ""
                           }`}
                         >
                           {/* Avatar */}
@@ -187,17 +187,17 @@ const Header = () => {
 
                           {/* Content */}
                           <div className="flex-1 min-w-0">
-                            <p className="text-white/85 text-sm leading-snug">
+                            <p className="text-[#0a0a0a] font-bold text-sm leading-snug">
                               {notificationMessage(n)}
                             </p>
-                            <p className="text-white/35 text-xs mt-0.5">
+                            <p className="text-gray-500 font-bold text-xs mt-0.5">
                               {timeAgo(n.createdAt)}
                             </p>
                           </div>
 
                           {/* Unread dot */}
                           {!n.read && (
-                            <span className="w-2 h-2 mt-1.5 flex-shrink-0 bg-[#fe0142] rounded-full" />
+                            <span className="w-2.5 h-2.5 mt-1.5 flex-shrink-0 bg-[#a855f7] border border-[#0a0a0a] rounded-full" />
                           )}
                         </Link>
                       ))
@@ -206,11 +206,11 @@ const Header = () => {
 
                   {/* Footer */}
                   {notifications.length > 0 && (
-                    <div className="px-4 py-2.5 border-t border-white/10">
+                    <div className="px-4 py-2.5 border-t-2 border-[#0a0a0a] bg-[#f4f4f5]">
                       <Link
                         to="/requests"
                         onClick={() => setNotifOpen(false)}
-                        className="text-xs text-[#fe5a33] hover:text-[#fe0142] transition font-medium"
+                        className="text-xs text-[#a855f7] hover:text-[#0a0a0a] transition font-black uppercase tracking-wider"
                       >
                         View all requests →
                       </Link>
@@ -226,7 +226,7 @@ const Header = () => {
             <div
               tabIndex={0}
               role="button"
-              className="btn btn-ghost btn-circle avatar ring-2 ring-[#fe0142]/30 hover:ring-[#fe0142]/60 transition-all"
+              className="btn btn-ghost btn-circle avatar border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#0a0a0a] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
             >
               <div className="w-10 rounded-full">
                 <img alt="Profile" src={user.photoUrl} />
@@ -234,41 +234,41 @@ const Header = () => {
             </div>
             <ul
               tabIndex={0}
-              className="menu menu-sm dropdown-content bg-[#0f0f0f]/95 backdrop-blur-xl border border-white/10 rounded-2xl z-10 mt-3 w-52 p-2 shadow-2xl"
+              className="menu menu-sm dropdown-content bg-white border-2 border-[#0a0a0a] shadow-[6px_6px_0px_#0a0a0a] rounded-2xl z-10 mt-3 w-52 p-2"
             >
               <li>
-                <Link to="/profile" className="text-white/80 hover:text-white justify-between">
+                <Link to="/profile" className="text-[#0a0a0a] font-bold hover:bg-gray-100 justify-between">
                   Profile
-                  <span className="badge badge-sm bg-[#fe0142] text-white border-0">
+                  <span className="badge badge-sm bg-[#ccff00] text-[#0a0a0a] border-2 border-[#0a0a0a] shadow-[1px_1px_0px_#0a0a0a]">
                     Edit
                   </span>
                 </Link>
               </li>
               <li>
-                <Link to="/connections" className="text-white/80 hover:text-white">
+                <Link to="/connections" className="text-[#0a0a0a] font-bold hover:bg-gray-100">
                   Connections
                 </Link>
               </li>
               <li>
-                <Link to="/requests" className="text-white/80 hover:text-white">
+                <Link to="/requests" className="text-[#0a0a0a] font-bold hover:bg-gray-100">
                   Requests
                   {unreadCount > 0 && (
-                    <span className="badge badge-sm bg-[#fe0142] text-white border-0">
+                    <span className="badge badge-sm bg-[#a855f7] text-white border-2 border-[#0a0a0a] shadow-[1px_1px_0px_#0a0a0a]">
                       {unreadCount}
                     </span>
                   )}
                 </Link>
               </li>
               <li>
-                <Link to="/premium" className="text-white/80 hover:text-white">
+                <Link to="/premium" className="text-[#0a0a0a] font-bold hover:bg-gray-100">
                   Premium ✨
                 </Link>
               </li>
-              <div className="divider my-0.5 opacity-20" />
+              <div className="divider my-0.5 border-t-2 border-[#0a0a0a]" />
               <li>
                 <button
                   onClick={handleLogout}
-                  className="text-red-400 hover:text-red-300"
+                  className="text-red-500 font-bold hover:bg-red-50"
                 >
                   Logout
                 </button>

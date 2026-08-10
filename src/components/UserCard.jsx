@@ -23,9 +23,9 @@ const UserCard = ({ user, isFront, onMatch }) => {
     x,
     [-150, 0, 150],
     [
-      "0 0 60px rgba(254, 1, 66, 0.4)", // Red glow left
-      "0 20px 25px -5px rgba(0, 0, 0, 0.5)", // Default dark shadow
-      "0 0 60px rgba(16, 185, 129, 0.4)" // Green glow right
+      "0 0 0px rgba(0,0,0,1)", // No glow on left, just flat shadow later
+      "8px 8px 0px rgba(10,10,10,1)", // Hard drop shadow default
+      "0 0 0px rgba(0,0,0,1)" // No glow on right
     ]
   );
 
@@ -87,8 +87,8 @@ const UserCard = ({ user, isFront, onMatch }) => {
     if (!hasExited) {
       controls.start(
         isFront
-          ? { scale: 1, y: 0, opacity: 1, filter: "blur(0px)", zIndex: 10, transition: { type: "spring", stiffness: 350, damping: 25 } }
-          : { scale: 0.94, y: 25, opacity: 0.7, filter: "blur(5px)", zIndex: 0, transition: { type: "spring", stiffness: 350, damping: 25 } }
+          ? { scale: 1, y: 0, opacity: 1, zIndex: 10, transition: { type: "spring", stiffness: 350, damping: 25 } }
+          : { scale: 0.94, y: 25, opacity: 0.7, zIndex: 0, transition: { type: "spring", stiffness: 350, damping: 25 } }
       );
     }
   }, [isFront, hasExited, controls]);
@@ -98,7 +98,7 @@ const UserCard = ({ user, isFront, onMatch }) => {
   return (
     <div className="absolute top-0 left-0 w-full flex flex-col items-center">
       <motion.div
-        className="relative w-[340px] h-[520px] rounded-[32px] overflow-hidden cursor-grab active:cursor-grabbing border border-white/5 bg-[#111]"
+        className="relative w-[340px] h-[520px] rounded-[32px] overflow-hidden cursor-grab active:cursor-grabbing border-4 border-[#0a0a0a] bg-white"
         drag={isFront && !hasExited ? "x" : false}
         // Remove dragConstraints so it doesn't fight the exit animation
         dragConstraints={false}
@@ -124,8 +124,8 @@ const UserCard = ({ user, isFront, onMatch }) => {
           style={{ opacity: likeOpacity }}
           className="absolute top-10 left-8 z-20 pointer-events-none"
         >
-          <div className="border-[5px] border-emerald-500 rounded-xl px-4 py-1.5 transform -rotate-12 bg-black/20 backdrop-blur-sm">
-            <span className="text-emerald-500 text-4xl font-black tracking-widest uppercase shadow-sm">
+          <div className="border-[6px] border-[#ccff00] rounded-xl px-4 py-1.5 transform -rotate-12 bg-white shadow-[4px_4px_0px_#0a0a0a]">
+            <span className="text-[#0a0a0a] text-4xl font-black tracking-widest uppercase">
               Like
             </span>
           </div>
@@ -135,19 +135,19 @@ const UserCard = ({ user, isFront, onMatch }) => {
           style={{ opacity: nopeOpacity }}
           className="absolute top-10 right-8 z-20 pointer-events-none"
         >
-          <div className="border-[5px] border-[#fe0142] rounded-xl px-4 py-1.5 transform rotate-12 bg-black/20 backdrop-blur-sm">
-            <span className="text-[#fe0142] text-4xl font-black tracking-widest uppercase shadow-sm">
+          <div className="border-[6px] border-red-500 rounded-xl px-4 py-1.5 transform rotate-12 bg-white shadow-[4px_4px_0px_#0a0a0a]">
+            <span className="text-[#0a0a0a] text-4xl font-black tracking-widest uppercase">
               Nope
             </span>
           </div>
         </motion.div>
 
         {/* Bottom Gradient & User Info */}
-        <div className="absolute bottom-0 w-full h-[50%] bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent p-6 pointer-events-none flex flex-col justify-end pb-8">
-          <h2 className="text-white text-3xl font-extrabold drop-shadow-md">
+        <div className="absolute bottom-0 w-full h-[50%] bg-gradient-to-t from-white via-white/90 to-transparent p-6 pointer-events-none flex flex-col justify-end pb-8">
+          <h2 className="text-[#0a0a0a] text-3xl font-black drop-shadow-sm">
             {user.firstName}{user.age && `, ${user.age}`}
           </h2>
-          <p className="text-white/85 font-medium text-sm mt-1.5 leading-relaxed line-clamp-2">
+          <p className="text-gray-700 font-bold text-sm mt-1.5 leading-relaxed line-clamp-2">
             {user.about}
           </p>
           {user.skills && user.skills.length > 0 && (
@@ -156,7 +156,7 @@ const UserCard = ({ user, isFront, onMatch }) => {
                 {user.skills.slice(0, 4).map((skill, index) => (
                   <span
                     key={index}
-                    className="bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-xs px-3 py-1.5 rounded-full font-semibold shadow-sm"
+                    className="bg-white border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] text-[#0a0a0a] text-xs px-3 py-1.5 rounded-full font-black uppercase tracking-wider"
                   >
                     {skill}
                   </span>
@@ -177,16 +177,16 @@ const UserCard = ({ user, isFront, onMatch }) => {
         <button
           onClick={() => handleAction("ignored")}
           disabled={!isFront || hasExited}
-          className="w-16 h-16 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center shadow-xl hover:scale-110 hover:bg-[#222] hover:border-white/20 transition-all active:scale-95 disabled:opacity-50 group"
+          className="w-16 h-16 bg-white border-4 border-[#0a0a0a] rounded-full flex items-center justify-center shadow-[4px_4px_0px_#0a0a0a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#0a0a0a] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50"
         >
-          <span className="text-[#fe0142] text-3xl font-black group-hover:drop-shadow-[0_0_10px_rgba(254,1,66,0.6)] transition-all">✖</span>
+          <span className="text-red-500 text-3xl font-black">✖</span>
         </button>
         <button
           onClick={() => handleAction("interested")}
           disabled={!isFront || hasExited}
-          className="w-16 h-16 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center shadow-xl hover:scale-110 hover:bg-[#222] hover:border-white/20 transition-all active:scale-95 disabled:opacity-50 group"
+          className="w-16 h-16 bg-[#ccff00] border-4 border-[#0a0a0a] rounded-full flex items-center justify-center shadow-[4px_4px_0px_#0a0a0a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#0a0a0a] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50"
         >
-          <span className="text-emerald-500 text-3xl font-black group-hover:drop-shadow-[0_0_10px_rgba(16,185,129,0.6)] transition-all">❤</span>
+          <span className="text-[#0a0a0a] text-3xl font-black">❤</span>
         </button>
       </motion.div>
     </div>

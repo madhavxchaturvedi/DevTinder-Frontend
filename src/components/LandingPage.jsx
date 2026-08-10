@@ -1,246 +1,218 @@
 import { Link } from "react-router-dom";
-import bgImage from "../assets/bg-image.png";
-
-const howItWorksSteps = [
-  {
-    title: "Create a developer profile",
-    description:
-      "Showcase your stack, experience, and interests so other developers can discover the real you.",
-  },
-  {
-    title: "Discover other developers",
-    description:
-      "Explore relevant developer profiles based on skills, goals, and collaboration preferences.",
-  },
-  {
-    title: "Connect and collaborate",
-    description:
-      "Send requests, start conversations, and build meaningful professional relationships.",
-  },
-];
-
-const features = [
-  "Developer discovery",
-  "Profile matching and connections",
-  "Real-time messaging",
-  "Premium profile boost",
-];
-
-const premiumBenefits = [
-  "Increased profile visibility",
-  "Featured developer placement",
-  "Advanced discovery options",
-];
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-[#080b14] text-white">
-      <div className="relative overflow-hidden">
-        <div
-          className="absolute inset-0 -z-30 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url(${bgImage})` }}
-        />
-        <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_15%,_rgba(254,90,51,0.35),_transparent_35%),radial-gradient(circle_at_82%_10%,_rgba(254,1,66,0.3),_transparent_38%),linear-gradient(180deg,_#090d18_0%,_#070b14_45%,_#090d18_100%)]" />
-        <div className="absolute left-1/2 top-0 -z-10 h-[22rem] w-[22rem] -translate-x-1/2 rounded-full bg-[#fe5a33]/20 blur-3xl" />
+    <div className="w-full bg-[#f4f4f5] text-[#0a0a0a] font-sans -mt-28">
+      {/* ── Hero Section (Pitch Black) ─────────────────────────── */}
+      <section className="relative w-full bg-[#0a0a0a] text-white pt-48 pb-40 px-6 overflow-hidden rounded-b-[40px] md:rounded-b-[80px] border-b-4 border-[#0a0a0a]">
+        <div className="mx-auto max-w-5xl text-center relative z-10 flex flex-col items-center">
+          <p className="text-sm md:text-base font-bold text-gray-400 uppercase tracking-widest mb-6">
+            The most comprehensive
+          </p>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[1.05] tracking-tight mb-8">
+            Developer Discovery <br />
+            <span className="text-white">Platform</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 font-medium">
+            Streamline your professional network and fortify your career by connecting with the best builders in the industry.
+          </p>
 
-        <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-7 md:px-10">
-          <Link
-            to="/"
-            className="text-2xl font-bold bg-gradient-to-tr from-[#fe5a33] via-[#fe0142] via-30% to-[#fe6d27] inline-block text-transparent bg-clip-text"
-          >
-            DevTinder
-          </Link>
-          <div className="flex items-center gap-3">
+          {/* Email Input Pill */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 p-2 bg-white rounded-full w-full max-w-md mx-auto shadow-[0_0_30px_rgba(204,255,0,0.15)] relative z-20">
+            <input
+              type="email"
+              placeholder="Your work email"
+              className="flex-1 bg-transparent px-6 py-3 outline-none text-[#0a0a0a] font-medium placeholder:text-gray-400 w-full"
+            />
             <Link
               to="/login"
-              className="rounded-full border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10"
-            >
-              Login
-            </Link>
-            <Link
-              to="/login"
-              className="rounded-full bg-gradient-to-r from-[#fe5a33] via-[#fe0142] to-[#fe6d27] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_30px_-12px_rgba(254,90,51,0.9)] transition hover:scale-[1.02]"
+              className="w-full sm:w-auto bg-[#ccff00] text-[#0a0a0a] font-black uppercase tracking-wide px-8 py-3 rounded-full hover:bg-[#bbf000] transition-colors whitespace-nowrap border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a]"
             >
               Get Started
             </Link>
           </div>
-        </header>
-
-        <section className="mx-auto grid w-full max-w-7xl gap-12 px-6 pb-20 pt-8 md:grid-cols-2 md:items-center md:px-10 md:pb-28 md:pt-14">
-          <div>
-            <p className="mb-5 inline-flex items-center rounded-full border border-[#fe5a33]/40 bg-white/5 px-4 py-1.5 text-sm font-medium text-[#ffd3c8] backdrop-blur">
-              Built for builders, founders, and engineers
-            </p>
-            <h1 className="text-4xl font-black leading-tight tracking-tight text-white md:text-6xl">
-              Connect with Developers Who Build the Future
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300">
-              DevTinder helps developers connect, collaborate, and grow their
-              professional network through high-intent discovery and meaningful
-              conversations.
-            </p>
-            <div className="mt-9 flex flex-wrap items-center gap-4">
-              <Link
-                to="/login"
-                className="rounded-full bg-gradient-to-r from-[#fe5a33] via-[#fe0142] to-[#fe6d27] px-7 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-16px_rgba(254,90,51,0.95)] transition hover:scale-[1.02]"
-              >
-                Get Started
-              </Link>
-              <Link
-                to="/login"
-                className="rounded-full border border-white/30 bg-white/5 px-7 py-3 text-sm font-semibold text-white transition hover:border-white/50 hover:bg-white/10"
-              >
-                Login
-              </Link>
-            </div>
-
-            <div className="mt-10 grid max-w-xl grid-cols-3 gap-3 text-sm">
-              {[
-                { value: "50K+", label: "Developers" },
-                { value: "200K+", label: "Connections" },
-                { value: "1.2K+", label: "Teams Built" },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur"
-                >
-                  <p className="text-lg font-bold text-white">{stat.value}</p>
-                  <p className="text-slate-300">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_24px_80px_-24px_rgba(254,1,66,0.45)] backdrop-blur-xl md:p-8">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-300">
-                Live Network Pulse
-              </p>
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-400" />
-            </div>
-            <div className="mt-6 space-y-4">
-              {[
-                "React Engineer matched with Backend Architect",
-                "AI Developer started collaborating on open-source tooling",
-                "Mobile Engineer discovered 12 relevant profiles",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-2xl border border-white/10 bg-[#0f1628]/80 p-4 text-sm text-slate-200"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <section className="mx-auto w-full max-w-7xl px-6 py-16 md:px-10">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            How It Works
-          </h2>
-          <p className="mt-3 text-slate-300">
-            From profile to collaboration in three simple steps.
-          </p>
         </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          {howItWorksSteps.map((step, idx) => (
-            <article
-              key={step.title}
-              className="group rounded-3xl border border-white/10 bg-white/[0.03] p-7 transition hover:-translate-y-1 hover:border-[#fe5a33]/40 hover:bg-white/[0.06]"
-            >
-              <p className="text-sm font-semibold text-[#ffb8a7]">
-                Step {idx + 1}
-              </p>
-              <h3 className="mt-2 text-xl font-bold text-white">
-                {step.title}
-              </h3>
-              <p className="mt-3 text-slate-300">{step.description}</p>
-            </article>
-          ))}
+
+        {/* Abstract Isometric Illustration (CSS) */}
+        <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-full max-w-6xl h-64 md:h-96 pointer-events-none opacity-90 flex justify-center items-end gap-10">
+           {/* Left Block */}
+           <div className="w-32 h-40 bg-[#ccff00] border-[6px] border-[#0a0a0a] transform -skew-y-12 translate-y-10"></div>
+           {/* Center Purple Block */}
+           <div className="w-64 h-64 bg-[#a855f7] border-[6px] border-[#0a0a0a] transform skew-y-12 relative z-10 shadow-[-20px_20px_0px_#000]"></div>
+           {/* Right White Block */}
+           <div className="w-48 h-48 bg-white border-[6px] border-[#0a0a0a] transform -skew-y-12 -translate-y-10"></div>
         </div>
       </section>
 
-      <section className="border-y border-white/10 bg-[#0a0f1d]/90 py-16">
-        <div className="mx-auto w-full max-w-7xl px-6 md:px-10">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Features
+      {/* ── Logos Section ──────────────────────────────────────── */}
+      <section className="py-12 border-b-2 border-[#0a0a0a] bg-white">
+        <div className="max-w-6xl mx-auto px-6 flex flex-wrap justify-center items-center gap-10 md:gap-20 opacity-50 grayscale">
+          <h3 className="text-xl font-black font-serif italic tracking-tighter">coinbase</h3>
+          <h3 className="text-xl font-black font-serif italic tracking-tighter">DocuSign</h3>
+          <h3 className="text-xl font-black font-serif italic tracking-tighter">Wealthsimple</h3>
+          <h3 className="text-xl font-black font-serif italic tracking-tighter">Wilson</h3>
+        </div>
+      </section>
+
+      {/* ── Values / Features Grid ─────────────────────────────── */}
+      <section className="py-24 px-6 max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-black mb-4">DevTinder Values</h2>
+          <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto">
+            These values embody the platform's vision and dedication to creating superior developer experiences.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Card 1 */}
+          <div className="neo-card p-10 flex flex-col items-center text-center bg-[#f4f4f5]">
+            <h3 className="text-2xl font-black mb-3">Collaboration</h3>
+            <p className="text-sm font-medium text-gray-600 mb-10">
+              Automatically capture and correlate all actions—from planning to code changes.
+            </p>
+            {/* Geometric art */}
+            <div className="w-32 h-32 grid grid-cols-2 gap-2 transform rotate-45">
+              <div className="bg-gray-300 rounded-full border-4 border-[#0a0a0a]"></div>
+              <div className="bg-gray-300 rounded-full border-4 border-[#0a0a0a]"></div>
+              <div className="bg-gray-300 rounded-full border-4 border-[#0a0a0a]"></div>
+              <div className="bg-gray-300 rounded-full border-4 border-[#0a0a0a]"></div>
+            </div>
+          </div>
+
+          {/* Card 2 */}
+          <div className="neo-card p-10 flex flex-col items-center text-center bg-[#f4f4f5]">
+            <h3 className="text-2xl font-black mb-3">Easy to scale</h3>
+            <p className="text-sm font-medium text-gray-600 mb-10">
+              Reference architectures show you how to scale high availability for installations.
+            </p>
+            {/* Geometric art */}
+            <div className="w-32 h-32 relative">
+               <div className="absolute top-0 left-0 w-12 h-12 rounded-full bg-[#a855f7] border-4 border-[#0a0a0a] shadow-[0_15px_0_rgba(0,0,0,0.1)]"></div>
+               <div className="absolute top-1/2 right-0 w-12 h-12 rounded-full bg-[#ccff00] border-4 border-[#0a0a0a] shadow-[0_15px_0_rgba(0,0,0,0.1)]"></div>
+               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-[#0a0a0a] border-4 border-[#0a0a0a] shadow-[0_15px_0_rgba(0,0,0,0.1)]"></div>
+            </div>
+          </div>
+
+          {/* Card 3 */}
+          <div className="neo-card p-10 flex flex-col items-center text-center bg-[#f4f4f5]">
+            <h3 className="text-2xl font-black mb-3">DevSecOps</h3>
+            <p className="text-sm font-medium text-gray-600 mb-10">
+              Use a common set of tools across teams and lifecycle stages without dependencies.
+            </p>
+            {/* Geometric art */}
+            <div className="w-32 h-32 flex flex-col items-center justify-center gap-1">
+               <div className="w-24 h-8 bg-gray-300 rounded-[50%] border-4 border-[#0a0a0a]"></div>
+               <div className="w-16 h-6 bg-gray-300 rounded-[50%] border-4 border-[#0a0a0a]"></div>
+               <div className="w-10 h-4 bg-gray-300 rounded-[50%] border-4 border-[#0a0a0a]"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Complex Bento Grid Section ───────────────────────────── */}
+      <section className="py-24 px-6 max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+          <h2 className="text-4xl md:text-5xl font-black max-w-md">
+            View and manage end-to-end processes
           </h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {features.map((feature) => (
-              <div
-                key={feature}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 font-medium text-slate-100 transition hover:border-[#fe0142]/40"
-              >
-                {feature}
+          <p className="text-lg text-gray-600 font-medium max-w-md">
+            Streamline software delivery processes through automation, enhance overall productivity, and fortify the security of your complete software supply chain.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Big Graphic Card */}
+          <div className="neo-card bg-[#a855f7] p-8 min-h-[400px] flex items-center justify-center relative overflow-hidden">
+             <div className="w-full max-w-sm bg-white rounded-xl border-4 border-[#0a0a0a] p-6 shadow-[10px_10px_0px_#0a0a0a] transform rotate-2">
+                <div className="flex gap-2 mb-4">
+                  <div className="w-3 h-3 rounded-full bg-red-500 border-2 border-black"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500 border-2 border-black"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-black"></div>
+                </div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-gray-200 rounded border-2 border-black w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded border-2 border-black w-1/2"></div>
+                  <div className="h-4 bg-[#ccff00] rounded border-2 border-black w-5/6"></div>
+                </div>
+             </div>
+          </div>
+
+          {/* List Card */}
+          <div className="flex flex-col justify-center gap-10 py-4">
+            {[
+              { title: "One tool, no chain", desc: "There are no integrations to manage, no API chokepoints to limit visibility." },
+              { title: "Actionable data", desc: "A single source of insight built on a single system of work means you can speed up time." },
+              { title: "Focus on value", desc: "A single application means single-click drill down into actual work items." },
+            ].map((item, i) => (
+              <div key={i} className="flex gap-6 items-start">
+                <div className="w-10 h-10 rounded-full bg-[#0a0a0a] text-white flex items-center justify-center font-black flex-shrink-0 shadow-[2px_2px_0px_#ccff00]">
+                  {i + 1}
+                </div>
+                <div>
+                  <h4 className="text-xl font-black mb-2">{item.title}</h4>
+                  <p className="text-gray-600 font-medium leading-relaxed">{item.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 py-16 md:px-10">
-        <div className="rounded-3xl border border-[#fe5a33]/35 bg-gradient-to-br from-[#1b0f19] via-[#1a1224] to-[#111827] p-8 text-white shadow-[0_24px_80px_-26px_rgba(254,1,66,0.65)] md:p-12">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Premium Features
-          </h2>
-          <p className="mt-4 max-w-3xl text-slate-200">
-            DevTinder premium membership gives you more reach, stronger profile
-            exposure, and deeper discovery tools to accelerate your growth.
-          </p>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {premiumBenefits.map((benefit) => (
-              <div
-                key={benefit}
-                className="rounded-2xl border border-white/15 bg-white/10 p-5"
-              >
-                <p className="font-semibold">{benefit}</p>
+        <div className="grid md:grid-cols-2 gap-8 mt-8">
+           {/* Security Card */}
+           <div className="neo-card p-10 flex flex-col sm:flex-row items-center justify-between gap-8 bg-[#f4f4f5]">
+              <div>
+                <h3 className="text-3xl font-black mb-6">Security and Governance</h3>
+                <span className="border-2 border-[#0a0a0a] rounded-full px-5 py-2 font-bold bg-white shadow-[2px_2px_0px_#0a0a0a]">Security Testing</span>
               </div>
-            ))}
-          </div>
+              <div className="relative">
+                <div className="w-24 h-32 border-[6px] border-[#0a0a0a] rounded-t-full bg-[#ccff00]"></div>
+                <div className="w-24 h-16 border-[6px] border-[#0a0a0a] bg-[#a855f7] absolute bottom-0 left-4 shadow-[-8px_8px_0px_#000]"></div>
+              </div>
+           </div>
+
+           {/* Code Block Card */}
+           <div className="neo-card-dark p-10 bg-[#0a0a0a] text-white flex flex-col justify-center">
+              <h4 className="text-sm font-bold uppercase tracking-widest text-[#ccff00] mb-4">Accelerate Delivery</h4>
+              <p className="text-gray-400 mb-6 font-medium">Automated tasks improve efficiency and free up developers' time — without sacrificing security.</p>
+              <div className="bg-[#18181b] border-2 border-white/10 rounded-xl p-4 font-mono text-sm text-gray-300 shadow-[4px_4px_0px_#a855f7]">
+                <p><span className="text-[#a855f7]">const</span> <span className="text-white">match</span> = <span className="text-[#ccff00]">useDeveloper</span>();</p>
+                <p className="mt-2 text-gray-500">// Connect and build</p>
+                <p className="text-[#ccff00]">match.connect();</p>
+              </div>
+           </div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 pb-14 md:px-10">
-        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 md:p-12">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            About DevTinder
-          </h2>
-          <p className="mt-5 max-w-4xl text-slate-300">
-            DevTinder is built to help developers form meaningful professional
-            connections, collaborate on ideas, and turn conversations into real
-            products with people who share the same builder mindset.
-          </p>
+      {/* ── Footer ───────────────────────────────────────────── */}
+      <footer className="bg-[#0a0a0a] text-white pt-24 pb-12 px-6 rounded-t-[40px] md:rounded-t-[80px]">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 mb-16 border-b-2 border-white/10 pb-16">
+           <div>
+             <h2 className="text-3xl font-black mb-4 flex items-center gap-3">
+               <div className="w-8 h-8 bg-[#ccff00] border-2 border-white rounded-full flex items-center justify-center">
+                 <div className="w-3 h-3 bg-[#a855f7] rounded-full"></div>
+               </div>
+               DevTinder
+             </h2>
+             <p className="text-gray-400 font-medium max-w-sm">
+               Streamline software delivery processes through automation, enhance overall productivity, and fortify.
+             </p>
+           </div>
+           <div>
+              <div className="flex bg-[#18181b] border-2 border-white/10 rounded-full p-2 max-w-md">
+                 <input type="email" placeholder="Enter your email" className="bg-transparent px-4 w-full outline-none text-white placeholder:text-gray-600 font-medium" />
+                 <button className="bg-white text-[#0a0a0a] font-black p-3 rounded-full hover:bg-[#ccff00] transition-colors border-2 border-transparent hover:border-[#0a0a0a]">
+                   →
+                 </button>
+              </div>
+           </div>
         </div>
-      </section>
-
-      <footer className="border-t border-white/10 bg-[#070b14]">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-8 text-sm text-slate-300 md:flex-row md:items-center md:justify-between md:px-10">
-          <div className="flex flex-wrap items-center gap-5">
-            <a href="#" className="transition hover:text-white">
-              Privacy Policy
-            </a>
-            <a href="#" className="transition hover:text-white">
-              Terms & Conditions
-            </a>
-            <a href="#" className="transition hover:text-white">
-              Refund Policy
-            </a>
-            <a
-              href="mailto:support@devtinder.app"
-              className="transition hover:text-white"
-            >
-              Contact
-            </a>
-          </div>
-          <a
-            href="mailto:support@devtinder.app"
-            className="font-semibold text-white"
-          >
-            support@devtinder.app
-          </a>
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center text-gray-500 font-medium text-sm">
+           <p>© 2026 DevTinder Inc.</p>
+           <div className="flex gap-6 mt-4 md:mt-0">
+             <Link to="/" className="hover:text-white transition">Privacy Policy</Link>
+             <Link to="/" className="hover:text-white transition">Terms of Use</Link>
+             <Link to="/" className="hover:text-white transition">Cookie Preference</Link>
+           </div>
         </div>
       </footer>
     </div>

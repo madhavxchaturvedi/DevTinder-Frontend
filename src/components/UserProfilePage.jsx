@@ -7,14 +7,9 @@ import { motion } from "framer-motion";
 import { FiArrowLeft, FiMessageCircle, FiUser } from "react-icons/fi";
 
 const SKILL_COLORS = [
-  "bg-violet-500/25 text-violet-300 border-violet-500/40",
-  "bg-blue-500/25 text-blue-300 border-blue-500/40",
-  "bg-emerald-500/25 text-emerald-300 border-emerald-500/40",
-  "bg-amber-500/25 text-amber-300 border-amber-500/40",
-  "bg-pink-500/25 text-pink-300 border-pink-500/40",
-  "bg-cyan-500/25 text-cyan-300 border-cyan-500/40",
-  "bg-orange-500/25 text-orange-300 border-orange-500/40",
-  "bg-lime-500/25 text-lime-300 border-lime-500/40",
+  "bg-[#ccff00] text-[#0a0a0a]",
+  "bg-[#a855f7] text-white",
+  "bg-white text-[#0a0a0a]",
 ];
 
 // ── Inline skeleton while loading ──────────────────────────────────
@@ -104,13 +99,13 @@ const UserProfilePage = () => {
   if (error) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
-        <div className="text-center p-10 bg-white/5 border border-white/10 rounded-3xl max-w-sm">
+        <div className="text-center p-10 bg-white border-4 border-[#0a0a0a] shadow-[8px_8px_0px_#0a0a0a] rounded-3xl max-w-sm">
           <p className="text-5xl mb-4">😕</p>
-          <h2 className="text-white font-bold text-xl mb-2">Not found</h2>
-          <p className="text-white/50 text-sm mb-6">{error}</p>
+          <h2 className="text-[#0a0a0a] font-black text-xl mb-2">Not found</h2>
+          <p className="text-gray-600 font-bold text-sm mb-6">{error}</p>
           <button
             onClick={() => navigate(-1)}
-            className="px-6 py-2 rounded-full bg-gradient-to-r from-[#fe5a33] to-[#fe0142] text-white text-sm font-semibold shadow-lg shadow-[#fe0142]/30"
+            className="neo-btn-primary"
           >
             Go back
           </button>
@@ -140,24 +135,17 @@ const UserProfilePage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
-        className="w-full max-w-lg"
+        className="w-full max-w-lg neo-card p-0"
       >
-        {/* ── Hero banner with blurred photo background ───────────── */}
-        <div className="relative h-44 rounded-t-3xl overflow-hidden">
-          {/* Blurred background photo */}
-          <img
-            src={photoUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-60"
-          />
-          {/* Dark gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-[#0d0d0d]" />
-          {/* Subtle red-orange top glow */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#fe5a33]/20 via-transparent to-[#fe0142]/10" />
+        {/* ── Hero banner with solid background ───────────── */}
+        <div className="relative h-44 overflow-hidden bg-gradient-to-tr from-[#ccff00] to-[#a855f7] border-b-4 border-[#0a0a0a]">
+          {/* Abstract background shape */}
+          <div className="absolute top-4 left-4 w-20 h-20 border-[6px] border-[#0a0a0a] rounded-full opacity-30" />
+          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white border-[6px] border-[#0a0a0a] rounded-xl transform rotate-12 opacity-30" />
         </div>
 
         {/* ── Card body ────────────────────────────────────────────── */}
-        <div className="bg-[#0d0d0d]/95 border border-white/10 border-t-0 rounded-b-3xl shadow-2xl shadow-black/60 backdrop-blur-xl pb-8">
+        <div className="bg-white pb-8">
           {/* Avatar — overlaps the banner */}
           <div className="flex justify-center -mt-14 mb-5">
             <div className="relative">
@@ -168,30 +156,28 @@ const UserProfilePage = () => {
                 src={photoUrl}
                 alt={profile.firstName}
                 onLoad={() => setImgLoaded(true)}
-                className="w-28 h-28 rounded-full object-cover ring-4 ring-[#0d0d0d] shadow-2xl shadow-black/80"
+                className="w-28 h-28 rounded-full object-cover border-4 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] bg-white"
               />
               {/* Loading placeholder until img loads */}
               {!imgLoaded && (
-                <div className="absolute inset-0 w-28 h-28 rounded-full bg-white/10 animate-pulse ring-4 ring-[#0d0d0d]" />
+                <div className="absolute inset-0 w-28 h-28 rounded-full bg-gray-200 animate-pulse border-4 border-[#0a0a0a]" />
               )}
-              {/* Accent ring */}
-              <div className="absolute inset-0 rounded-full ring-2 ring-[#fe0142]/30 ring-offset-2 ring-offset-[#0d0d0d]" />
             </div>
           </div>
 
           {/* Name + meta tags */}
           <div className="flex flex-col items-center gap-2 px-6 mb-5">
-            <h1 className="text-2xl font-extrabold text-white tracking-tight text-center">
+            <h1 className="text-3xl font-black text-[#0a0a0a] tracking-tight text-center">
               {profile.firstName} {profile.lastName}
             </h1>
             <div className="flex flex-wrap items-center justify-center gap-2">
               {profile.age && (
-                <span className="text-xs font-semibold text-white/50 bg-white/8 border border-white/10 px-3 py-1 rounded-full">
+                <span className="text-xs font-bold text-[#0a0a0a] bg-white border-2 border-[#0a0a0a] px-3 py-1 rounded-full shadow-[2px_2px_0px_#0a0a0a]">
                   AGE {profile.age}
                 </span>
               )}
               {profile.gender && (
-                <span className="text-xs font-semibold text-white/50 bg-white/8 border border-white/10 px-3 py-1 rounded-full capitalize">
+                <span className="text-xs font-bold text-[#0a0a0a] bg-white border-2 border-[#0a0a0a] px-3 py-1 rounded-full capitalize shadow-[2px_2px_0px_#0a0a0a]">
                   {profile.gender}
                 </span>
               )}
@@ -199,12 +185,12 @@ const UserProfilePage = () => {
           </div>
 
           {/* Divider */}
-          <div className="mx-6 mb-5 h-px bg-white/8" />
+          <div className="mx-6 mb-5 h-[2px] bg-[#0a0a0a]" />
 
           {/* Skills */}
           {profile.skills && profile.skills.length > 0 && (
             <div className="px-6 mb-6">
-              <p className="text-[10px] font-bold text-white/25 uppercase tracking-[0.15em] mb-3 text-center">
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 text-center">
                 Skills
               </p>
               <div className="flex flex-wrap justify-center gap-2">
@@ -214,7 +200,7 @@ const UserProfilePage = () => {
                     initial={{ opacity: 0, scale: 0.85 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.05 * i, duration: 0.25 }}
-                    className={`text-xs px-3 py-1.5 rounded-full border font-semibold tracking-wide ${
+                    className={`text-xs px-4 py-1.5 rounded-full border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] font-bold tracking-wide ${
                       SKILL_COLORS[i % SKILL_COLORS.length]
                     }`}
                   >
@@ -227,11 +213,11 @@ const UserProfilePage = () => {
 
           {/* About */}
           {profile.about && (
-            <div className="mx-6 mb-7 p-4 rounded-2xl bg-white/[0.04] border border-white/8">
-              <p className="text-[10px] font-bold text-white/25 uppercase tracking-[0.15em] mb-2">
+            <div className="mx-6 mb-8 p-6 bg-[#f4f4f5] border-2 border-[#0a0a0a] rounded-xl shadow-[4px_4px_0px_#0a0a0a]">
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">
                 About
               </p>
-              <p className="text-white/75 text-sm leading-relaxed">
+              <p className="text-[#0a0a0a] font-medium text-sm leading-relaxed">
                 {profile.about}
               </p>
             </div>
@@ -242,15 +228,15 @@ const UserProfilePage = () => {
             {!isOwnProfile && connectionStatus === "accepted" && (
               <Link
                 to={`/chat/${userId}`}
-                className="flex items-center gap-2.5 px-8 py-3 rounded-2xl bg-gradient-to-r from-[#fe5a33] via-[#fe0142] to-[#fe6d27] text-white font-bold shadow-xl shadow-[#fe0142]/40 hover:scale-[1.03] hover:shadow-[#fe0142]/60 active:scale-[0.97] transition-all text-sm"
+                className="flex items-center gap-2.5 px-8 py-3 bg-[#ccff00] text-[#0a0a0a] border-2 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#0a0a0a] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all rounded-full font-black uppercase tracking-wider text-sm"
               >
-                <FiMessageCircle size={17} />
+                <FiMessageCircle size={18} strokeWidth={3} />
                 Message
               </Link>
             )}
 
             {!isOwnProfile && connectionStatus === "pending" && (
-              <div className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-sm font-semibold">
+              <div className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#0a0a0a] text-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] rounded-full font-bold text-sm">
                 ⏳ Request Pending
               </div>
             )}
@@ -258,7 +244,7 @@ const UserProfilePage = () => {
             {!isOwnProfile &&
               (connectionStatus === "none" ||
                 connectionStatus === "ignored") && (
-                <div className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white/35 text-sm font-medium">
+                <div className="px-6 py-3 bg-gray-200 border-2 border-[#0a0a0a] text-gray-500 rounded-full font-bold text-sm">
                   Not connected
                 </div>
               )}
@@ -266,9 +252,9 @@ const UserProfilePage = () => {
             {isOwnProfile && (
               <Link
                 to="/profile"
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 text-sm font-medium transition-all"
+                className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#0a0a0a] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all rounded-full text-[#0a0a0a] text-sm font-black uppercase tracking-wider"
               >
-                <FiUser size={15} />
+                <FiUser size={18} strokeWidth={3} />
                 Edit my profile
               </Link>
             )}
