@@ -96,9 +96,9 @@ const UserCard = ({ user, isFront, onMatch }) => {
   if (!user) return null;
 
   return (
-    <div className="absolute top-0 left-0 w-full flex flex-col items-center">
+    <div className={`${isFront !== undefined ? "absolute top-0 left-0" : "relative"} w-full flex flex-col items-center`}>
       <motion.div
-        className="relative w-[340px] h-[520px] rounded-[32px] overflow-hidden cursor-grab active:cursor-grabbing border-4 border-[#0a0a0a] bg-white"
+        className="relative w-[340px] h-[520px] rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing border border-white/10 bg-[#121212] shadow-xl"
         drag={isFront && !hasExited ? "x" : false}
         // Remove dragConstraints so it doesn't fight the exit animation
         dragConstraints={false}
@@ -124,8 +124,8 @@ const UserCard = ({ user, isFront, onMatch }) => {
           style={{ opacity: likeOpacity }}
           className="absolute top-10 left-8 z-20 pointer-events-none"
         >
-          <div className="border-[6px] border-[#ccff00] rounded-xl px-4 py-1.5 transform -rotate-12 bg-white shadow-[4px_4px_0px_#0a0a0a]">
-            <span className="text-[#0a0a0a] text-4xl font-black tracking-widest uppercase">
+          <div className="border-2 border-green-500 rounded-lg px-4 py-1 bg-green-500/20 backdrop-blur-sm transform -rotate-12">
+            <span className="text-green-500 text-2xl font-bold tracking-wider uppercase">
               Like
             </span>
           </div>
@@ -135,41 +135,54 @@ const UserCard = ({ user, isFront, onMatch }) => {
           style={{ opacity: nopeOpacity }}
           className="absolute top-10 right-8 z-20 pointer-events-none"
         >
-          <div className="border-[6px] border-red-500 rounded-xl px-4 py-1.5 transform rotate-12 bg-white shadow-[4px_4px_0px_#0a0a0a]">
-            <span className="text-[#0a0a0a] text-4xl font-black tracking-widest uppercase">
+          <div className="border-2 border-red-500 rounded-lg px-4 py-1 bg-red-500/20 backdrop-blur-sm transform rotate-12">
+            <span className="text-red-500 text-2xl font-bold tracking-wider uppercase">
               Nope
             </span>
           </div>
         </motion.div>
 
-        {/* Bottom Gradient & User Info */}
-        <div className="absolute bottom-0 w-full h-[50%] bg-gradient-to-t from-white via-white/90 to-transparent p-6 pointer-events-none flex flex-col justify-end pb-8">
-          <h2 className="text-[#0a0a0a] text-3xl font-black drop-shadow-sm">
-            {user.firstName}{user.age && `, ${user.age}`}
-          </h2>
-          <p className="text-gray-700 font-bold text-sm mt-1.5 leading-relaxed line-clamp-2">
-            {user.about}
-          </p>
-          {user.skills && user.skills.length > 0 && (
-            <div className="mt-4">
-              <div className="flex flex-wrap gap-2 mt-1">
+          {/* Content gradient overlay */}
+          <div className="absolute bottom-0 w-full bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/90 to-transparent pt-32 pb-6 px-6">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              {user.firstName} {user.lastName}
+            </h2>
+            {user.age && (
+              <p className="text-xs text-[#a3a3a3] font-medium mt-1 uppercase tracking-wider">
+                {user.age}
+              </p>
+            )}
+
+            {/* Skills tags */}
+            {user.skills && user.skills.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-4">
                 {user.skills.slice(0, 4).map((skill, index) => (
                   <span
                     key={index}
-                    className="bg-white border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] text-[#0a0a0a] text-xs px-3 py-1.5 rounded-full font-black uppercase tracking-wider"
+                    className="text-[10px] font-semibold text-[#e5e5e5] bg-white/10 border border-white/5 px-2.5 py-1 rounded-md"
                   >
                     {skill}
                   </span>
                 ))}
+                {user.skills.length > 4 && (
+                  <span className="text-[10px] font-semibold text-[#a3a3a3] bg-transparent border border-white/5 px-2.5 py-1 rounded-md">
+                    +{user.skills.length - 4}
+                  </span>
+                )}
               </div>
-            </div>
-          )}
-        </div>
+            )}
+
+            {user.about && (
+              <p className="text-xs text-[#a3a3a3] mt-4 line-clamp-2 leading-relaxed">
+                {user.about}
+              </p>
+            )}
+          </div>
       </motion.div>
 
       {/* Action Buttons (Only visible on front card) */}
       <motion.div 
-        className="flex justify-center gap-10 mt-8 pointer-events-auto relative z-20"
+        className="flex justify-center gap-6 mt-8 pointer-events-auto relative z-20"
         animate={{ opacity: isFront && !hasExited ? 1 : 0, scale: isFront && !hasExited ? 1 : 0.8 }}
         transition={{ duration: 0.2 }}
         style={{ pointerEvents: isFront && !hasExited ? "auto" : "none" }}

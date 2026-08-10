@@ -48,25 +48,27 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[85vh] w-full px-4">
-      
+    <div className="flex justify-center items-center min-h-[85vh] w-full px-4 relative">
+      {/* Subtle Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#ccff00]/5 rounded-full blur-[150px] pointer-events-none" />
+
       {/* Container */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative w-full max-w-5xl h-[650px] rounded-[40px] overflow-hidden bg-white flex flex-col md:flex-row shadow-[12px_12px_0px_#0a0a0a] border-4 border-[#0a0a0a]"
+        className="relative w-full max-w-5xl h-[650px] rounded-[32px] overflow-hidden bg-[#121212] flex flex-col md:flex-row shadow-2xl border border-white/5 backdrop-blur-xl"
       >
         
         {/* Left Side: Branding & Visuals */}
-        <div className="hidden md:flex flex-col justify-center items-center w-1/2 relative p-12 bg-[#ccff00] border-r-4 border-[#0a0a0a] overflow-hidden">
+        <div className="hidden md:flex flex-col justify-center items-center w-1/2 relative p-12 bg-[#0a0a0a] border-r border-white/5 overflow-hidden">
           
-          <div className="relative z-10 text-center">
-            <h1 className="text-6xl font-black tracking-tighter mb-4 text-[#0a0a0a]">
+          <div className="relative z-10 text-center mt-10">
+            <h1 className="text-5xl font-bold tracking-tight mb-6 text-white">
               &lt;DevTinder /&gt;
             </h1>
-            <p className="text-[#0a0a0a] font-bold text-lg leading-relaxed max-w-sm mx-auto">
-              Swipe right on great code. Find your next pair-programming partner or co-founder.
+            <p className="text-[#a3a3a3] font-medium text-lg leading-relaxed max-w-xs mx-auto">
+              Connect with elite builders. Start building the future together.
             </p>
           </div>
           
@@ -74,37 +76,40 @@ const LoginForm = () => {
           <motion.div 
             animate={{ y: [-10, 10, -10], rotate: [0, 5, 0] }} 
             transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-            className="absolute top-[20%] right-[15%] px-4 py-2 bg-white border-2 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] rounded-lg flex items-center justify-center text-xs text-[#0a0a0a] font-bold font-mono"
+            className="absolute top-[20%] right-[10%] px-5 py-3 bg-[#121212] border border-white/10 shadow-xl rounded-2xl flex items-center justify-center text-xs text-[#ccff00] font-bold font-mono backdrop-blur-sm"
           >
             git commit -m "Match"
           </motion.div>
           <motion.div 
             animate={{ y: [10, -10, 10], rotate: [0, -5, 0] }} 
             transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 }}
-            className="absolute bottom-[25%] left-[10%] px-4 py-3 bg-white border-2 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] rounded-lg flex flex-col justify-center text-[10px] text-[#0a0a0a] font-bold font-mono"
+            className="absolute bottom-[25%] left-[5%] px-5 py-4 bg-[#121212] border border-white/10 shadow-xl rounded-2xl flex flex-col justify-center text-[10px] text-white font-bold font-mono backdrop-blur-sm"
           >
-            <span>if (mutual) {`{`}</span>
-            <span className="pl-2">startBuild();</span>
+            <span><span className="text-[#a855f7]">if</span> (mutual) {`{`}</span>
+            <span className="pl-4 text-blue-400">startBuild<span className="text-white">();</span></span>
             <span>{`}`}</span>
           </motion.div>
+          
+          {/* Decorative glow inside the left panel */}
+          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-[#a855f7]/10 to-transparent pointer-events-none" />
         </div>
 
         {/* Right Side: Form */}
-        <div className="w-full md:w-1/2 flex flex-col justify-center px-8 sm:px-16 bg-white relative z-10">
+        <div className="w-full md:w-1/2 flex flex-col justify-center px-8 sm:px-14 relative z-10 bg-[#121212]">
           <div className="w-full max-w-sm mx-auto">
             
             <div className="mb-10 text-center md:text-left">
-              <h2 className="text-4xl font-black text-[#0a0a0a] tracking-tight mb-2">
+              <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
                 {isLogin ? "Welcome back" : "Create account"}
               </h2>
-              <p className="text-gray-500 font-bold text-sm">
+              <p className="text-[#a3a3a3] font-medium text-sm">
                 {isLogin
-                  ? "Enter your details to access your matches."
+                  ? "Enter your credentials to access your matches."
                   : "Start your journey to finding the perfect dev."}
               </p>
             </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-5" onSubmit={handleSubmit}>
               {!isLogin && (
                 <div className="flex gap-4">
                   <div className="relative w-1/2">
@@ -114,7 +119,7 @@ const LoginForm = () => {
                       placeholder="First Name"
                       onChange={handleChange}
                       required
-                      className="w-full bg-[#f4f4f5] border-2 border-[#0a0a0a] rounded-xl px-4 py-3.5 text-[#0a0a0a] font-bold placeholder-gray-400 focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_#a855f7] transition-all"
+                      className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3.5 text-[#e5e5e5] font-semibold placeholder-gray-500 focus:outline-none focus:border-[#ccff00]/50 focus:ring-1 focus:ring-[#ccff00]/50 transition-all"
                     />
                   </div>
                   <div className="relative w-1/2">
@@ -123,7 +128,7 @@ const LoginForm = () => {
                       name="lastName"
                       placeholder="Last Name"
                       onChange={handleChange}
-                      className="w-full bg-[#f4f4f5] border-2 border-[#0a0a0a] rounded-xl px-4 py-3.5 text-[#0a0a0a] font-bold placeholder-gray-400 focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_#a855f7] transition-all"
+                      className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3.5 text-[#e5e5e5] font-semibold placeholder-gray-500 focus:outline-none focus:border-[#ccff00]/50 focus:ring-1 focus:ring-[#ccff00]/50 transition-all"
                     />
                   </div>
                 </div>
@@ -136,7 +141,7 @@ const LoginForm = () => {
                   placeholder="Email address"
                   onChange={handleChange}
                   required
-                  className="w-full bg-[#f4f4f5] border-2 border-[#0a0a0a] rounded-xl px-4 py-3.5 text-[#0a0a0a] font-bold placeholder-gray-400 focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_#a855f7] transition-all"
+                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3.5 text-[#e5e5e5] font-semibold placeholder-gray-500 focus:outline-none focus:border-[#a855f7]/50 focus:ring-1 focus:ring-[#a855f7]/50 transition-all"
                 />
               </div>
               
@@ -147,7 +152,7 @@ const LoginForm = () => {
                   placeholder="Password"
                   onChange={handleChange}
                   required
-                  className="w-full bg-[#f4f4f5] border-2 border-[#0a0a0a] rounded-xl px-4 py-3.5 text-[#0a0a0a] font-bold placeholder-gray-400 focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_#a855f7] transition-all"
+                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3.5 text-[#e5e5e5] font-semibold placeholder-gray-500 focus:outline-none focus:border-[#a855f7]/50 focus:ring-1 focus:ring-[#a855f7]/50 transition-all"
                 />
               </div>
 
@@ -155,7 +160,7 @@ const LoginForm = () => {
                 <motion.p 
                   initial={{ opacity: 0, y: -5 }} 
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-red-400 text-sm font-medium text-center bg-red-400/10 py-2 rounded-lg border border-red-400/20"
+                  className="text-red-400 text-sm font-medium text-center bg-red-400/10 py-2.5 rounded-xl border border-red-400/20"
                 >
                   {error}
                 </motion.p>
@@ -163,14 +168,14 @@ const LoginForm = () => {
 
               <button
                 type="submit"
-                className="w-full neo-btn-primary py-4 mt-6"
+                className="w-full bg-[#ccff00] text-[#0a0a0a] font-bold text-lg py-3.5 rounded-xl mt-6 hover:bg-[#bbf000] hover:shadow-[0_0_20px_rgba(204,255,0,0.3)] transition-all transform active:scale-[0.98]"
               >
                 {isLogin ? "Log In" : "Sign Up"}
               </button>
             </form>
 
             <div className="mt-8 text-center">
-              <p className="text-gray-500 font-bold text-sm">
+              <p className="text-[#a3a3a3] font-medium text-sm">
                 {isLogin ? "Don't have an account?" : "Already have an account?"}
                 <button
                   type="button"
@@ -178,7 +183,7 @@ const LoginForm = () => {
                     setIsLogin(!isLogin);
                     setError("");
                   }}
-                  className="ml-2 text-[#a855f7] hover:text-[#0a0a0a] font-black transition-colors focus:outline-none"
+                  className="ml-2 text-[#ccff00] hover:text-[#bbf000] font-bold transition-colors focus:outline-none"
                 >
                   {isLogin ? "Sign Up" : "Log In"}
                 </button>

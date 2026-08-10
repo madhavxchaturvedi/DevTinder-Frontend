@@ -10,6 +10,8 @@ import Premium from "./components/Premium";
 import Chat from "./components/Chat";
 import UserProfilePage from "./components/UserProfilePage";
 
+import Discover from "./components/Discover";
+
 const App = () => {
   return (
     <BrowserRouter basename="/">
@@ -18,10 +20,12 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route element={<Body />}>
           <Route path="/feed" element={<Feed />} />
+          <Route path="/discover" element={<Discover />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/connections" element={<ConnectionsPage />} />
           <Route path="/requests" element={<RequestPage />} />
           <Route path="/premium" element={<Premium />} />
+          <Route path="/chat" element={<Chat />} />
           <Route path="/chat/:targetId" element={<Chat />} />
           <Route path="/user/:userId" element={<UserProfilePage />} />
         </Route>

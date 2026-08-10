@@ -6,6 +6,7 @@ import { BASE_URL } from "../utils/constants";
 import { removeUser } from "../redux/userSlice";
 import { markAllRead, clearNotifications } from "../redux/notificationSlice";
 import { motion, AnimatePresence } from "framer-motion";
+import { FiUserPlus, FiCheckCircle } from "react-icons/fi";
 
 // How long ago a date was (e.g. "2 min ago", "3 hr ago")
 const timeAgo = (dateString) => {
@@ -21,7 +22,7 @@ const timeAgo = (dateString) => {
 const notificationMessage = (n) => {
   const name = n.fromUserId?.firstName || "Someone";
   if (n.type === "connection_request") return `${name} sent you a connection request`;
-  if (n.type === "request_accepted") return `${name} accepted your connection request 🎉`;
+  if (n.type === "request_accepted") return `${name} accepted your connection request`;
   if (n.type === "request_rejected") return `${name} declined your request`;
   return "You have a new notification";
 };
@@ -83,11 +84,11 @@ const Header = () => {
   };
 
   return (
-    <div className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl bg-white border-2 border-[#0a0a0a] shadow-[6px_6px_0px_#0a0a0a] rounded-full px-6 py-3 flex justify-between items-center z-50 transition-all duration-300">
-      <div className="flex-1">
+    <header className="fixed top-0 left-0 w-full bg-white border-b-4 border-[#0a0a0a] px-8 py-4 flex justify-between items-center z-[100] transition-all duration-300">
+      <div className="flex-1 flex items-center gap-2">
         <Link
           to={user ? "/feed" : "/"}
-          className="text-2xl font-black tracking-tight text-[#0a0a0a] inline-block hover:scale-[1.02] transition-transform"
+          className="text-3xl font-black tracking-tighter text-[#0a0a0a] inline-block hover:text-[#a855f7] transition-colors"
         >
           DevTinder
         </Link>
@@ -181,7 +182,7 @@ const Header = () => {
                             />
                             {/* Type icon */}
                             <span className="absolute -bottom-1 -right-1 text-xs">
-                              {n.type === "connection_request" ? "👋" : "🎉"}
+                              {n.type === "connection_request" ? <FiUserPlus className="text-blue-500" /> : <FiCheckCircle className="text-green-500" />}
                             </span>
                           </div>
 
@@ -277,7 +278,7 @@ const Header = () => {
           </div>
         </div>
       )}
-    </div>
+    </header>
   );
 };
 

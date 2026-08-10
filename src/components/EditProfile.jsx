@@ -43,7 +43,7 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
 
       setUploadState("success");
       onUploadSuccess(res.data.photoUrl);
-      toast.success("Photo uploaded!");
+      toast.success("Photo uploaded!", { style: { background: '#121212', color: '#e5e5e5' } });
 
       // Reset success badge after 2.5s
       setTimeout(() => setUploadState("idle"), 2500);
@@ -67,8 +67,8 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
     <div className="flex flex-col items-center gap-3 mb-6">
       {/* Clickable photo circle */}
       <div
-        className={`relative w-28 h-28 rounded-full cursor-pointer group transition-all duration-200 ${
-          dragOver ? "scale-105 ring-4 ring-emerald-500/60" : ""
+        className={`relative w-28 h-28 rounded-full cursor-pointer group transition-all duration-300 ${
+          dragOver ? "scale-105 ring-4 ring-[#a855f7]/60" : ""
         }`}
         onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -76,16 +76,18 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
         onDrop={onDrop}
       >
         {/* Profile image */}
-        <img
-          src={preview || "https://geographyandyou.com/images/user-profile.png"}
-          alt="Profile"
-          className="w-28 h-28 rounded-full object-cover border-4 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] bg-white group-hover:border-[#ccff00] transition-all"
-        />
+        <div className="w-full h-full rounded-full p-[3px] bg-gradient-to-tr from-[#ccff00] to-[#a855f7] shadow-lg group-hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all">
+          <img
+            src={preview || "https://geographyandyou.com/images/user-profile.png"}
+            alt="Profile"
+            className="w-full h-full rounded-full object-cover border-4 border-[#121212] bg-[#0a0a0a]"
+          />
+        </div>
 
         {/* Hover overlay */}
-        <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+        <div className="absolute inset-[3px] rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 backdrop-blur-sm">
           <FaCamera className="text-white text-xl" />
-          <span className="text-white text-[10px] font-medium">Change</span>
+          <span className="text-white text-[10px] font-semibold">Change</span>
         </div>
 
         {/* Upload state badge */}
@@ -95,9 +97,9 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#0e0e0e] rounded-full flex items-center justify-center border-2 border-emerald-500/40"
+              className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#121212] rounded-full flex items-center justify-center border-2 border-[#a855f7]/40"
             >
-              <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-[#a855f7] border-t-transparent rounded-full animate-spin" />
             </motion.div>
           )}
           {uploadState === "success" && (
@@ -105,9 +107,9 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -bottom-1 -right-1 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-[#0e0e0e]"
+              className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#ccff00] rounded-full flex items-center justify-center border-2 border-[#121212]"
             >
-              <FiCheck className="text-white" size={14} />
+              <FiCheck className="text-[#0a0a0a]" size={14} />
             </motion.div>
           )}
           {uploadState === "error" && (
@@ -115,7 +117,7 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -bottom-1 -right-1 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center border-2 border-[#0e0e0e]"
+              className="absolute -bottom-1 -right-1 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center border-2 border-[#121212]"
             >
               <FiX className="text-white" size={14} />
             </motion.div>
@@ -129,12 +131,12 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploadState === "uploading"}
-          className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-[#0a0a0a] font-bold transition disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-[#a3a3a3] hover:text-white font-semibold transition disabled:opacity-50"
         >
-          <FiUploadCloud size={13} />
+          <FiUploadCloud size={14} />
           {uploadState === "uploading" ? "Uploading..." : "Upload new photo"}
         </button>
-        <p className="text-[10px] text-gray-500">JPG, PNG, GIF up to 5 MB · Auto-cropped to square</p>
+        <p className="text-[10px] text-gray-500">JPG, PNG, GIF up to 5 MB</p>
       </div>
 
       {/* Hidden file input */}
@@ -202,30 +204,30 @@ const EditProfile = ({ user }) => {
         withCredentials: true,
       });
       dispatch(addUser(res?.data?.data));
-      toast.success("Profile updated successfully!");
+      toast.success("Profile updated successfully!", { style: { background: '#121212', color: '#e5e5e5' } });
     } catch (err) {
       toast.error(err?.response?.data?.message || err.message);
     }
   };
 
   return (
-    <div className="w-full px-4 flex flex-col md:flex-row items-start justify-center gap-10 py-6">
+    <div className="w-full px-4 flex flex-col md:flex-row items-start justify-center gap-10 py-6 max-w-7xl mx-auto">
       {/* ── Left: Form ───────────────────────────────────────── */}
       <div className="w-full md:w-2/3 flex justify-center">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="bg-white border-4 border-[#0a0a0a] shadow-[8px_8px_0px_#0a0a0a] rounded-[32px] px-8 py-8 w-full max-w-2xl"
+          className="bg-[#121212] border border-white/10 shadow-2xl rounded-3xl px-8 py-10 w-full max-w-2xl"
         >
           {/* Header */}
           <motion.div
             initial={{ y: -16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.5 }}
-            className="text-center mb-8"
+            className="text-center mb-10"
           >
-            <h2 className="text-4xl font-black text-[#0a0a0a] flex justify-center items-center gap-3 tracking-tight">
+            <h2 className="text-3xl font-bold text-white flex justify-center items-center gap-3 tracking-tight">
               <motion.span
                 animate={{ rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 3 }}
@@ -234,7 +236,7 @@ const EditProfile = ({ user }) => {
               </motion.span>
               Edit Profile
             </h2>
-            <p className="text-sm font-bold text-gray-500 mt-2">Keep your profile fresh!</p>
+            <p className="text-sm font-medium text-[#a3a3a3] mt-2">Manage your developer identity</p>
           </motion.div>
 
           {/* ── Photo Upload ──────────────────────────────────── */}
@@ -243,7 +245,7 @@ const EditProfile = ({ user }) => {
             onUploadSuccess={handlePhotoUploaded}
           />
 
-          <div className="border-t-2 border-[#0a0a0a] mb-8 w-1/2 mx-auto" />
+          <div className="border-t border-white/10 mb-8 w-2/3 mx-auto" />
 
           {/* ── Form Fields ───────────────────────────────────── */}
           <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -255,7 +257,7 @@ const EditProfile = ({ user }) => {
                 transition={{ delay: 0.2 + i * 0.07, duration: 0.35 }}
                 className={field.type === "textarea" ? "md:col-span-2" : ""}
               >
-                <label className="block text-[10px] font-black text-gray-600 mb-2 uppercase tracking-widest">
+                <label className="block text-xs font-bold text-[#a3a3a3] mb-2 uppercase tracking-wider">
                   {field.label}
                 </label>
 
@@ -264,7 +266,7 @@ const EditProfile = ({ user }) => {
                     name={field.name}
                     value={formData[field.name] || ""}
                     onChange={handleChange}
-                    className="w-full bg-[#f4f4f5] text-[#0a0a0a] font-bold px-4 py-3 rounded-xl border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] focus:shadow-[4px_4px_0px_#ccff00] focus:bg-white outline-none transition-all text-sm appearance-none"
+                    className="w-full bg-[#0a0a0a] text-[#e5e5e5] font-semibold px-4 py-3.5 rounded-xl border border-white/10 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] outline-none transition-all text-sm appearance-none"
                   >
                     <option value="">Select Gender</option>
                     {field.options.map((opt) => (
@@ -280,7 +282,7 @@ const EditProfile = ({ user }) => {
                     onChange={handleChange}
                     rows={4}
                     placeholder={field.placeholder}
-                    className="w-full bg-[#f4f4f5] text-[#0a0a0a] font-bold px-4 py-3 rounded-xl border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] focus:shadow-[4px_4px_0px_#ccff00] focus:bg-white outline-none transition-all placeholder:text-gray-400 resize-none text-sm"
+                    className="w-full bg-[#0a0a0a] text-[#e5e5e5] font-semibold px-4 py-3.5 rounded-xl border border-white/10 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] outline-none transition-all placeholder:text-gray-600 resize-none text-sm"
                   />
                 ) : (
                   <input
@@ -293,7 +295,7 @@ const EditProfile = ({ user }) => {
                     }
                     onChange={handleChange}
                     placeholder={field.placeholder}
-                    className="w-full bg-[#f4f4f5] text-[#0a0a0a] font-bold px-4 py-3 rounded-xl border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] focus:shadow-[4px_4px_0px_#ccff00] focus:bg-white outline-none transition-all placeholder:text-gray-400 text-sm"
+                    className="w-full bg-[#0a0a0a] text-[#e5e5e5] font-semibold px-4 py-3.5 rounded-xl border border-white/10 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] outline-none transition-all placeholder:text-gray-600 text-sm"
                   />
                 )}
               </motion.div>
@@ -301,15 +303,15 @@ const EditProfile = ({ user }) => {
 
             {/* Save button */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="md:col-span-2 mt-2"
+              className="md:col-span-2 mt-4"
             >
               <button
                 type="submit"
                 onClick={saveProfile}
-                className="w-full neo-btn-primary py-4 mt-4"
+                className="w-full bg-[#ccff00] text-[#0a0a0a] font-bold py-4 rounded-xl hover:bg-[#bbf000] transition-colors shadow-lg shadow-[#ccff00]/10"
               >
                 Save Changes
               </button>
@@ -319,8 +321,8 @@ const EditProfile = ({ user }) => {
       </div>
 
       {/* ── Right: Live Preview ───────────────────────────────── */}
-      <div className="w-full md:w-1/3 flex flex-col items-center gap-3 pt-2 sticky top-4">
-        <p className="text-xs text-gray-500 uppercase tracking-widest font-medium">
+      <div className="w-full md:w-1/3 flex flex-col items-center gap-4 pt-2 sticky top-4">
+        <p className="text-xs text-[#a3a3a3] uppercase tracking-widest font-bold">
           Live Preview
         </p>
         <UserCard user={formData} />

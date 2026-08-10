@@ -1,4 +1,5 @@
 import { Outlet, useNavigate } from "react-router-dom";
+import LeftSidebar from "./LeftSidebar";
 import Header from "./Header";
 import { useDispatch, useSelector } from "react-redux";
 import { BASE_URL } from "../utils/constants";
@@ -12,7 +13,7 @@ import { addNotification, setNotifications } from "../redux/notificationSlice";
 const Body = () => {
   const userData = useSelector((store) => store.user);
   const dispatch = useDispatch();
-  const Navigate = useNavigate();
+  const navigate = useNavigate();
 
   const fetchUser = async () => {
     if (userData) return;
@@ -23,13 +24,17 @@ const Body = () => {
       dispatch(addUser(res.data));
     } catch (err) {
       if (err?.response?.status === 401) {
-        Navigate("/login");
+        if (
+          window.location.pathname !== "/login" &&
+          window.location.pathname !== "/"
+        ) {
+          navigate("/login");
+        }
       }
       console.log(err);
     }
   };
 
-  // Fetch existing notifications from DB on mount
   const fetchNotifications = async () => {
     try {
       const res = await axios.get(BASE_URL + "/notifications", {
@@ -37,7 +42,6 @@ const Body = () => {
       });
       dispatch(setNotifications(res.data));
     } catch (err) {
-      // Silent — not critical
       console.log("Could not fetch notifications:", err?.message);
     }
   };
@@ -46,13 +50,10 @@ const Body = () => {
     fetchUser();
   }, []);
 
-  // Set up socket connection and listen for real-time notifications
-  // Only after the user is known to be logged in
   useEffect(() => {
     if (!userData) return;
 
     fetchNotifications();
-
     const socket = getSocket();
 
     const handleNewNotification = (notification) => {
@@ -61,21 +62,41 @@ const Body = () => {
 
     socket.on("newNotification", handleNewNotification);
 
+    if (window.location.pathname === "/login" || window.location.pathname === "/") {
+      navigate("/feed");
+    }
+
     return () => {
       socket.off("newNotification", handleNewNotification);
     };
   }, [userData]);
 
   return (
-    <div className="min-h-screen flex flex-col relative text-[#0a0a0a] selection:bg-[#ccff00]/50 bg-[#f4f4f5]">
+    <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] selection:bg-indigo-500/30 flex flex-col lg:flex-row">
+      <Toaster 
+        toastOptions={{
+          style: {
+            background: '#121212',
+            color: '#e5e5e5',
+            border: '1px solid rgba(255,255,255,0.1)',
+          }
+        }} 
+      />
+      
+      {/* ── Unauthenticated State: Show Top Header ── */}
+      {!userData && (
+        <div className="w-full absolute top-0 z-50">
+          <Header />
+        </div>
+      )}
 
-      <Toaster />
-      <Header />
-      <div className="flex-1 pt-28 pb-10 w-full flex flex-col items-center">
+      {/* ── Authenticated State: Global 3-Column Layout ── */}
+      {userData && <LeftSidebar />}
+
+      {/* ── Main Content Area ── */}
+      <div className={`flex-1 flex flex-col items-center overflow-x-hidden min-h-screen ${!userData ? 'pt-24' : ''}`}>
         <Outlet />
       </div>
-
-      {/* <Footer /> */}
     </div>
   );
 };
