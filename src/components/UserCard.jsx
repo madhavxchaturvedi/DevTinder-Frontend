@@ -1,92 +1,149 @@
 import axios from "axios";
-import { motion, useMotionValue, useTransform } from "framer-motion";
-import React, { useState } from "react";
+import { motion, useMotionValue, useTransform, useAnimation } from "framer-motion";
+import React, { useState, useEffect } from "react";
 import { BASE_URL } from "../utils/constants";
 import { useDispatch } from "react-redux";
 import { removeFeed } from "../redux/feedSlice";
 
-const UserCard = ({ user, isFront }) => {
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-20, 20]);
+const UserCard = ({ user, isFront, onMatch }) => {
   const dispatch = useDispatch();
-  const [exitX, setExitX] = useState(0);
+  const controls = useAnimation();
+  const [hasExited, setHasExited] = useState(false);
+
+  // Motion Values for Physics
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-250, 250], [-25, 25]);
+  
+  // Opacity for LIKE and NOPE stamps based on drag distance
+  const likeOpacity = useTransform(x, [10, 100], [0, 1]);
+  const nopeOpacity = useTransform(x, [-10, -100], [0, 1]);
+
+  // Glow shadow that changes color based on swipe direction
+  const boxShadow = useTransform(
+    x,
+    [-150, 0, 150],
+    [
+      "0 0 60px rgba(254, 1, 66, 0.4)", // Red glow left
+      "0 20px 25px -5px rgba(0, 0, 0, 0.5)", // Default dark shadow
+      "0 0 60px rgba(16, 185, 129, 0.4)" // Green glow right
+    ]
+  );
 
   const handleSendRequest = async (status, userId) => {
+    // Optimistic UI update
+    dispatch(removeFeed(userId));
+
     try {
-      await axios.post(
+      const res = await axios.post(
         BASE_URL + "/request/send/" + status + "/" + userId,
         {},
         { withCredentials: true }
       );
-      dispatch(removeFeed(userId));
+      if (res.data?.isMatch && onMatch) {
+        onMatch(res.data.matchedUser);
+      }
     } catch (err) {
       console.log(err);
     }
   };
 
-  const handleDragEnd = (_, info) => {
-    // Only allow drag actions if it's the front card
-    if (!isFront) return;
+  const handleDragEnd = async (event, info) => {
+    if (!isFront || hasExited) return;
     
-    if (info.offset.x > 150) {
-      setExitX(window.innerWidth);
-    } else if (info.offset.x < -150) {
-      setExitX(-window.innerWidth);
+    const swipeThreshold = 100;
+    const velocityThreshold = 500;
+    
+    const draggedRight = info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold;
+    const draggedLeft = info.offset.x < -swipeThreshold || info.velocity.x < -velocityThreshold;
+
+    if (draggedRight) {
+      setHasExited(true);
+      await controls.start({ x: window.innerWidth, opacity: 0, transition: { duration: 0.3 } });
+      handleSendRequest("interested", user._id);
+    } else if (draggedLeft) {
+      setHasExited(true);
+      await controls.start({ x: -window.innerWidth, opacity: 0, transition: { duration: 0.3 } });
+      handleSendRequest("ignored", user._id);
+    } else {
+      // Snap back to center
+      controls.start({ x: 0, transition: { type: "spring", stiffness: 300, damping: 20 } });
     }
   };
 
-  const handleAction = (status) => {
-    if (!isFront) return;
+  const handleAction = async (status) => {
+    if (!isFront || hasExited) return;
+    setHasExited(true);
     
     if (status === "interested") {
-      setExitX(window.innerWidth);
-    } else {
-      setExitX(-window.innerWidth);
-    }
-  };
-
-  const onAnimationComplete = () => {
-    if (exitX === window.innerWidth) {
+      await controls.start({ x: window.innerWidth, rotate: 20, opacity: 0, transition: { duration: 0.3 } });
       handleSendRequest("interested", user._id);
-    } else if (exitX === -window.innerWidth) {
+    } else {
+      await controls.start({ x: -window.innerWidth, rotate: -20, opacity: 0, transition: { duration: 0.3 } });
       handleSendRequest("ignored", user._id);
     }
   };
+
+  useEffect(() => {
+    if (!hasExited) {
+      controls.start(
+        isFront
+          ? { scale: 1, y: 0, opacity: 1, filter: "blur(0px)", zIndex: 10, transition: { type: "spring", stiffness: 350, damping: 25 } }
+          : { scale: 0.94, y: 25, opacity: 0.7, filter: "blur(5px)", zIndex: 0, transition: { type: "spring", stiffness: 350, damping: 25 } }
+      );
+    }
+  }, [isFront, hasExited, controls]);
 
   if (!user) return null;
 
   return (
     <div className="absolute top-0 left-0 w-full flex flex-col items-center">
-      {/* Card with Motion */}
       <motion.div
-        className="relative w-[340px] h-[500px] rounded-3xl overflow-hidden shadow-2xl cursor-grab active:cursor-grabbing"
-        drag={isFront && exitX === 0 ? "x" : false}
-        dragConstraints={{ left: 0, right: 0 }}
-        style={{ x, rotate }}
+        className="relative w-[340px] h-[520px] rounded-[32px] overflow-hidden cursor-grab active:cursor-grabbing border border-white/5 bg-[#111]"
+        drag={isFront && !hasExited ? "x" : false}
+        // Remove dragConstraints so it doesn't fight the exit animation
+        dragConstraints={false}
+        dragElastic={1}
         onDragEnd={handleDragEnd}
-        animate={
-          exitX !== 0
-            ? { x: exitX, opacity: 0, transition: { duration: 0.3 } }
-            : isFront
-            ? { scale: 1, y: 0, opacity: 1, filter: "blur(0px)", zIndex: 10 }
-            : { scale: 0.92, y: 25, opacity: 0.8, filter: "blur(4px)", zIndex: 0 }
+        style={{ x, rotate, boxShadow }}
+        animate={controls}
+        initial={
+          isFront 
+            ? { scale: 1, y: 0, opacity: 1 } 
+            : { scale: 0.94, y: 25, opacity: 0 }
         }
-        transition={
-          exitX !== 0
-            ? { duration: 0.3 }
-            : { type: "spring", stiffness: 300, damping: 20 }
-        }
-        onAnimationComplete={onAnimationComplete}
       >
-        {/* Background Image */}
+        {/* Profile Image */}
         <img
           src={user.photoUrl || "https://geographyandyou.com/images/user-profile.png"}
           alt={user.firstName}
           className="w-full h-full object-cover pointer-events-none"
         />
 
-        {/* Gradient & Content */}
-        <div className="absolute bottom-0 w-full h-[45%] bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-transparent p-5 pointer-events-none flex flex-col justify-end pb-6">
+        {/* ── Active LIKE / NOPE Stamps ── */}
+        <motion.div
+          style={{ opacity: likeOpacity }}
+          className="absolute top-10 left-8 z-20 pointer-events-none"
+        >
+          <div className="border-[5px] border-emerald-500 rounded-xl px-4 py-1.5 transform -rotate-12 bg-black/20 backdrop-blur-sm">
+            <span className="text-emerald-500 text-4xl font-black tracking-widest uppercase shadow-sm">
+              Like
+            </span>
+          </div>
+        </motion.div>
+
+        <motion.div
+          style={{ opacity: nopeOpacity }}
+          className="absolute top-10 right-8 z-20 pointer-events-none"
+        >
+          <div className="border-[5px] border-[#fe0142] rounded-xl px-4 py-1.5 transform rotate-12 bg-black/20 backdrop-blur-sm">
+            <span className="text-[#fe0142] text-4xl font-black tracking-widest uppercase shadow-sm">
+              Nope
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Bottom Gradient & User Info */}
+        <div className="absolute bottom-0 w-full h-[50%] bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent p-6 pointer-events-none flex flex-col justify-end pb-8">
           <h2 className="text-white text-3xl font-extrabold drop-shadow-md">
             {user.firstName}{user.age && `, ${user.age}`}
           </h2>
@@ -94,12 +151,12 @@ const UserCard = ({ user, isFront }) => {
             {user.about}
           </p>
           {user.skills && user.skills.length > 0 && (
-            <div className="mt-3">
-              <div className="flex flex-wrap gap-1.5 mt-1">
+            <div className="mt-4">
+              <div className="flex flex-wrap gap-2 mt-1">
                 {user.skills.slice(0, 4).map((skill, index) => (
                   <span
                     key={index}
-                    className="bg-white/15 backdrop-blur-md border border-white/10 text-white text-xs px-2.5 py-1 rounded-full font-medium shadow-sm"
+                    className="bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-xs px-3 py-1.5 rounded-full font-semibold shadow-sm"
                   >
                     {skill}
                   </span>
@@ -110,26 +167,26 @@ const UserCard = ({ user, isFront }) => {
         </div>
       </motion.div>
 
-      {/* Action Buttons */}
+      {/* Action Buttons (Only visible on front card) */}
       <motion.div 
-        className="flex justify-center gap-8 mt-6 pointer-events-auto"
-        animate={{ opacity: isFront ? 1 : 0, scale: isFront ? 1 : 0.8 }}
+        className="flex justify-center gap-10 mt-8 pointer-events-auto relative z-20"
+        animate={{ opacity: isFront && !hasExited ? 1 : 0, scale: isFront && !hasExited ? 1 : 0.8 }}
         transition={{ duration: 0.2 }}
-        style={{ pointerEvents: isFront ? "auto" : "none" }}
+        style={{ pointerEvents: isFront && !hasExited ? "auto" : "none" }}
       >
         <button
-          onClick={() => isFront && handleAction("ignored")}
-          disabled={!isFront || exitX !== 0}
-          className="w-14 h-14 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 hover:bg-white/10 transition disabled:opacity-50"
+          onClick={() => handleAction("ignored")}
+          disabled={!isFront || hasExited}
+          className="w-16 h-16 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center shadow-xl hover:scale-110 hover:bg-[#222] hover:border-white/20 transition-all active:scale-95 disabled:opacity-50 group"
         >
-          <span className="text-[#fe0142] text-2xl font-bold">✖</span>
+          <span className="text-[#fe0142] text-3xl font-black group-hover:drop-shadow-[0_0_10px_rgba(254,1,66,0.6)] transition-all">✖</span>
         </button>
         <button
-          onClick={() => isFront && handleAction("interested")}
-          disabled={!isFront || exitX !== 0}
-          className="w-14 h-14 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 hover:bg-white/10 transition disabled:opacity-50"
+          onClick={() => handleAction("interested")}
+          disabled={!isFront || hasExited}
+          className="w-16 h-16 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center shadow-xl hover:scale-110 hover:bg-[#222] hover:border-white/20 transition-all active:scale-95 disabled:opacity-50 group"
         >
-          <span className="text-emerald-500 text-2xl font-bold">❤</span>
+          <span className="text-emerald-500 text-3xl font-black group-hover:drop-shadow-[0_0_10px_rgba(16,185,129,0.6)] transition-all">❤</span>
         </button>
       </motion.div>
     </div>

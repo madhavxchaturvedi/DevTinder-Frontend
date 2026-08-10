@@ -7,6 +7,8 @@ import axios from "axios";
 import { SkeletonUserCard } from "./Skeletons";
 import toast from "react-hot-toast";
 import { FiSearch, FiX } from "react-icons/fi";
+import MatchSplash from "./MatchSplash";
+import { AnimatePresence } from "framer-motion";
 
 const Feed = () => {
   const feed = useSelector((store) => store.feed);
@@ -14,6 +16,7 @@ const Feed = () => {
   const [loading, setLoading] = useState(false);
   const [skillInput, setSkillInput] = useState("");
   const [activeSkills, setActiveSkills] = useState(""); // Track currently applied skills
+  const [matchedUser, setMatchedUser] = useState(null);
 
   const getFeed = async (forceRefetch = false, skillsToFetch = "") => {
     // If not forcing, and we already have feed data, and we aren't changing filters, skip
@@ -129,10 +132,19 @@ const Feed = () => {
         <div className="-mt-10 relative z-0 flex justify-center w-full max-w-sm h-[600px]">
           {feed.slice(0, 2).reverse().map((user) => {
             const isFront = user._id === feed[0]._id;
-            return <UserCard key={user._id} user={user} isFront={isFront} />;
+            return <UserCard key={user._id} user={user} isFront={isFront} onMatch={setMatchedUser} />;
           })}
         </div>
       )}
+
+      <AnimatePresence>
+        {matchedUser && (
+          <MatchSplash 
+            matchedUser={matchedUser} 
+            onClose={() => setMatchedUser(null)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
