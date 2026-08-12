@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { addUser } from "../redux/userSlice";
 import { FiArrowLeft, FiCode, FiZap, FiCheck, FiStar, FiPlay, FiTerminal, FiMessageSquare, FiSend, FiTrash2, FiX } from "react-icons/fi";
 import Editor from "@monaco-editor/react";
 import { getSocket } from "../utils/socket";
@@ -28,10 +29,16 @@ const Sandbox = () => {
   const { roomId } = useParams();
   const user = useSelector((store) => store.user);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   
+  const [isInitializing, setIsInitializing] = useState(true);
   const [socketConnected, setSocketConnected] = useState(false);
   const [language, setLanguage] = useState("javascript");
   const [code, setCode] = useState(BOILERPLATES["javascript"]);
+  
+  const targetId = user ? roomId?.split("_").find(id => id !== String(user._id)) : null;
+  const [targetUser, setTargetUser] = useState(null);
+  const [isTargetUserInRoom, setIsTargetUserInRoom] = useState(false);
   
   // Execution state
   const [output, setOutput] = useState("");
@@ -43,17 +50,54 @@ const Sandbox = () => {
   const [chatInput, setChatInput] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const chatEndRef = useRef(null);
+  
+  const isChatOpenRef = useRef(isChatOpen);
+  useEffect(() => {
+    isChatOpenRef.current = isChatOpen;
+  }, [isChatOpen]);
 
   // Editor refs
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
   const decorationsRef = useRef(null);
   const remoteCursorsRef = useRef({}); // Store cursor data by userId
+  const codeRef = useRef(code); // To access latest code inside socket listener
+  const languageRef = useRef(language); // To access latest language
 
   const isPremium = user?.isPremium;
 
   useEffect(() => {
-    if (!isPremium || !user || !roomId) return;
+    const fetchUser = async () => {
+      if (user) {
+        setIsInitializing(false);
+        return;
+      }
+      try {
+        const res = await axios.get(BASE_URL + "/profile/view", {
+          withCredentials: true,
+        });
+        dispatch(addUser(res.data));
+      } catch (err) {
+        if (err?.response?.status === 401) {
+          navigate("/login");
+        }
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    fetchUser();
+  }, [user, dispatch, navigate]);
+
+  useEffect(() => {
+    if (targetId) {
+      axios.get(BASE_URL + "/user/" + targetId, { withCredentials: true })
+        .then(res => setTargetUser(res.data.user))
+        .catch(console.error);
+    }
+  }, [targetId]);
+
+  useEffect(() => {
+    if (isInitializing || !isPremium || !user || !roomId) return;
 
     const sock = getSocket(BASE_URL);
 
@@ -84,28 +128,62 @@ const Sandbox = () => {
       setOutput(syncedOutput);
     });
 
+    sock.on("provideSandboxSync", ({ targetSocketId }) => {
+      sock.emit("sendSandboxSync", { 
+        targetSocketId, 
+        code: codeRef.current, 
+        language: languageRef.current 
+      });
+    });
+
     sock.on("receiveSandboxMessage", (msg) => {
       setChatMessages((prev) => [...prev, msg]);
-      if (!isChatOpen) {
+      if (!isChatOpenRef.current) {
         setUnreadCount((prev) => prev + 1);
       }
     });
 
+    sock.on("userJoinedSandbox", ({ userId }) => {
+      if (String(userId) === String(targetId)) setIsTargetUserInRoom(true);
+      sock.emit("acknowledgeSandboxJoin", { roomId, userId: user._id });
+    });
+
+    sock.on("userAlreadyInSandbox", ({ userId }) => {
+      if (String(userId) === String(targetId)) setIsTargetUserInRoom(true);
+    });
+
+    sock.on("userLeftSandbox", ({ userId }) => {
+      if (String(userId) === String(targetId)) setIsTargetUserInRoom(false);
+    });
+
+    sock.on("sandboxPresencePing", ({ requesterId }) => {
+      sock.emit("pongSandboxPresence", { targetSocketId: requesterId, userId: user._id });
+    });
+
     if (sock.connected) {
       setSocketConnected(true);
-      sock.emit("joinSandbox", { roomId });
+      sock.emit("joinSandbox", { roomId, userId: user._id });
+      sock.emit("requestSandboxSync", { roomId });
     }
 
     return () => {
+      if (sock.connected) {
+        sock.emit("leaveSandbox", { roomId, userId: user._id });
+      }
       sock.off("connect");
       sock.off("disconnect");
       sock.off("receiveCodeChange");
       sock.off("receiveCursorMove");
       sock.off("receiveExecutionState");
       sock.off("receiveOutput");
+      sock.off("provideSandboxSync");
       sock.off("receiveSandboxMessage");
+      sock.off("userJoinedSandbox");
+      sock.off("userAlreadyInSandbox");
+      sock.off("userLeftSandbox");
+      sock.off("sandboxPresencePing");
     };
-  }, [user, roomId, isPremium, language, isChatOpen]);
+  }, [user, roomId, isPremium, isInitializing, targetId]); // Use isInitializing, removed isChatOpen to avoid socket reconnects
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -168,22 +246,26 @@ const Sandbox = () => {
   };
 
   const handleEditorChange = (value) => {
-    setCode(value || "");
+    const newCode = value || "";
+    setCode(newCode);
+    codeRef.current = newCode;
     const sock = getSocket();
     if (sock?.connected) {
-      sock.emit("codeChange", { roomId, code: value || "", language });
+      sock.emit("codeChange", { roomId, code: newCode, language: languageRef.current });
     }
   };
 
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     setLanguage(newLang);
+    languageRef.current = newLang;
     
     // Only overwrite with boilerplate if editor is empty or matches an existing boilerplate
-    const isBoilerplate = Object.values(BOILERPLATES).includes(code) || code.trim() === "";
+    const isBoilerplate = Object.values(BOILERPLATES).includes(codeRef.current) || codeRef.current.trim() === "";
     if (isBoilerplate) {
       const newCode = BOILERPLATES[newLang] || "";
       setCode(newCode);
+      codeRef.current = newCode;
       const sock = getSocket();
       if (sock?.connected) {
         sock.emit("codeChange", { roomId, code: newCode, language: newLang });
@@ -288,6 +370,14 @@ const Sandbox = () => {
     }
   };
 
+  if (isInitializing) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-[#0a0a0a]">
+        <div className="w-10 h-10 border-2 border-[#ccff00] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   if (!isPremium) {
     return (
       <div className="flex justify-center items-center h-screen bg-[#0a0a0a] relative overflow-hidden">
@@ -337,9 +427,30 @@ const Sandbox = () => {
           <button onClick={() => navigate(-1)} className="text-[#a3a3a3] hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors">
             <FiArrowLeft size={18} />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 border-r border-white/10 pr-4">
             <FiCode className="text-[#ccff00] text-xl" />
             <span className="text-white font-bold tracking-tight">Pro Sandbox</span>
+          </div>
+
+          {/* Active Users */}
+          <div className="flex items-center gap-2 pl-2">
+            <div className="relative group cursor-default">
+              <img src={user?.photoUrl} alt="Me" className="w-8 h-8 rounded-full border-2 border-[#a855f7] object-cover" />
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#121212]" />
+              <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-[#1a1a1a] border border-white/10 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                You (Active)
+              </div>
+            </div>
+            
+            {targetUser && isTargetUserInRoom && (
+              <div className="relative group cursor-default transition-all duration-300 opacity-100 scale-100">
+                <img src={targetUser.photoUrl} alt={targetUser.firstName} className="w-8 h-8 rounded-full border-2 border-transparent object-cover" />
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#121212] bg-green-500" />
+                <div className="absolute top-10 left-1/2 -translate-x-1/2 bg-[#1a1a1a] border border-white/10 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                  {targetUser.firstName} (Active)
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

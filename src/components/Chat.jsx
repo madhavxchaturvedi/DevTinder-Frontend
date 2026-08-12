@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSend, FiArrowLeft, FiMoreVertical, FiCode, FiMessageSquare } from "react-icons/fi";
+import { FiSend, FiArrowLeft, FiMoreVertical, FiCode, FiMessageSquare, FiZap } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { getSocket } from "../utils/socket";
 
@@ -41,6 +41,7 @@ const Chat = () => {
   const [error, setError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [isTargetInSandbox, setIsTargetInSandbox] = useState(false);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -106,6 +107,18 @@ const Chat = () => {
       setIsTyping(typing);
     });
 
+    sock.on("userJoinedSandbox", ({ userId }) => {
+      if (String(userId) === String(targetId)) setIsTargetInSandbox(true);
+    });
+
+    sock.on("userLeftSandbox", ({ userId }) => {
+      if (String(userId) === String(targetId)) setIsTargetInSandbox(false);
+    });
+
+    sock.on("sandboxPresencePong", ({ userId }) => {
+      if (String(userId) === String(targetId)) setIsTargetInSandbox(true);
+    });
+
     sock.on("error", (err) => {
       console.error("Socket error:", err.message);
     });
@@ -113,6 +126,9 @@ const Chat = () => {
     if (sock.connected) {
       setSocketConnected(true);
       sock.emit("joinChat", { targetId });
+      
+      const roomId = [loggedInUser._id, targetId].sort().join("_");
+      sock.emit("pingSandboxPresence", { roomId });
     }
 
     return () => {
@@ -121,6 +137,9 @@ const Chat = () => {
       sock.off("receiveMessage");
       sock.off("userTyping");
       sock.off("error");
+      sock.off("userJoinedSandbox");
+      sock.off("userLeftSandbox");
+      sock.off("sandboxPresencePong");
     };
   }, [loggedInUser, targetId]);
 
@@ -142,6 +161,57 @@ const Chat = () => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const renderMessageText = (text, mine, isSandboxInvite) => {
+    if (isSandboxInvite) {
+      const url = text.split("I launched a Live Sandbox! Click here to join: ")[1];
+      return (
+        <div className="flex flex-col gap-3 py-1 min-w-[240px] sm:min-w-[280px]">
+          <div className="flex items-center gap-3 w-full">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#a855f7]/20 to-[#ccff00]/20 flex items-center justify-center border border-white/5 flex-shrink-0">
+              <FiCode className="text-xl text-[#ccff00]" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-white text-[15px] leading-none mb-1">Live Sandbox</h4>
+              <p className="text-[10px] text-[#ccff00] uppercase tracking-widest font-bold">
+                {mine && targetUser ? `Invite to ${targetUser.firstName}` : targetUser ? `Invite from ${targetUser.firstName}` : "Collab Invite"}
+              </p>
+            </div>
+            {isTargetInSandbox && targetUser && (
+              <div className="relative ml-2 group">
+                <img 
+                  src={targetUser.photoUrl} 
+                  alt="avatar" 
+                  className="w-8 h-8 rounded-full border border-white/10 object-cover flex-shrink-0" 
+                />
+                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#121212]" />
+                <div className="absolute top-10 right-0 bg-[#1a1a1a] border border-white/10 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                  {targetUser.firstName} is in the Sandbox
+                </div>
+              </div>
+            )}
+          </div>
+          <p className="text-[13px] text-[#a3a3a3] leading-relaxed mt-1">
+            I've opened a real-time collaborative workspace for us. Let's code together!
+          </p>
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              let path = url;
+              if (url.startsWith("http")) {
+                path = new URL(url).pathname;
+              }
+              navigate(path);
+            }}
+            className="flex items-center justify-center gap-2 font-black px-4 py-3 rounded-xl hover:scale-[1.02] active:scale-95 transition-all w-full mt-2 bg-[#ccff00] text-[#0a0a0a] hover:bg-[#bbf000] shadow-[0_0_15px_rgba(204,255,0,0.15)] active:scale-95"
+          >
+            <FiZap className="text-lg" /> Join Workspace
+          </button>
+        </div>
+      );
+    }
+    return <p className="break-words whitespace-pre-wrap">{text}</p>;
   };
 
   const handleInputChange = (e) => {
@@ -228,9 +298,9 @@ const Chat = () => {
   }
 
   return (
-    <div className="flex justify-center items-start min-h-[calc(100vh-80px)] px-4 py-4 pt-6 max-w-[1400px] mx-auto w-full gap-6">
+    <div className="flex justify-center items-start h-[100dvh] w-full bg-[#0a0a0a]">
       {/* ── Main Chat Area ───────────────────────────────────── */}
-      <div className="flex-1 flex flex-col h-[calc(100vh-120px)] rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-[#0a0a0a] relative">
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative border-l border-white/5">
         
         {/* ── Header ───────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#121212]/80 backdrop-blur-md z-20">
@@ -312,6 +382,7 @@ const Chat = () => {
                 const mine = isMyMessage(msg);
                 const isFirstInSequence = idx === 0 || isMyMessage(msgs[idx - 1]) !== mine;
                 const isLastInSequence = idx === msgs.length - 1 || isMyMessage(msgs[idx + 1]) !== mine;
+                const isSandboxInvite = msg.text.includes("I launched a Live Sandbox! Click here to join: ");
                 
                 return (
                   <motion.div
@@ -336,18 +407,20 @@ const Chat = () => {
 
                     {/* Bubble */}
                     <div
-                      className={`max-w-[70%] px-5 py-3 text-[15px] leading-relaxed shadow-sm ${
-                        mine
-                          ? "bg-[#ccff00] text-[#0a0a0a] font-medium"
-                          : "bg-[#121212] text-[#e5e5e5] border border-white/5 font-medium"
+                      className={`max-w-[85%] md:max-w-[75%] px-5 py-3 text-[15px] leading-relaxed shadow-sm ${
+                        isSandboxInvite
+                          ? "bg-[#121212] border border-white/10 text-white"
+                          : mine
+                            ? "bg-[#a855f7] text-white font-medium shadow-[#a855f7]/10"
+                            : "bg-[#1a1a1a] text-[#e5e5e5] border border-white/5 font-medium"
                       } ${
                         mine
                           ? `rounded-l-2xl ${isFirstInSequence ? 'rounded-tr-2xl' : 'rounded-tr-md'} ${isLastInSequence ? 'rounded-br-2xl' : 'rounded-br-md'}`
                           : `rounded-r-2xl ${isFirstInSequence ? 'rounded-tl-2xl' : 'rounded-tl-md'} ${isLastInSequence ? 'rounded-bl-2xl' : 'rounded-bl-md'}`
                       }`}
                     >
-                      <p className="break-words">{msg.text}</p>
-                      <div className={`flex items-center justify-end gap-1 mt-1 ${mine ? 'text-[#0a0a0a]/60' : 'text-[#a3a3a3]'}`}>
+                      {renderMessageText(msg.text, mine, isSandboxInvite)}
+                      <div className={`flex items-center justify-end gap-1 mt-2 ${isSandboxInvite ? 'text-[#a3a3a3]' : mine ? 'text-white/70' : 'text-[#a3a3a3]'}`}>
                         <span className="text-[9px] font-bold tracking-wider">
                           {formatTime(msg.createdAt)}
                         </span>
@@ -399,16 +472,16 @@ const Chat = () => {
         </div>
 
         {/* ── Input ────────────────────────────────────────────── */}
-        <div className="p-4 bg-[#121212]/80 backdrop-blur-md border-t border-white/5 z-20">
-          <div className="flex items-end gap-3 max-w-4xl mx-auto">
-            <div className="flex-1 bg-[#1a1a1a] rounded-2xl border border-white/5 flex items-end focus-within:border-[#ccff00]/50 focus-within:ring-1 focus-within:ring-[#ccff00]/50 transition-all overflow-hidden shadow-inner">
+        <div className="px-6 py-4 pb-8 md:pb-6 bg-[#121212]/95 backdrop-blur-xl border-t border-white/5 z-20">
+          <div className="flex items-end gap-3 w-full max-w-6xl mx-auto">
+            <div className="flex-1 bg-[#1a1a1a] rounded-2xl border border-white/5 flex items-end focus-within:border-[#a855f7]/50 focus-within:ring-1 focus-within:ring-[#a855f7]/50 transition-all overflow-hidden shadow-inner">
               <textarea
                 ref={inputRef}
                 rows={1}
                 value={inputText}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder="Type a message..."
+                placeholder="Message..."
                 className="w-full bg-transparent px-5 py-4 text-[#e5e5e5] font-medium placeholder:text-[#a3a3a3] outline-none resize-none max-h-32 text-[15px]"
                 style={{ minHeight: "54px" }}
               />
@@ -416,84 +489,13 @@ const Chat = () => {
             <button
               onClick={handleSend}
               disabled={!inputText.trim() || !socketConnected}
-              className="w-14 h-[54px] flex-shrink-0 rounded-2xl flex items-center justify-center transition-all bg-[#ccff00] disabled:bg-[#ccff00]/20 disabled:text-[#0a0a0a]/30 disabled:cursor-not-allowed hover:bg-[#bbf000] text-[#0a0a0a] shadow-lg shadow-[#ccff00]/10 active:scale-95"
+              className="w-14 h-[54px] flex-shrink-0 rounded-2xl flex items-center justify-center transition-all bg-[#ccff00] disabled:bg-[#ccff00]/20 disabled:text-[#0a0a0a]/30 disabled:cursor-not-allowed hover:bg-[#bbf000] text-[#0a0a0a] shadow-[0_0_15px_rgba(204,255,0,0.15)] active:scale-95"
             >
               <FiSend size={20} className="ml-1" />
             </button>
           </div>
         </div>
       </div>
-
-      {/* ── Right Profile Panel (Desktop Only) ──────────────── */}
-      {targetUser && (
-        <div className="hidden xl:flex w-80 flex-col h-[calc(100vh-120px)] rounded-3xl border border-white/10 shadow-2xl bg-[#121212] overflow-y-auto scrollbar-hide">
-          {/* Banner */}
-          <div className="h-32 bg-gradient-to-br from-[#a855f7] to-[#ccff00] relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/20" />
-          </div>
-          
-          <div className="px-6 pb-8 flex flex-col items-center -mt-12 relative z-10">
-            {/* Avatar */}
-            <div className="mb-4">
-              <div className="w-24 h-24 rounded-full p-1 bg-[#121212] shadow-xl">
-                <img
-                  src={targetUser.photoUrl || "https://geographyandyou.com/images/user-profile.png"}
-                  alt={targetUser.firstName}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </div>
-            </div>
-            
-            <h2 className="text-xl font-bold text-white text-center tracking-tight">
-              {targetUser.firstName} {targetUser.lastName}
-            </h2>
-            
-            <p className="text-xs font-semibold text-[#a3a3a3] mt-1 text-center">
-              {targetUser.about || "Developer"}
-            </p>
-
-            <div className="w-full h-px bg-white/5 my-6" />
-            
-            {/* Stats / Info Row */}
-            <div className="flex w-full justify-around mb-6">
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-[#a855f7] font-bold text-sm">{targetUser.age || "--"}</span>
-                <span className="text-[10px] text-[#a3a3a3] uppercase tracking-wider font-semibold">Age</span>
-              </div>
-              <div className="w-px h-8 bg-white/5" />
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-[#ccff00] font-bold text-sm capitalize">{targetUser.gender || "--"}</span>
-                <span className="text-[10px] text-[#a3a3a3] uppercase tracking-wider font-semibold">Gender</span>
-              </div>
-            </div>
-
-            {targetUser.skills && targetUser.skills.length > 0 && (
-              <div className="w-full mb-6">
-                <p className="text-[10px] font-bold text-[#a3a3a3] uppercase tracking-widest mb-3">
-                  Tech Stack
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {targetUser.skills.map((skill, i) => (
-                    <span
-                      key={i}
-                      className="text-[10px] font-semibold px-2.5 py-1 rounded-md bg-[#1a1a1a] border border-white/5 text-[#e5e5e5]"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <button 
-              onClick={() => navigate(`/user/${targetUser._id}`)}
-              className="w-full mt-6 py-2 bg-[#ccff00] border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] font-black uppercase text-xs tracking-wider hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-[1px_1px_0px_#0a0a0a] transition-all"
-            >
-              View Full Profile
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
