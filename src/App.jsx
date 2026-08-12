@@ -9,8 +9,8 @@ import LandingPage from "./components/LandingPage";
 import Premium from "./components/Premium";
 import Chat from "./components/Chat";
 import UserProfilePage from "./components/UserProfilePage";
-
 import Discover from "./components/Discover";
+import Sandbox from "./components/Sandbox";
 
 const App = () => {
   return (
@@ -29,6 +29,7 @@ const App = () => {
           <Route path="/chat/:targetId" element={<Chat />} />
           <Route path="/user/:userId" element={<UserProfilePage />} />
         </Route>
+        <Route path="/sandbox/:roomId" element={<Sandbox />} />
       </Routes>
     </BrowserRouter>
   );
