@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSend, FiArrowLeft, FiMoreVertical } from "react-icons/fi";
+import { FiSend, FiArrowLeft, FiMoreVertical, FiCode, FiMessageSquare } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { getSocket } from "../utils/socket";
 
@@ -262,9 +262,24 @@ const Chat = () => {
               </div>
             )}
           </div>
-          <button className="text-[#a3a3a3] hover:text-white p-2 hover:bg-white/5 rounded-full transition">
-            <FiMoreVertical size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                const roomId = [loggedInUser._id, targetUser._id].sort().join("_");
+                const sock = getSocket();
+                if (sock?.connected) {
+                  sock.emit("sendMessage", { targetId, text: "I launched a Live Sandbox! Click here to join: " + window.location.origin + "/sandbox/" + roomId });
+                }
+                navigate(`/sandbox/${roomId}`);
+              }}
+              className="hidden md:flex items-center gap-2 bg-[#ccff00]/10 text-[#ccff00] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#ccff00]/20 transition-colors border border-[#ccff00]/20"
+            >
+              <FiCode size={14} /> Live Sandbox
+            </button>
+            <button className="text-[#a3a3a3] hover:text-white p-2 hover:bg-white/5 rounded-full transition">
+              <FiMoreVertical size={20} />
+            </button>
+          </div>
         </div>
 
         {/* ── Messages ─────────────────────────────────────────── */}
