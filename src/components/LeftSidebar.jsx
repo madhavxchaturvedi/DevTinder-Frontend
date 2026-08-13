@@ -6,6 +6,7 @@ import { HiCode } from "react-icons/hi";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { removeUser } from "../redux/userSlice";
+import NotificationsDropdown from "./NotificationsDropdown";
 
 const LeftSidebar = () => {
   const user = useSelector((store) => store.user);
@@ -36,12 +37,15 @@ const LeftSidebar = () => {
   ];
 
   return (
-    <div className="hidden lg:flex w-64 flex-col h-screen sticky top-0 bg-[#0a0a0a] border-r border-white/5 py-6 px-4">
-      {/* Logo */}
-      <Link to="/feed" className="flex items-center gap-2 px-2 mb-10 text-white hover:text-[#ccff00] transition-colors">
-        <HiCode size={28} />
-        <span className="text-xl font-black tracking-tight font-mono">DevTinder</span>
-      </Link>
+    <div className="hidden lg:flex w-64 flex-col h-screen sticky top-0 bg-[#0a0a0a] border-r border-white/5 py-6 px-4 z-50">
+      {/* Logo and Notifications */}
+      <div className="flex items-center justify-between px-2 mb-10">
+        <Link to="/feed" className="flex items-center gap-2 text-white hover:text-[#ccff00] transition-colors">
+          <HiCode size={28} />
+          <span className="text-xl font-black tracking-tight font-mono">DevTinder</span>
+        </Link>
+        <NotificationsDropdown />
+      </div>
 
       {/* Nav Links */}
       <div className="flex flex-col gap-2 flex-1">

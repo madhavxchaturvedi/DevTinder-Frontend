@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { FiMessageSquare, FiMoreHorizontal, FiTrash2, FiGitMerge } from "react-icons/fi";
+import { FiMessageSquare, FiMoreHorizontal, FiTrash2, FiGitMerge, FiStar, FiZap, FiTerminal, FiCheckCircle, FiUsers } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { removePost, updatePost } from "../redux/postSlice";
 import toast from "react-hot-toast";
 
-// Markdown & Code
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import LiveSnippet from "./LiveSnippet";
-import { FiZap, FiTerminal, FiStar, FiUsers } from "react-icons/fi";
+import CommentsSection from "./CommentsSection";
+
 
 // How long ago a date was
 const timeAgo = (dateString) => {
@@ -42,6 +42,7 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
   const [localFollowState, setLocalFollowState] = useState(null);
   const isAlreadyFollowing = localFollowState !== null ? localFollowState : followedUsers.includes(authorId._id);
   
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
 
   const handleFollowToggle = async () => {
@@ -131,8 +132,10 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
 
   return (
     <div className={`relative rounded-2xl mb-6 transition-all duration-300 group/card ${
-      type === 'debug_sos' 
-        ? 'p-[1px] bg-[#ccff00]/50 hover:shadow-[0_0_20px_rgba(204,255,0,0.15)] border border-dashed border-[#ccff00]' 
+      type === 'debug_sos' && post.isResolved
+        ? 'p-[1px] bg-[#ccff00]/50 hover:shadow-[0_0_20px_rgba(204,255,0,0.15)] border border-solid border-[#ccff00]' 
+        : type === 'debug_sos'
+        ? 'p-[1px] bg-[#ffb86c]/50 hover:shadow-[0_0_20px_rgba(255,184,108,0.15)] border border-dashed border-[#ffb86c]'
         : 'p-0 bg-transparent'
     }`}>
       <div className={`bg-[#0a0a0a] rounded-2xl p-5 flex flex-col h-full transition-colors duration-300 ${
@@ -154,13 +157,25 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
 
       {/* Debug SOS Badge */}
       {type === 'debug_sos' && (
-        <div className="flex items-center gap-2 mb-4 bg-[#ccff00]/10 border border-[#ccff00]/30 rounded px-3 py-1.5 w-fit">
-          <FiTerminal className="text-[#ccff00] text-sm animate-pulse" />
-          <span className="text-[10px] font-bold text-[#ccff00] tracking-widest uppercase font-mono">
-            SYS_DEBUG_SOS
+        <div className={`flex items-center gap-2 mb-4 rounded px-3 py-1.5 w-fit border ${
+          post.isResolved 
+            ? 'bg-[#ccff00]/10 border-[#ccff00]/50'
+            : 'bg-[#ffb86c]/10 border-[#ffb86c]/30'
+        }`}>
+          {post.isResolved ? (
+            <FiCheckCircle className="text-[#ccff00] text-sm" />
+          ) : (
+            <FiTerminal className="text-[#ffb86c] text-sm animate-pulse" />
+          )}
+          <span className={`text-[10px] font-bold tracking-widest uppercase font-mono ${
+            post.isResolved ? 'text-[#ccff00]' : 'text-[#ffb86c]'
+          }`}>
+            {post.isResolved ? 'RESOLVED_SOS' : 'SYS_DEBUG_SOS'}
           </span>
-          <div className="w-[1px] h-3 bg-[#ccff00]/30 mx-1" />
-          <span className="text-[10px] text-[#ccff00]/70 font-mono">Bounty Request</span>
+          <div className={`w-[1px] h-3 mx-1 ${post.isResolved ? 'bg-[#ccff00]/30' : 'bg-[#ffb86c]/30'}`} />
+          <span className={`text-[10px] font-mono ${post.isResolved ? 'text-[#ccff00]/70' : 'text-[#ffb86c]/70'}`}>
+            {post.isResolved ? 'Answer Found' : 'Bounty Request'}
+          </span>
         </div>
       )}
 
@@ -304,18 +319,22 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
         
         {/* Comments / Help */}
         <button 
-          onClick={() => toast("Comments coming in Phase 3!", { icon: "🚧" })}
+          onClick={() => setIsCommentsOpen(true)}
           className={`flex items-center gap-1.5 transition-all duration-300 group text-xs font-semibold ml-auto px-4 py-1.5 rounded-full border font-mono ${
             type === 'debug_sos'
               ? 'text-[#0a0a0a] bg-[#ccff00] border-transparent hover:bg-[#b3e600] hover:scale-105'
               : 'text-[#a3a3a3] hover:text-[#d8b4fe] bg-white/5 border-white/5 hover:border-[#a855f7]/30 hover:bg-[#a855f7]/10'
           }`}
         >
-          <FiMessageSquare className="group-active:scale-90 transition-transform" />
-          {type === 'debug_sos' ? "HELP_DEBUG" : "Comment"}
+          <FiMessageSquare className={`transition-transform ${isCommentsOpen ? 'text-[#ccff00]' : 'group-active:scale-90'}`} />
+          {type === 'debug_sos' ? (post.isResolved ? "View Answer" : "HELP_DEBUG") : "Comment"}
         </button>
 
       </div>
+      
+      {/* Inline Comments Section */}
+      <CommentsSection post={post} isOpen={isCommentsOpen} />
+      
       </div>
     </div>
   );

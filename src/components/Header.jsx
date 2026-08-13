@@ -7,6 +7,7 @@ import { removeUser } from "../redux/userSlice";
 import { markAllRead, clearNotifications } from "../redux/notificationSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiUserPlus, FiCheckCircle } from "react-icons/fi";
+import NotificationsDropdown from "./NotificationsDropdown";
 
 // How long ago a date was (e.g. "2 min ago", "3 hr ago")
 const timeAgo = (dateString) => {
@@ -100,127 +101,7 @@ const Header = () => {
             Hello, {user.firstName}
           </p>
 
-          {/* ── Notification Bell ───────────────────────────── */}
-          <div className="relative" ref={notifRef}>
-            <button
-              onClick={handleOpenNotifications}
-              className="relative w-10 h-10 flex items-center justify-center rounded-full bg-white border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#0a0a0a] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-            >
-              {/* Bell icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5 text-[#0a0a0a]"
-              >
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-
-              {/* Unread badge */}
-              {unreadCount > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#ccff00] text-[#0a0a0a] border-2 border-[#0a0a0a] text-[10px] font-bold rounded-full flex items-center justify-center shadow-[2px_2px_0px_#0a0a0a]"
-                >
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </motion.span>
-              )}
-            </button>
-
-            {/* ── Dropdown ──────────────────────────────────── */}
-            <AnimatePresence>
-              {notifOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-12 w-80 bg-white border-2 border-[#0a0a0a] shadow-[6px_6px_0px_#0a0a0a] rounded-2xl overflow-hidden z-50"
-                >
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b-2 border-[#0a0a0a] bg-[#f4f4f5]">
-                    <span className="text-[#0a0a0a] font-black text-sm uppercase tracking-wide">
-                      Notifications
-                    </span>
-                    {unreadCount === 0 && notifications.length > 0 && (
-                      <span className="text-xs font-bold text-gray-500">All caught up</span>
-                    )}
-                  </div>
-
-                  {/* Notification list */}
-                  <div className="max-h-80 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-10 gap-2">
-                        <span className="text-3xl">🔔</span>
-                        <p className="text-gray-500 font-bold text-sm">No notifications yet</p>
-                      </div>
-                    ) : (
-                      notifications.map((n) => (
-                        <Link
-                          key={n._id}
-                          to={notificationLink(n)}
-                          onClick={() => setNotifOpen(false)}
-                          className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-100 transition-colors cursor-pointer border-b-2 border-[#0a0a0a] last:border-0 ${
-                            !n.read ? "bg-[#ccff00]/20" : ""
-                          }`}
-                        >
-                          {/* Avatar */}
-                          <div className="relative flex-shrink-0">
-                            <img
-                              src={
-                                n.fromUserId?.photoUrl ||
-                                "https://geographyandyou.com/images/user-profile.png"
-                              }
-                              alt={n.fromUserId?.firstName}
-                              className="w-9 h-9 rounded-full object-cover"
-                            />
-                            {/* Type icon */}
-                            <span className="absolute -bottom-1 -right-1 text-xs">
-                              {n.type === "connection_request" ? <FiUserPlus className="text-blue-500" /> : <FiCheckCircle className="text-green-500" />}
-                            </span>
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[#0a0a0a] font-bold text-sm leading-snug">
-                              {notificationMessage(n)}
-                            </p>
-                            <p className="text-gray-500 font-bold text-xs mt-0.5">
-                              {timeAgo(n.createdAt)}
-                            </p>
-                          </div>
-
-                          {/* Unread dot */}
-                          {!n.read && (
-                            <span className="w-2.5 h-2.5 mt-1.5 flex-shrink-0 bg-[#a855f7] border border-[#0a0a0a] rounded-full" />
-                          )}
-                        </Link>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Footer */}
-                  {notifications.length > 0 && (
-                    <div className="px-4 py-2.5 border-t-2 border-[#0a0a0a] bg-[#f4f4f5]">
-                      <Link
-                        to="/requests"
-                        onClick={() => setNotifOpen(false)}
-                        className="text-xs text-[#a855f7] hover:text-[#0a0a0a] transition font-black uppercase tracking-wider"
-                      >
-                        View all requests →
-                      </Link>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <NotificationsDropdown />
 
           {/* ── Avatar dropdown ─────────────────────────────── */}
           <div className="dropdown dropdown-end">

@@ -147,6 +147,12 @@ const UserCard = ({ user, isFront, onMatch }) => {
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
               {user.firstName} {user.lastName}
             </h2>
+            {user.helpfulAnswers > 0 && (
+              <div className="flex items-center gap-1.5 mt-2 bg-[#ccff00]/10 border border-[#ccff00]/20 text-[#ccff00] w-max px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                {user.helpfulAnswers} Helpful Answer{user.helpfulAnswers > 1 ? 's' : ''}
+              </div>
+            )}
             {user.age && (
               <p className="text-xs text-[#a3a3a3] font-medium mt-1 uppercase tracking-wider">
                 {user.age}

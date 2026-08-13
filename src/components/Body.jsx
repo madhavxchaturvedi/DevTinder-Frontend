@@ -83,12 +83,10 @@ const Body = () => {
         }} 
       />
       
-      {/* ── Unauthenticated State: Show Top Header ── */}
-      {!userData && (
-        <div className="w-full absolute top-0 z-50">
-          <Header />
-        </div>
-      )}
+      {/* ── Header: Always show for unauthenticated, show on mobile for authenticated ── */}
+      <div className={`w-full absolute top-0 z-50 ${userData ? 'lg:hidden' : ''}`}>
+        <Header />
+      </div>
 
       {/* ── Authenticated State: Global 3-Column Layout ── */}
       {userData && <LeftSidebar />}
