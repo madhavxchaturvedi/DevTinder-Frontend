@@ -147,7 +147,7 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     
     if (count === 1) {
       return (
-        <div className="mt-3 rounded-2xl overflow-hidden border border-white/10 max-h-[500px]">
+        <div className="rounded-2xl overflow-hidden border border-white/10 max-h-[500px]">
           <img src={post.images[0]} alt="Attachment 1" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[0], '_blank')} />
         </div>
       );
@@ -155,7 +155,7 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     
     if (count === 2) {
       return (
-        <div className="mt-3 grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[300px]">
+        <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[300px]">
           {post.images.map((img, i) => (
             <img key={i} src={img} alt={`Attachment ${i+1}`} className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(img, '_blank')} />
           ))}
@@ -165,7 +165,7 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     
     if (count === 3) {
       return (
-        <div className="mt-3 grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[350px]">
+        <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[350px]">
           <div className="h-full">
              <img src={post.images[0]} alt="Attachment 1" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[0], '_blank')} />
           </div>
@@ -179,7 +179,7 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     
     if (count === 4) {
       return (
-        <div className="mt-3 grid grid-cols-2 grid-rows-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[350px]">
+        <div className="grid grid-cols-2 grid-rows-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[350px]">
           {post.images.map((img, i) => (
             <img key={i} src={img} alt={`Attachment ${i+1}`} className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(img, '_blank')} />
           ))}
@@ -313,67 +313,70 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
         </div>
       )}
 
-      {/* Media Rendering */}
-      {renderImages()}
+      {/* Media and Snippets Container */}
+      <div className="flex flex-col gap-4 mb-4">
+        {/* Media Rendering */}
+        {renderImages()}
 
-      {post.documentUrl && (
-        <div className="mt-3">
-          <a 
-            href={post.documentUrl} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="inline-flex items-center group bg-[#151515] border border-white/20 rounded-xl overflow-hidden hover:bg-white/10 hover:border-[#ccff00]/70 transition-all duration-300"
-          >
-            <div className="bg-white/5 px-3 py-2.5 flex items-center justify-center border-r border-white/10 group-hover:bg-[#ccff00] transition-colors duration-300">
-              <FiFileText size={18} className="text-[#ccff00] group-hover:text-black transition-colors duration-300" />
+        {/* Code Snippet & Live Runner */}
+        {type === "snippet" && codeSnippet && (
+          <div className="rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] flex flex-col max-w-full">
+            <div className="bg-white/5 px-4 py-2 border-b border-white/10 flex items-center justify-between overflow-x-auto">
+              <span className="text-[11px] font-mono text-[#a3a3a3] uppercase tracking-wider whitespace-nowrap mr-4">{codeSnippet.language}</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={handleCopy}
+                  className="text-[11px] flex items-center gap-1.5 text-[#a3a3a3] hover:text-white transition-all duration-300 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 whitespace-nowrap"
+                >
+                  {copied ? <FiCheckCircle className="text-[#ccff00]" /> : <FiCopy />} {copied ? 'Copied' : 'Copy'}
+                </button>
+                <button 
+                  onClick={() => onFork && onFork(post)}
+                  className="text-[11px] flex items-center gap-1.5 text-[#a855f7] hover:text-white hover:bg-[#a855f7] font-mono transition-all duration-300 bg-[#a855f7]/10 px-3 py-1.5 rounded-lg border border-[#a855f7]/20 whitespace-nowrap"
+                >
+                  <FiGitMerge /> Fork Snippet
+                </button>
+              </div>
             </div>
-            <div className="px-4 py-2 flex items-center gap-4">
-              <span className="text-sm font-semibold text-white group-hover:text-[#ccff00] transition-colors tracking-wide">
-                Attached Document
-              </span>
-              <FiDownloadCloud size={16} className="text-white/30 group-hover:text-[#ccff00] transition-colors duration-300" />
+            <div className="max-h-[400px] overflow-auto custom-scrollbar w-full">
+              <SyntaxHighlighter 
+                language={codeSnippet.language} 
+                style={vscDarkPlus}
+                customStyle={{ margin: 0, padding: '1rem', background: 'transparent' }}
+                wrapLines={false}
+                wrapLongLines={false}
+              >
+                {codeSnippet.code}
+              </SyntaxHighlighter>
             </div>
-          </a>
-        </div>
-      )}
-
-      {/* Code Snippet & Live Runner */}
-      {type === "snippet" && codeSnippet && (
-        <div className="mb-4 rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] flex flex-col max-w-full">
-          <div className="bg-white/5 px-4 py-2 border-b border-white/10 flex items-center justify-between overflow-x-auto">
-            <span className="text-[11px] font-mono text-[#a3a3a3] uppercase tracking-wider whitespace-nowrap mr-4">{codeSnippet.language}</span>
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={handleCopy}
-                className="text-[11px] flex items-center gap-1.5 text-[#a3a3a3] hover:text-white transition-all duration-300 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 whitespace-nowrap"
-              >
-                {copied ? <FiCheckCircle className="text-[#ccff00]" /> : <FiCopy />} {copied ? 'Copied' : 'Copy'}
-              </button>
-              <button 
-                onClick={() => onFork && onFork(post)}
-                className="text-[11px] flex items-center gap-1.5 text-[#a855f7] hover:text-white hover:bg-[#a855f7] font-mono transition-all duration-300 bg-[#a855f7]/10 px-3 py-1.5 rounded-lg border border-[#a855f7]/20 whitespace-nowrap"
-              >
-                <FiGitMerge /> Fork Snippet
-              </button>
+            {/* Live Executable Sandbox */}
+            <div className="px-4 pb-4">
+              <LiveSnippet code={codeSnippet.code} language={codeSnippet.language} />
             </div>
           </div>
-          <div className="max-h-[400px] overflow-auto custom-scrollbar w-full">
-            <SyntaxHighlighter 
-              language={codeSnippet.language} 
-              style={vscDarkPlus}
-              customStyle={{ margin: 0, padding: '1rem', background: 'transparent' }}
-              wrapLines={false}
-              wrapLongLines={false}
+        )}
+
+        {post.documentUrl && (
+          <div>
+            <a 
+              href={post.documentUrl} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="inline-flex items-center group bg-[#151515] border border-white/20 rounded-xl overflow-hidden hover:bg-white/10 hover:border-[#ccff00]/70 transition-all duration-300 w-full sm:w-auto"
             >
-              {codeSnippet.code}
-            </SyntaxHighlighter>
+              <div className="bg-white/5 px-3 py-2.5 flex items-center justify-center border-r border-white/10 group-hover:bg-[#ccff00] transition-colors duration-300 h-full">
+                <FiFileText size={18} className="text-[#ccff00] group-hover:text-black transition-colors duration-300" />
+              </div>
+              <div className="px-4 py-2 flex items-center justify-between gap-4 flex-1">
+                <span className="text-sm font-semibold text-white group-hover:text-[#ccff00] transition-colors tracking-wide truncate">
+                  Attached Document
+                </span>
+                <FiDownloadCloud size={16} className="text-white/30 group-hover:text-[#ccff00] transition-colors duration-300 flex-shrink-0" />
+              </div>
+            </a>
           </div>
-          {/* Live Executable Sandbox */}
-          <div className="px-4 pb-4">
-            <LiveSnippet code={codeSnippet.code} language={codeSnippet.language} />
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Reactions & Actions */}
       <div className="flex items-center gap-4 pt-3 border-t border-white/5 mt-auto flex-wrap">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { addUser } from "../redux/userSlice";
 import { FiArrowLeft, FiCode, FiZap, FiCheck, FiStar, FiPlay, FiTerminal, FiMessageSquare, FiSend, FiTrash2, FiX } from "react-icons/fi";
@@ -29,12 +29,18 @@ const Sandbox = () => {
   const { roomId } = useParams();
   const user = useSelector((store) => store.user);
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   
   const [isInitializing, setIsInitializing] = useState(true);
   const [socketConnected, setSocketConnected] = useState(false);
-  const [language, setLanguage] = useState("javascript");
-  const [code, setCode] = useState(BOILERPLATES["javascript"]);
+  
+  // Intercept initial code and language from route state (if coming from a snippet)
+  const initialCode = location.state?.initialCode;
+  const initialLanguage = location.state?.initialLanguage || "javascript";
+
+  const [language, setLanguage] = useState(initialLanguage);
+  const [code, setCode] = useState(initialCode || BOILERPLATES[initialLanguage] || BOILERPLATES["javascript"]);
   
   const targetId = user ? roomId?.split("_").find(id => id !== String(user._id)) : null;
   const [targetUser, setTargetUser] = useState(null);

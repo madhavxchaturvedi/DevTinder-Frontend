@@ -1,11 +1,41 @@
 import React, { useState } from 'react';
-import { FiPlay, FiSquare, FiExternalLink } from 'react-icons/fi';
+import { FiPlay, FiSquare, FiExternalLink, FiZap } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 const LiveSnippet = ({ code, language }) => {
   const [isRunning, setIsRunning] = useState(false);
+  const navigate = useNavigate();
+
+  // Heuristic to fix wrong language selection by users (e.g. pasting Java but leaving dropdown on JS)
+  let effectiveLang = language?.toLowerCase() || 'javascript';
+  if (effectiveLang === 'javascript' || effectiveLang === 'js') {
+    if (code.includes('public class ') || code.includes('public static void main') || code.includes('System.out.println')) {
+      effectiveLang = 'java';
+    } else if (code.includes('def ') && code.includes('print(') && !code.includes('function')) {
+      effectiveLang = 'python';
+    } else if (code.includes('#include')) {
+      effectiveLang = 'cpp';
+    }
+  }
 
   // We only execute web languages directly
-  const isRunnable = ['javascript', 'js', 'html', 'css'].includes(language?.toLowerCase());
+  const isRunnable = ['javascript', 'js', 'html', 'css'].includes(effectiveLang);
+  const isBackend = ['python', 'java', 'cpp', 'c', 'c++', 'typescript', 'ts', 'go', 'rust'].includes(effectiveLang);
+
+  const handleOpenSandbox = () => {
+    const roomId = `snippet_${Math.random().toString(36).substring(2, 9)}`;
+    let mappedLang = effectiveLang;
+    if (mappedLang === 'js') mappedLang = 'javascript';
+    if (mappedLang === 'ts') mappedLang = 'typescript';
+    if (mappedLang === 'c++') mappedLang = 'cpp';
+    
+    navigate(`/sandbox/${roomId}`, { 
+      state: { 
+        initialCode: code, 
+        initialLanguage: mappedLang 
+      } 
+    });
+  };
 
   const handleRun = () => {
     setIsRunning(true);
@@ -98,6 +128,23 @@ const LiveSnippet = ({ code, language }) => {
           >
             <FiExternalLink /> Open in New Tab
           </button>
+        </div>
+      )}
+
+      {isBackend && (
+        <div className="flex items-center gap-3 mt-1">
+          <button
+            onClick={handleOpenSandbox}
+            className="group relative flex items-center gap-2 text-xs font-medium text-white bg-[#151515] border border-white/10 px-4 py-2 rounded-lg hover:border-[#a855f7]/50 hover:bg-[#1a1a1a] transition-all duration-300 overflow-hidden shadow-sm"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#a855f7]/10 to-transparent opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-1000 ease-in-out" />
+            <FiZap className="text-[#a855f7] relative z-10" /> 
+            <span className="relative z-10 tracking-wide">Run in Sandbox</span>
+          </button>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#a855f7]/10 border border-[#a855f7]/20">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#a855f7] animate-pulse" />
+            <span className="text-[9px] font-bold text-[#d8b4fe] uppercase tracking-widest">Pro Only</span>
+          </div>
         </div>
       )}
 
