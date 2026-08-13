@@ -2,10 +2,10 @@ import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
-import { setPosts, addPost } from "../redux/postSlice";
+import { setPosts, addPost, appendPosts } from "../redux/postSlice";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { FiImage, FiArrowUp, FiCode, FiX, FiLock, FiGlobe, FiUsers, FiGitMerge, FiSend, FiInbox, FiStar } from "react-icons/fi";
+import { FiImage, FiArrowUp, FiCode, FiX, FiLock, FiGlobe, FiUsers, FiGitMerge, FiSend, FiInbox, FiStar, FiPaperclip, FiFileText } from "react-icons/fi";
 import PostCard from "./PostCard";
 
 const COMMON_TAGS = ["react", "node", "javascript", "python", "rustlang", "machinelearning", "webdev"];
@@ -20,6 +20,11 @@ const Feed = () => {
   const [loading, setLoading] = useState(false);
   const [activeTag, setActiveTag] = useState("");
   
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const loaderRef = useRef(null);
+  
   // Create Post State
   const [isPosting, setIsPosting] = useState(false);
   const [content, setContent] = useState("");
@@ -31,12 +36,18 @@ const Feed = () => {
   const [forkedFrom, setForkedFrom] = useState(null); // Parent post object
   const [followedUsers, setFollowedUsers] = useState([]); // List of followed IDs
 
-  const createPostRef = useRef(null);
+  // Media State
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedDocument, setSelectedDocument] = useState(null);
 
-  const fetchPosts = async (tag = "") => {
+  const createPostRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const docInputRef = useRef(null);
+
+  const fetchPosts = async (tag = "", pageNum = 1) => {
     try {
       setLoading(true);
-      const url = tag ? `${BASE_URL}/feed/posts?tag=${tag}` : `${BASE_URL}/feed/posts`;
+      const url = tag ? `${BASE_URL}/feed/posts?tag=${tag}&page=${pageNum}` : `${BASE_URL}/feed/posts?page=${pageNum}`;
       const res = await axios.get(url, { withCredentials: true });
       
       const fetchedPosts = res?.data?.data || [];
@@ -47,7 +58,13 @@ const Feed = () => {
         userReaction: userReactionsMap[p._id] || null
       }));
       
-      dispatch(setPosts(postsWithReactions));
+      if (pageNum === 1) {
+        dispatch(setPosts(postsWithReactions));
+      } else {
+        dispatch(appendPosts(postsWithReactions));
+      }
+      
+      setHasMore(fetchedPosts.length > 0);
       setFollowedUsers(res?.data?.followedUserIds || []);
     } catch (err) {
       if (err?.response?.status === 401) return;
@@ -57,9 +74,37 @@ const Feed = () => {
     }
   };
 
+  // Fetch when tag changes (reset to page 1)
   useEffect(() => {
-    fetchPosts(activeTag);
+    setPage(1);
+    setHasMore(true);
+    fetchPosts(activeTag, 1);
   }, [activeTag]);
+
+  // Fetch when page changes (infinite scroll)
+  useEffect(() => {
+    if (page > 1) {
+      fetchPosts(activeTag, page);
+    }
+  }, [page]);
+
+  // Intersection Observer for Infinite Scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 1.0 }
+    );
+    
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, [hasMore, loading]);
 
   const handleFork = (parentPost) => {
     setForkedFrom(parentPost);
@@ -84,18 +129,59 @@ const Feed = () => {
     setVisibility("public");
   };
 
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (selectedImages.length + files.length > 4) {
+      toast.error("You can only upload up to 4 images");
+      return;
+    }
+    const validFiles = files.filter(f => f.size <= 10 * 1024 * 1024);
+    if (validFiles.length < files.length) toast.error("Some images exceeded 10MB");
+    setSelectedImages([...selectedImages, ...validFiles]);
+  };
+
+  const handleDocSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Document exceeds 10MB limit");
+        return;
+      }
+      setSelectedDocument(file);
+    }
+  };
+
   const handlePost = async () => {
     if (!content.trim()) return toast.error("Content is required");
     if (type === "snippet" && !code.trim()) return toast.error("Code snippet is required");
 
     try {
       setIsPosting(true);
+
+      let uploadedImages = [];
+      let uploadedDocumentUrl = null;
+
+      if (selectedImages.length > 0 || selectedDocument) {
+        const formData = new FormData();
+        selectedImages.forEach(img => formData.append("images", img));
+        if (selectedDocument) formData.append("document", selectedDocument);
+
+        const uploadRes = await axios.post(`${BASE_URL}/post/upload-media`, formData, {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+        
+        uploadedImages = uploadRes.data.images || [];
+        uploadedDocumentUrl = uploadRes.data.documentUrl || null;
+      }
       
       const payload = {
         type,
         content,
         visibility,
         stackTags: postTags.split(",").map(t => t.trim().replace(/^#/, '').toLowerCase()).filter(t => t),
+        images: uploadedImages,
+        documentUrl: uploadedDocumentUrl
       };
 
       if (type === "snippet") {
@@ -115,6 +201,8 @@ const Feed = () => {
       setCode("");
       setPostTags("");
       setForkedFrom(null);
+      setSelectedImages([]);
+      setSelectedDocument(null);
       setType("standard");
       setVisibility("public");
       toast.success("Posted successfully!");
@@ -129,7 +217,7 @@ const Feed = () => {
     <div className="w-full max-w-5xl mx-auto flex flex-col lg:flex-row items-start gap-8 px-4 pt-10">
       
       {/* ── Center Column (Timeline) ───────────────────────────── */}
-      <div className="flex-1 flex flex-col w-full min-h-[800px]">
+      <div className="flex-1 flex flex-col w-full min-w-0 min-h-[800px]">
         
         {/* Create Post Box */}
         <div ref={createPostRef} className="dev-card p-5 mb-6 flex flex-col gap-3">
@@ -195,11 +283,54 @@ const Feed = () => {
             </div>
           )}
 
+          {/* Media Previews */}
+          {(selectedImages.length > 0 || selectedDocument) && (
+            <div className="mt-3 flex flex-wrap gap-3">
+              {selectedImages.map((img, idx) => (
+                <div key={idx} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-white/10">
+                  <img src={URL.createObjectURL(img)} alt="preview" className="w-full h-full object-cover" />
+                  <button onClick={() => setSelectedImages(selectedImages.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-black/70 p-1 rounded-full opacity-0 group-hover:opacity-100 transition text-white hover:text-red-400">
+                    <FiX size={12} />
+                  </button>
+                </div>
+              ))}
+              {selectedDocument && (
+                <div className="relative group flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/10">
+                  <FiFileText className="text-[#ccff00]" />
+                  <span className="text-xs text-white max-w-[120px] truncate">{selectedDocument.name}</span>
+                  <button onClick={() => setSelectedDocument(null)} className="ml-1 opacity-0 group-hover:opacity-100 transition text-white hover:text-red-400">
+                    <FiX size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex justify-between items-center border-t border-white/5 pt-3 mt-1">
+            <div className="flex items-center gap-2">
+              <input type="file" multiple accept="image/*" className="hidden" ref={imageInputRef} onChange={handleImageSelect} />
+              <input type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" ref={docInputRef} onChange={handleDocSelect} />
+              
+              <button
+                onClick={() => imageInputRef.current?.click()}
+                className="p-2 text-[#a3a3a3] hover:text-[#ccff00] hover:bg-[#ccff00]/10 rounded-xl transition"
+                title="Upload Images (max 4)"
+              >
+                <FiImage size={20} />
+              </button>
+              <button
+                onClick={() => docInputRef.current?.click()}
+                className="p-2 text-[#a3a3a3] hover:text-[#ccff00] hover:bg-[#ccff00]/10 rounded-xl transition"
+                title="Upload Document"
+              >
+                <FiPaperclip size={20} />
+              </button>
+            </div>
+
             <input 
               type="text"
               placeholder="Tags (comma separated)..."
-              className="bg-transparent border border-white/10 rounded-lg px-3 py-1.5 text-xs text-[#a3a3a3] outline-none w-1/2 focus:border-[#a855f7]/50 focus:ring-1 focus:ring-[#a855f7]/20 transition-all duration-300"
+              className="bg-transparent border border-white/10 rounded-lg px-3 py-1.5 text-xs text-[#a3a3a3] outline-none w-1/3 focus:border-[#a855f7]/50 focus:ring-1 focus:ring-[#a855f7]/20 transition-all duration-300"
               value={postTags}
               onChange={(e) => setPostTags(e.target.value)}
             />
@@ -256,7 +387,22 @@ const Feed = () => {
               </p>
             </div>
           ) : (
-            posts.map((post) => <PostCard key={post._id} post={post} onFork={handleFork} followedUsers={followedUsers} />)
+            <>
+              {posts.map((post) => <PostCard key={post._id} post={post} onFork={handleFork} followedUsers={followedUsers} />)}
+              
+              {/* Infinite Scroll Loader */}
+              {hasMore && (
+                <div ref={loaderRef} className="py-8 flex justify-center">
+                  <div className="w-8 h-8 border-4 border-[#a855f7] border-t-transparent rounded-full animate-spin shadow-[0_0_15px_#a855f7]"></div>
+                </div>
+              )}
+              
+              {!hasMore && posts.length > 0 && (
+                <div className="py-8 text-center text-[#a3a3a3] font-mono text-sm">
+                  You've reached the end of the feed.
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

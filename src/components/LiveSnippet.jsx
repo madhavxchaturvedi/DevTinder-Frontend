@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiPlay, FiSquare } from 'react-icons/fi';
+import { FiPlay, FiSquare, FiExternalLink } from 'react-icons/fi';
 
 const LiveSnippet = ({ code, language }) => {
   const [isRunning, setIsRunning] = useState(false);
@@ -13,6 +13,13 @@ const LiveSnippet = ({ code, language }) => {
 
   const handleStop = () => {
     setIsRunning(false);
+  };
+
+  const handleOpenNewTab = () => {
+    const htmlContent = getExecutableHTML();
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
   };
 
   // Wrap the code into a basic HTML structure if it's purely JS or CSS
@@ -85,23 +92,51 @@ const LiveSnippet = ({ code, language }) => {
               <FiSquare className="text-red-500" /> Stop
             </button>
           )}
+          <button
+            onClick={handleOpenNewTab}
+            className="flex items-center gap-1.5 text-[11px] font-bold text-[#a3a3a3] bg-white/5 border border-white/10 px-3 py-1.5 rounded hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <FiExternalLink /> Open in New Tab
+          </button>
         </div>
       )}
 
       {isRunning && (
-        <div className="w-full border border-[#ccff00]/30 rounded-lg overflow-hidden bg-[#0a0a0a] min-h-[150px] mb-2 relative">
-          <div className="absolute top-0 left-0 w-full bg-[#ccff00]/10 border-b border-[#ccff00]/20 px-3 py-1 flex items-center justify-between">
-            <span className="text-[10px] text-[#ccff00] font-mono uppercase tracking-wider">Live Preview Sandbox</span>
+        <div className="w-full border border-white/20 rounded-xl overflow-hidden bg-white mt-2 flex flex-col transition-all h-[280px]">
+          {/* Mini-Browser Header */}
+          <div className="bg-[#1e1e1e] border-b border-white/10 px-3 py-2 flex items-center justify-between">
+            {/* Traffic Lights */}
+            <div className="flex items-center gap-1.5 w-12">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+            </div>
+            
+            {/* Address Bar / Title */}
+            <div className="flex-1 flex justify-center">
+              <div className="bg-black/50 rounded px-3 py-0.5 flex items-center justify-center max-w-[150px] w-full border border-white/5">
+                <span className="text-[9px] text-white/50 font-mono flex items-center gap-1.5 tracking-wider">
+                  <FiPlay size={8} className="text-[#ccff00]" /> localhost
+                </span>
+              </div>
+            </div>
+
+            {/* Spacer for centering */}
+            <div className="w-12" />
           </div>
-          <iframe
-            className="w-full h-full min-h-[150px] mt-6 border-none"
-            // CRITICAL SECURITY FIX: 
-            // We only use allow-scripts. We DO NOT use allow-same-origin.
-            // This guarantees the iframe runs in a unique origin, completely isolated from our app's cookies/storage.
-            sandbox="allow-scripts"
-            srcDoc={getExecutableHTML()}
-            title="Live Code Snippet"
-          />
+          
+          {/* Content iframe */}
+          <div className="flex-1 bg-white relative w-full h-full">
+            <iframe
+              className="w-full h-full absolute inset-0 border-none"
+              // CRITICAL SECURITY FIX: 
+              // We only use allow-scripts. We DO NOT use allow-same-origin.
+              // This guarantees the iframe runs in a unique origin, completely isolated from our app's cookies/storage.
+              sandbox="allow-scripts"
+              srcDoc={getExecutableHTML()}
+              title="Live Code Snippet"
+            />
+          </div>
         </div>
       )}
     </div>

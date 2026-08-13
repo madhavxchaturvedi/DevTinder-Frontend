@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { FiMessageSquare, FiMoreHorizontal, FiTrash2, FiGitMerge, FiStar, FiZap, FiTerminal, FiCheckCircle, FiUsers } from "react-icons/fi";
+import { FiMessageSquare, FiMoreHorizontal, FiTrash2, FiGitMerge, FiStar, FiZap, FiTerminal, FiCheckCircle, FiUsers, FiFileText, FiDownloadCloud, FiCopy } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
@@ -44,6 +44,16 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
   
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (codeSnippet?.code) {
+      navigator.clipboard.writeText(codeSnippet.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const handleFollowToggle = async () => {
     try {
@@ -130,6 +140,56 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     }
   };
 
+  const renderImages = () => {
+    if (!post.images || post.images.length === 0) return null;
+    
+    const count = post.images.length;
+    
+    if (count === 1) {
+      return (
+        <div className="mt-3 rounded-2xl overflow-hidden border border-white/10 max-h-[500px]">
+          <img src={post.images[0]} alt="Attachment 1" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[0], '_blank')} />
+        </div>
+      );
+    }
+    
+    if (count === 2) {
+      return (
+        <div className="mt-3 grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[300px]">
+          {post.images.map((img, i) => (
+            <img key={i} src={img} alt={`Attachment ${i+1}`} className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(img, '_blank')} />
+          ))}
+        </div>
+      );
+    }
+    
+    if (count === 3) {
+      return (
+        <div className="mt-3 grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[350px]">
+          <div className="h-full">
+             <img src={post.images[0]} alt="Attachment 1" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[0], '_blank')} />
+          </div>
+          <div className="grid grid-rows-2 gap-0.5 h-full">
+             <img src={post.images[1]} alt="Attachment 2" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[1], '_blank')} />
+             <img src={post.images[2]} alt="Attachment 3" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[2], '_blank')} />
+          </div>
+        </div>
+      );
+    }
+    
+    if (count === 4) {
+      return (
+        <div className="mt-3 grid grid-cols-2 grid-rows-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[350px]">
+          {post.images.map((img, i) => (
+            <img key={i} src={img} alt={`Attachment ${i+1}`} className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(img, '_blank')} />
+          ))}
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   return (
     <div className={`relative rounded-2xl mb-6 transition-all duration-300 group/card ${
       type === 'debug_sos' && post.isResolved
@@ -149,9 +209,9 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
         <div className="flex items-center gap-1.5 text-[11px] text-[#a3a3a3] font-medium mb-3 pl-1">
           <FiGitMerge /> 
           Forked from 
-          <span className="text-white hover:text-[#ccff00] cursor-pointer">
+          <Link to={`/user/${forkedFrom.authorId?._id}`} className="text-white hover:text-[#ccff00] transition-colors">
             {forkedFrom.authorId?.firstName} {forkedFrom.authorId?.lastName}
-          </span>
+          </Link>
         </div>
       )}
 
@@ -236,30 +296,74 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
 
       {/* Content (Markdown) */}
       {content && (
-        <div className="text-[#e5e5e5] text-sm leading-relaxed mb-4 prose prose-invert prose-pre:bg-[#0a0a0a] prose-pre:border-white/10 max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {content}
-          </ReactMarkdown>
+        <div className="mb-4">
+          <div className={`text-[#e5e5e5] text-sm leading-relaxed prose prose-invert prose-pre:bg-[#0a0a0a] prose-pre:border-white/10 max-w-none break-words ${!isExpanded && content.length > 300 ? 'line-clamp-4' : ''}`}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {content}
+            </ReactMarkdown>
+          </div>
+          {content.length > 300 && (
+            <button 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-[#ccff00] text-xs font-semibold hover:underline mt-2 inline-flex items-center gap-1"
+            >
+              {isExpanded ? 'Show less' : 'Read more'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Media Rendering */}
+      {renderImages()}
+
+      {post.documentUrl && (
+        <div className="mt-3">
+          <a 
+            href={post.documentUrl} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="inline-flex items-center group bg-[#151515] border border-white/20 rounded-xl overflow-hidden hover:bg-white/10 hover:border-[#ccff00]/70 transition-all duration-300"
+          >
+            <div className="bg-white/5 px-3 py-2.5 flex items-center justify-center border-r border-white/10 group-hover:bg-[#ccff00] transition-colors duration-300">
+              <FiFileText size={18} className="text-[#ccff00] group-hover:text-black transition-colors duration-300" />
+            </div>
+            <div className="px-4 py-2 flex items-center gap-4">
+              <span className="text-sm font-semibold text-white group-hover:text-[#ccff00] transition-colors tracking-wide">
+                Attached Document
+              </span>
+              <FiDownloadCloud size={16} className="text-white/30 group-hover:text-[#ccff00] transition-colors duration-300" />
+            </div>
+          </a>
         </div>
       )}
 
       {/* Code Snippet & Live Runner */}
       {type === "snippet" && codeSnippet && (
-        <div className="mb-4 rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] flex flex-col">
-          <div className="bg-white/5 px-4 py-2 border-b border-white/10 flex items-center justify-between">
-            <span className="text-[11px] font-mono text-[#a3a3a3] uppercase tracking-wider">{codeSnippet.language}</span>
-            <button 
-              onClick={() => onFork && onFork(post)}
-              className="text-[11px] flex items-center gap-1.5 text-[#a855f7] hover:text-white hover:bg-[#a855f7] font-mono transition-all duration-300 bg-[#a855f7]/10 px-3 py-1.5 rounded-lg border border-[#a855f7]/20"
-            >
-              <FiGitMerge /> Fork Snippet
-            </button>
+        <div className="mb-4 rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] flex flex-col max-w-full">
+          <div className="bg-white/5 px-4 py-2 border-b border-white/10 flex items-center justify-between overflow-x-auto">
+            <span className="text-[11px] font-mono text-[#a3a3a3] uppercase tracking-wider whitespace-nowrap mr-4">{codeSnippet.language}</span>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleCopy}
+                className="text-[11px] flex items-center gap-1.5 text-[#a3a3a3] hover:text-white transition-all duration-300 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 whitespace-nowrap"
+              >
+                {copied ? <FiCheckCircle className="text-[#ccff00]" /> : <FiCopy />} {copied ? 'Copied' : 'Copy'}
+              </button>
+              <button 
+                onClick={() => onFork && onFork(post)}
+                className="text-[11px] flex items-center gap-1.5 text-[#a855f7] hover:text-white hover:bg-[#a855f7] font-mono transition-all duration-300 bg-[#a855f7]/10 px-3 py-1.5 rounded-lg border border-[#a855f7]/20 whitespace-nowrap"
+              >
+                <FiGitMerge /> Fork Snippet
+              </button>
+            </div>
           </div>
-          <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+          <div className="max-h-[400px] overflow-auto custom-scrollbar w-full">
             <SyntaxHighlighter 
               language={codeSnippet.language} 
               style={vscDarkPlus}
               customStyle={{ margin: 0, padding: '1rem', background: 'transparent' }}
+              wrapLines={false}
+              wrapLongLines={false}
             >
               {codeSnippet.code}
             </SyntaxHighlighter>
@@ -319,7 +423,7 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
         
         {/* Comments / Help */}
         <button 
-          onClick={() => setIsCommentsOpen(true)}
+          onClick={() => setIsCommentsOpen(!isCommentsOpen)}
           className={`flex items-center gap-1.5 transition-all duration-300 group text-xs font-semibold ml-auto px-4 py-1.5 rounded-full border font-mono ${
             type === 'debug_sos'
               ? 'text-[#0a0a0a] bg-[#ccff00] border-transparent hover:bg-[#b3e600] hover:scale-105'
