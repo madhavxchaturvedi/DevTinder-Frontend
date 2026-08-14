@@ -168,7 +168,7 @@ const LoginForm = () => {
 
               <button
                 type="submit"
-                className="w-full bg-[#ccff00] text-[#0a0a0a] font-bold text-lg py-3.5 rounded-xl mt-6 hover:bg-[#bbf000] hover:shadow-[0_0_20px_rgba(204,255,0,0.3)] transition-all transform active:scale-[0.98]"
+                className="w-full bg-[#ccff00] text-[#0a0a0a] font-bold text-lg py-3.5 rounded-none mt-6 hover:bg-[#bbf000] transition-all transform active:scale-[0.98]"
               >
                 {isLogin ? "Log In" : "Sign Up"}
               </button>

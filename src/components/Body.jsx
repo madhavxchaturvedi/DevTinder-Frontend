@@ -72,7 +72,7 @@ const Body = () => {
   }, [userData]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] selection:bg-indigo-500/30 flex flex-col lg:flex-row">
+    <div className="h-screen overflow-hidden bg-[#09090b] text-[#e5e5e5] flex flex-col lg:flex-row">
       <Toaster 
         toastOptions={{
           style: {
@@ -91,8 +91,8 @@ const Body = () => {
       {/* ── Authenticated State: Global 3-Column Layout ── */}
       {userData && <LeftSidebar />}
 
-      {/* ── Main Content Area ── */}
-      <div className={`flex-1 flex flex-col items-center overflow-x-hidden min-h-screen ${!userData ? 'pt-24' : ''}`}>
+      {/* ── Main Content Area (Scrollable) ── */}
+      <div id="main-scroll-container" className={`flex-1 flex flex-col items-center overflow-x-hidden overflow-y-auto h-full ${!userData ? 'pt-24' : ''}`}>
         <Outlet />
       </div>
     </div>

@@ -147,15 +147,15 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     
     if (count === 1) {
       return (
-        <div className="rounded-2xl overflow-hidden border border-white/10 max-h-[500px]">
-          <img src={post.images[0]} alt="Attachment 1" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[0], '_blank')} />
+        <div className="rounded-xl overflow-hidden bg-[#111] max-h-[500px]">
+          <img src={post.images[0]} alt="Attachment 1" className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[0], '_blank')} />
         </div>
       );
     }
     
     if (count === 2) {
       return (
-        <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[300px]">
+        <div className="grid grid-cols-2 gap-1 rounded-xl overflow-hidden bg-[#111] h-[300px]">
           {post.images.map((img, i) => (
             <img key={i} src={img} alt={`Attachment ${i+1}`} className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(img, '_blank')} />
           ))}
@@ -165,11 +165,11 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     
     if (count === 3) {
       return (
-        <div className="grid grid-cols-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[350px]">
+        <div className="grid grid-cols-2 gap-1 rounded-xl overflow-hidden bg-[#111] h-[350px]">
           <div className="h-full">
              <img src={post.images[0]} alt="Attachment 1" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[0], '_blank')} />
           </div>
-          <div className="grid grid-rows-2 gap-0.5 h-full">
+          <div className="grid grid-rows-2 gap-1 h-full">
              <img src={post.images[1]} alt="Attachment 2" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[1], '_blank')} />
              <img src={post.images[2]} alt="Attachment 3" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[2], '_blank')} />
           </div>
@@ -179,7 +179,7 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     
     if (count === 4) {
       return (
-        <div className="grid grid-cols-2 grid-rows-2 gap-0.5 rounded-2xl overflow-hidden border border-white/10 h-[350px]">
+        <div className="grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden bg-[#111] h-[350px]">
           {post.images.map((img, i) => (
             <img key={i} src={img} alt={`Attachment ${i+1}`} className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(img, '_blank')} />
           ))}
@@ -191,18 +191,14 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
   };
 
   return (
-    <div className={`relative rounded-2xl mb-6 transition-all duration-300 group/card ${
+    <div className={`neo-card mb-6 w-full min-w-0 transition-all duration-300 group/card relative ${
       type === 'debug_sos' && post.isResolved
-        ? 'p-[1px] bg-[#ccff00]/50 hover:shadow-[0_0_20px_rgba(204,255,0,0.15)] border border-solid border-[#ccff00]' 
+        ? 'border-[#ccff00]/30 shadow-[0_0_20px_rgba(204,255,0,0.05)]' 
         : type === 'debug_sos'
-        ? 'p-[1px] bg-[#ffb86c]/50 hover:shadow-[0_0_20px_rgba(255,184,108,0.15)] border border-dashed border-[#ffb86c]'
-        : 'p-0 bg-transparent'
+        ? 'border-[#ffb86c]/30 shadow-[0_0_20px_rgba(255,184,108,0.05)]'
+        : ''
     }`}>
-      <div className={`bg-[#0a0a0a] rounded-2xl p-5 flex flex-col h-full transition-colors duration-300 ${
-        type === 'debug_sos'
-          ? 'border-transparent' // Border handled by wrapper
-          : 'border border-white/5 hover:border-[#a855f7]/30 bg-[#121212]'
-      }`}>
+      <div className="flex flex-col h-full p-5 md:p-6 w-full min-w-0">
       
       {/* Fork Indicator */}
       {forkedFrom && (
@@ -377,66 +373,67 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
           </div>
         )}
       </div>
-
       {/* Reactions & Actions */}
-      <div className="flex items-center gap-4 pt-3 border-t border-white/5 mt-auto flex-wrap">
+      <div className="flex items-center gap-3 pt-6 mt-auto flex-wrap border-t border-white/5">
         
         {/* Custom Reactions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button 
             onClick={() => handleReact('fire')} 
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full transition-colors group ${
-              userReaction === 'fire' ? 'bg-[#ff5555]/20 text-[#ff5555]' : 'hover:bg-white/10 text-[#a3a3a3]'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 group ${
+              userReaction === 'fire' ? 'bg-[#ff5555]/10 text-[#ff5555]' : 'bg-white/5 text-[#737373] hover:bg-white/10 hover:text-white'
             }`}
           >
-            <FiZap className="text-lg group-active:scale-75 transition-transform" />
-            <span className="text-xs font-semibold">{reactions?.fire || 0}</span>
+            <FiZap className={`text-[15px] group-active:scale-75 transition-transform ${userReaction === 'fire' ? 'fill-current' : ''}`} />
+            <span className="text-[12px] font-bold">{reactions?.fire || 0}</span>
           </button>
           
           <button 
             onClick={() => handleReact('bug')} 
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full transition-colors group ${
-              userReaction === 'bug' ? 'bg-[#ffb86c]/20 text-[#ffb86c]' : 'hover:bg-white/10 text-[#a3a3a3]'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 group ${
+              userReaction === 'bug' ? 'bg-[#ffb86c]/10 text-[#ffb86c]' : 'bg-white/5 text-[#737373] hover:bg-white/10 hover:text-white'
             }`}
           >
-            <FiTerminal className="text-lg group-active:scale-75 transition-transform" />
-            <span className="text-xs font-semibold">{reactions?.bug || 0}</span>
+            <FiTerminal className="text-[15px] group-active:scale-75 transition-transform" />
+            <span className="text-[12px] font-bold">{reactions?.bug || 0}</span>
           </button>
           
           <button 
             onClick={() => handleReact('clever')} 
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full transition-colors group ${
-              userReaction === 'clever' ? 'bg-[#8be9fd]/20 text-[#8be9fd]' : 'hover:bg-white/10 text-[#a3a3a3]'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 group ${
+              userReaction === 'clever' ? 'bg-[#8be9fd]/10 text-[#8be9fd]' : 'bg-white/5 text-[#737373] hover:bg-white/10 hover:text-white'
             }`}
           >
-            <FiStar className="text-lg group-active:scale-75 transition-transform" />
-            <span className="text-xs font-semibold">{reactions?.clever || 0}</span>
+            <FiStar className={`text-[15px] group-active:scale-75 transition-transform ${userReaction === 'clever' ? 'fill-current' : ''}`} />
+            <span className="text-[12px] font-bold">{reactions?.clever || 0}</span>
           </button>
           
           <button 
             onClick={() => handleReact('collab')} 
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full transition-colors group ${
-              userReaction === 'collab' ? 'bg-[#50fa7b]/20 text-[#50fa7b]' : 'hover:bg-white/10 text-[#a3a3a3]'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 group ${
+              userReaction === 'collab' ? 'bg-[#50fa7b]/10 text-[#50fa7b]' : 'bg-white/5 text-[#737373] hover:bg-white/10 hover:text-white'
             }`}
           >
-            <FiUsers className="text-lg group-active:scale-75 transition-transform" />
-            <span className="text-xs font-semibold">{reactions?.collab || 0}</span>
+            <FiUsers className={`text-[15px] group-active:scale-75 transition-transform ${userReaction === 'collab' ? 'fill-current' : ''}`} />
+            <span className="text-[12px] font-bold">{reactions?.collab || 0}</span>
           </button>
         </div>
         
         {/* Comments / Help */}
         <button 
           onClick={() => setIsCommentsOpen(!isCommentsOpen)}
-          className={`flex items-center gap-1.5 transition-all duration-300 group text-xs font-semibold ml-auto px-4 py-1.5 rounded-full border font-mono ${
+          className={`flex items-center gap-2 transition-all duration-300 group px-4 py-2 rounded-full ml-auto text-[13px] font-bold ${
             type === 'debug_sos'
-              ? 'text-[#0a0a0a] bg-[#ccff00] border-transparent hover:bg-[#b3e600] hover:scale-105'
-              : 'text-[#a3a3a3] hover:text-[#d8b4fe] bg-white/5 border-white/5 hover:border-[#a855f7]/30 hover:bg-[#a855f7]/10'
+              ? 'bg-[#ccff00]/10 text-[#ccff00] hover:bg-[#ccff00]/20'
+              : 'bg-white/5 text-[#e5e5e5] hover:bg-white/10'
           }`}
         >
-          <FiMessageSquare className={`transition-transform ${isCommentsOpen ? 'text-[#ccff00]' : 'group-active:scale-90'}`} />
-          {type === 'debug_sos' ? (post.isResolved ? "View Answer" : "HELP_DEBUG") : "Comment"}
+          {type === 'debug_sos' ? (
+            <><FiMessageSquare /> Provide Fix</>
+          ) : (
+            <><FiMessageSquare /> {post.comments?.length || 0} Comments</>
+          )}
         </button>
-
       </div>
       
       {/* Inline Comments Section */}

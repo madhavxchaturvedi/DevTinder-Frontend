@@ -127,7 +127,7 @@ const Premium = () => {
         </div>
 
         {/* Gold Membership */}
-        <div className="bg-[#0a0a0a] border border-[#ccff00]/30 rounded-3xl p-10 flex flex-col items-center flex-1 w-full max-w-sm relative shadow-[0_0_40px_rgba(204,255,0,0.05)] hover:shadow-[0_0_60px_rgba(204,255,0,0.1)] transition-all lg:-translate-y-4">
+        <div className="bg-[#0a0a0a] border border-[#ccff00]/30 rounded-none p-10 flex flex-col items-center flex-1 w-full max-w-sm relative transition-all lg:-translate-y-4">
           <div className="absolute -top-4 bg-[#ccff00] text-[#0a0a0a] font-black text-xs uppercase tracking-widest px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.4)]">
             Most Popular
           </div>

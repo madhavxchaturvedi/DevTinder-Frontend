@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { setPosts, addPost, appendPosts } from "../redux/postSlice";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { HiCode } from "react-icons/hi";
 import { FiImage, FiArrowUp, FiCode, FiX, FiLock, FiGlobe, FiUsers, FiGitMerge, FiSend, FiInbox, FiStar, FiPaperclip, FiFileText } from "react-icons/fi";
 import PostCard from "./PostCard";
 
@@ -32,9 +33,9 @@ const Feed = () => {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [visibility, setVisibility] = useState("public"); // public, followers, matches
-  const [postTags, setPostTags] = useState("");
   const [forkedFrom, setForkedFrom] = useState(null); // Parent post object
   const [followedUsers, setFollowedUsers] = useState([]); // List of followed IDs
+  const [globalTrendingTags, setGlobalTrendingTags] = useState([]);
 
   // Media State
   const [selectedImages, setSelectedImages] = useState([]);
@@ -68,9 +69,27 @@ const Feed = () => {
       setFollowedUsers(res?.data?.followedUserIds || []);
     } catch (err) {
       if (err?.response?.status === 401) return;
-      toast.error("Could not load feed");
+      toast.error("Could not load feed. Please try again.");
+      console.log(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFollowToggle = async (userId) => {
+    const isFollowing = followedUsers.includes(userId);
+    try {
+      if (isFollowing) {
+        await axios.post(BASE_URL + "/user/unfollow/" + userId, {}, { withCredentials: true });
+        setFollowedUsers(followedUsers.filter(id => id !== userId));
+        toast.success("Unfollowed builder");
+      } else {
+        await axios.post(BASE_URL + "/user/follow/" + userId, {}, { withCredentials: true });
+        setFollowedUsers([...followedUsers, userId]);
+        toast.success("Followed builder!");
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Action failed");
     }
   };
 
@@ -175,11 +194,13 @@ const Feed = () => {
         uploadedDocumentUrl = uploadRes.data.documentUrl || null;
       }
       
+      const extractedTags = content.match(/#[a-z0-9_]+/gi)?.map(t => t.slice(1).toLowerCase()) || [];
+
       const payload = {
         type,
         content,
         visibility,
-        stackTags: postTags.split(",").map(t => t.trim().replace(/^#/, '').toLowerCase()).filter(t => t),
+        stackTags: extractedTags,
         images: uploadedImages,
         documentUrl: uploadedDocumentUrl
       };
@@ -199,7 +220,6 @@ const Feed = () => {
       // Reset form
       setContent("");
       setCode("");
-      setPostTags("");
       setForkedFrom(null);
       setSelectedImages([]);
       setSelectedDocument(null);
@@ -213,6 +233,38 @@ const Feed = () => {
     }
   };
 
+  useEffect(() => {
+    if (!posts || posts.length === 0 || activeTag !== "") return;
+    const tagCounts = {};
+    posts.forEach(post => {
+      if (post.stackTags && Array.isArray(post.stackTags)) {
+        post.stackTags.forEach(tag => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+      }
+    });
+    const sortedTags = Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([tag]) => tag);
+    
+    // Only update if we found tags, to prevent flashing empty
+    if (sortedTags.length > 0) {
+      setGlobalTrendingTags(sortedTags);
+    }
+  }, [posts, activeTag]);
+
+  const topBuilders = useMemo(() => {
+    if (!posts || posts.length === 0) return [];
+    const uniqueBuilders = {};
+    posts.forEach(post => {
+      if (post.authorId && post.authorId._id !== user?._id && !uniqueBuilders[post.authorId._id]) {
+        uniqueBuilders[post.authorId._id] = post.authorId;
+      }
+    });
+    return Object.values(uniqueBuilders).slice(0, 3);
+  }, [posts, user]);
+
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col lg:flex-row items-start gap-8 px-4 pt-10">
       
@@ -220,62 +272,82 @@ const Feed = () => {
       <div className="flex-1 flex flex-col w-full min-w-0 min-h-[800px]">
         
         {/* Create Post Box */}
-        <div ref={createPostRef} className="dev-card p-5 mb-6 flex flex-col gap-3">
+        <div ref={createPostRef} className="bg-[#151515] border border-[#262626] rounded-2xl p-5 mb-8 shadow-xl relative transition-all duration-300 focus-within:border-[#444] focus-within:shadow-[0_8px_30px_rgba(0,0,0,0.5)]">
           
           {forkedFrom && (
-            <div className="flex items-center justify-between bg-white/5 border border-[#ccff00]/20 rounded-lg px-3 py-2 mb-2">
-              <span className="text-[11px] font-mono text-[#ccff00] flex items-center gap-1.5">
+            <div className="flex items-center justify-between bg-[#ccff00]/10 border border-[#ccff00]/20 rounded-lg px-3 py-2 mb-4">
+              <span className="text-[12px] font-mono text-[#ccff00] flex items-center gap-1.5">
                 <FiGitMerge /> Forking snippet from {forkedFrom.authorId?.firstName}
               </span>
-              <button onClick={handleCancelFork} className="text-[#a3a3a3] hover:text-red-500 transition-colors">
+              <button onClick={handleCancelFork} className="text-[#ccff00] hover:text-[#e6ff33] transition-colors">
                 <FiX />
               </button>
             </div>
           )}
 
-          {/* Visibility Dropdown (Must include matches!) */}
-          <div className="flex items-center gap-2 border-b border-white/5 pb-3">
-            <select 
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded px-2 py-1 text-xs font-semibold text-[#a3a3a3] outline-none hover:bg-white/10 transition-colors"
-            >
-              <option value="public" className="flex items-center gap-2">Public</option>
-              <option value="followers">Followers Only</option>
-              <option value="matches">Matches Only</option>
-            </select>
-            <select 
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded px-2 py-1 text-xs font-semibold text-[#a3a3a3] outline-none hover:bg-white/10 transition-colors"
-            >
-              <option value="standard">Standard Post</option>
-              <option value="snippet">Code Snippet</option>
-              <option value="debug_sos">Debug SOS</option>
-            </select>
+          <div className="flex gap-4">
+            {/* User Avatar */}
+            <div className="shrink-0">
+              <img 
+                src={user?.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
+                alt="Your avatar" 
+                className="w-10 h-10 rounded-full object-cover border border-white/10"
+              />
+            </div>
+
+            {/* Input Area */}
+            <div className="flex-1 min-w-0 pt-1">
+              <textarea 
+                placeholder="What are you building today? Markdown is supported..."
+                className="w-full bg-transparent text-[#e5e5e5] placeholder:text-[#555] outline-none resize-none text-[15px] min-h-[60px] p-0 transition-all duration-300 leading-relaxed"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+              />
+
+              {/* Media Previews */}
+              {(selectedImages.length > 0 || selectedDocument) && (
+                <div className="mt-2 mb-4 flex flex-wrap gap-3">
+                  {selectedImages.map((img, idx) => (
+                    <div key={idx} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-white/10 shadow-md">
+                      <img src={URL.createObjectURL(img)} alt="preview" className="w-full h-full object-cover" />
+                      <button onClick={() => setSelectedImages(selectedImages.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-black/70 p-1 rounded-full opacity-0 group-hover:opacity-100 transition text-white hover:text-red-400">
+                        <FiX size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {selectedDocument && (
+                    <div className="relative group flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/10 shadow-md">
+                      <FiFileText className="text-[#ccff00]" />
+                      <span className="text-xs text-white max-w-[120px] truncate">{selectedDocument.name}</span>
+                      <button onClick={() => setSelectedDocument(null)} className="ml-1 opacity-0 group-hover:opacity-100 transition text-white hover:text-red-400">
+                        <FiX size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          <textarea 
-            placeholder={type === 'debug_sos' ? "Describe what you're stuck on..." : "Share a thought, markdown supported..."}
-            className="w-full bg-transparent text-[#e5e5e5] placeholder:text-white/20 outline-none resize-none text-sm min-h-[60px] focus:ring-1 focus:ring-[#a855f7]/50 rounded-lg p-2 transition-all duration-300"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
-
+          {/* Full-width Code Snippet Editor */}
           {type === "snippet" && (
-            <div className="flex flex-col gap-2 mt-2 bg-[#0a0a0a] border border-white/10 rounded-lg overflow-hidden">
-              <div className="bg-white/5 px-3 py-2 flex items-center justify-between border-b border-white/10">
+            <div className="mt-3 mb-2 bg-[#09090b] border border-[#262626] rounded-xl overflow-hidden group">
+              <div className="bg-[#121212] px-4 py-2.5 flex items-center justify-between border-b border-[#262626]">
+                <div className="flex items-center gap-2 text-[#737373]">
+                  <FiCode size={14} />
+                  <span className="text-[11px] font-mono font-bold tracking-widest uppercase">Snippet</span>
+                </div>
                 <select 
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  className="bg-transparent text-xs font-mono text-[#a3a3a3] outline-none uppercase"
+                  className="bg-transparent text-[11px] font-mono font-bold text-[#a3a3a3] outline-none uppercase cursor-pointer hover:text-white transition-colors"
                 >
-                  {LANGUAGES.map(lang => <option key={lang} value={lang}>{lang}</option>)}
+                  {LANGUAGES.map(lang => <option key={lang} value={lang} className="bg-[#121212]">{lang}</option>)}
                 </select>
               </div>
               <textarea
-                placeholder="Paste your code here..."
-                className="w-full bg-transparent text-[#ccff00] font-mono text-sm p-4 outline-none resize-none min-h-[150px]"
+                placeholder="// Write or paste your code here..."
+                className="w-full bg-transparent text-[#e5e5e5] font-mono text-[13px] p-4 outline-none resize-none min-h-[140px] leading-relaxed custom-scrollbar placeholder:text-[#444]"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 spellCheck="false"
@@ -283,73 +355,68 @@ const Feed = () => {
             </div>
           )}
 
-          {/* Media Previews */}
-          {(selectedImages.length > 0 || selectedDocument) && (
-            <div className="mt-3 flex flex-wrap gap-3">
-              {selectedImages.map((img, idx) => (
-                <div key={idx} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-white/10">
-                  <img src={URL.createObjectURL(img)} alt="preview" className="w-full h-full object-cover" />
-                  <button onClick={() => setSelectedImages(selectedImages.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-black/70 p-1 rounded-full opacity-0 group-hover:opacity-100 transition text-white hover:text-red-400">
-                    <FiX size={12} />
-                  </button>
-                </div>
-              ))}
-              {selectedDocument && (
-                <div className="relative group flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/10">
-                  <FiFileText className="text-[#ccff00]" />
-                  <span className="text-xs text-white max-w-[120px] truncate">{selectedDocument.name}</span>
-                  <button onClick={() => setSelectedDocument(null)} className="ml-1 opacity-0 group-hover:opacity-100 transition text-white hover:text-red-400">
-                    <FiX size={14} />
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex justify-between items-center border-t border-white/5 pt-3 mt-1">
-            <div className="flex items-center gap-2">
-              <input type="file" multiple accept="image/*" className="hidden" ref={imageInputRef} onChange={handleImageSelect} />
-              <input type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" ref={docInputRef} onChange={handleDocSelect} />
+          {/* Bottom Action Bar */}
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#262626]">
+            
+            {/* Left Actions (Tools) */}
+            <div className="flex items-center gap-1">
+              <label className="p-2 text-[#737373] hover:text-[#e5e5e5] hover:bg-white/5 rounded-full cursor-pointer transition-all tooltip-trigger">
+                <FiImage size={18} />
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
+              </label>
               
-              <button
-                onClick={() => imageInputRef.current?.click()}
-                className="p-2 text-[#a3a3a3] hover:text-[#ccff00] hover:bg-[#ccff00]/10 rounded-xl transition"
-                title="Upload Images (max 4)"
+              <label className="p-2 text-[#737373] hover:text-[#e5e5e5] hover:bg-white/5 rounded-full cursor-pointer transition-all">
+                <FiPaperclip size={18} />
+                <input type="file" className="hidden" onChange={(e) => setSelectedDocument(e.target.files[0])} />
+              </label>
+
+              <button 
+                onClick={() => setType(type === "snippet" ? "standard" : "snippet")}
+                className={`p-2 rounded-full transition-all flex items-center gap-1.5 ml-1 ${
+                  type === "snippet" 
+                    ? "bg-[#ccff00]/10 text-[#ccff00]" 
+                    : "text-[#737373] hover:text-[#e5e5e5] hover:bg-white/5"
+                }`}
               >
-                <FiImage size={20} />
-              </button>
-              <button
-                onClick={() => docInputRef.current?.click()}
-                className="p-2 text-[#a3a3a3] hover:text-[#ccff00] hover:bg-[#ccff00]/10 rounded-xl transition"
-                title="Upload Document"
-              >
-                <FiPaperclip size={20} />
+                <FiCode size={18} />
+                {type === "snippet" && <span className="text-[11px] font-bold">Snippet</span>}
               </button>
             </div>
 
-            <input 
-              type="text"
-              placeholder="Tags (comma separated)..."
-              className="bg-transparent border border-white/10 rounded-lg px-3 py-1.5 text-xs text-[#a3a3a3] outline-none w-1/3 focus:border-[#a855f7]/50 focus:ring-1 focus:ring-[#a855f7]/20 transition-all duration-300"
-              value={postTags}
-              onChange={(e) => setPostTags(e.target.value)}
-            />
-            <button 
-              onClick={handlePost}
-              disabled={isPosting || !content.trim()}
-              className="bg-[#ccff00] text-[#0a0a0a] px-6 py-2 rounded-lg font-bold text-xs hover:bg-[#b3e600] disabled:opacity-50 transition-colors flex items-center gap-2"
-            >
-              {isPosting ? "Posting..." : "Ship It"} <FiSend className={isPosting ? "animate-pulse" : ""} />
-            </button>
+            {/* Right Actions (Visibility, Ship) */}
+            <div className="flex items-center gap-3">
+              {/* Visibility Dropdown (Subtle) */}
+              <div className="relative group flex items-center">
+                <FiGlobe className="absolute left-2.5 text-[#737373] group-hover:text-white transition-colors" size={12} />
+                <select 
+                  value={visibility}
+                  onChange={(e) => setVisibility(e.target.value)}
+                  className="appearance-none bg-transparent border border-transparent hover:border-[#333] hover:bg-[#1a1a1a] rounded-lg pl-7 pr-4 py-1.5 text-[12px] font-semibold text-[#a3a3a3] outline-none transition-all cursor-pointer"
+                >
+                  <option value="public" className="bg-[#121212]">Public</option>
+                  <option value="followers" className="bg-[#121212]">Followers</option>
+                  <option value="matches" className="bg-[#121212]">Matches</option>
+                </select>
+              </div>
+
+              {/* Ship Button */}
+              <button 
+                onClick={handlePost}
+                disabled={isPosting || (!content.trim() && !code.trim() && selectedImages.length === 0 && !selectedDocument)}
+                className="bg-[#e5e5e5] text-[#09090b] hover:bg-white px-5 py-1.5 rounded-full font-bold text-[13px] flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_10px_rgba(255,255,255,0.1)] hover:shadow-[0_2px_15px_rgba(255,255,255,0.2)]"
+              >
+                {isPosting ? "Shipping..." : "Ship It"} <FiSend size={12} />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Stack Tag Filter Bar */}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-2 custom-scrollbar items-center">
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-4 custom-scrollbar items-center">
           <button 
             onClick={() => setActiveTag("")}
-            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ${
-              activeTag === "" ? "bg-gradient-to-r from-[#a855f7] to-[#9240de] text-white shadow-[0_0_10px_rgba(168,85,247,0.3)]" : "bg-white/5 text-[#a3a3a3] hover:bg-[#a855f7]/10 hover:text-[#d8b4fe]"
+            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 border ${
+              activeTag === "" ? "bg-[#ccff00]/10 border-[#ccff00]/30 text-[#ccff00]" : "bg-[#121212] border-white/5 text-[#737373] hover:text-white"
             }`}
           >
             All Feed
@@ -358,10 +425,10 @@ const Feed = () => {
             <button 
               key={tag}
               onClick={() => setActiveTag(tag)}
-              className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold font-mono transition-all duration-300 border ${
+              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-bold font-mono transition-all duration-300 border ${
                 activeTag === tag 
-                  ? "bg-gradient-to-r from-[#a855f7]/20 to-[#9240de]/20 text-[#d8b4fe] border-[#a855f7]/50 shadow-[0_0_10px_rgba(168,85,247,0.2)]" 
-                  : "border-white/5 bg-[#121212] text-[#a3a3a3] hover:border-[#a855f7]/30 hover:text-white"
+                  ? "bg-[#a855f7]/10 border-[#a855f7]/30 text-[#a855f7]" 
+                  : "bg-[#121212] border-white/5 text-[#737373] hover:text-white"
               }`}
             >
               #{tag}
@@ -375,11 +442,11 @@ const Feed = () => {
             <div className="flex flex-col gap-4 mt-4">
                {/* Skeleton Posts */}
                {[1,2,3].map((i) => (
-                 <div key={i} className="dev-card p-5 animate-pulse h-40"></div>
+                 <div key={i} className="animate-pulse h-32 border-b border-white/5 mb-6"></div>
                ))}
             </div>
           ) : posts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center mt-8 gap-4 text-center px-4 dev-card w-full py-16 bg-transparent border-dashed">
+            <div className="flex flex-col items-center justify-center mt-8 gap-4 text-center px-4 w-full py-16 border-t border-dashed border-white/10">
               <FiInbox className="text-4xl text-[#a3a3a3]/50" />
               <h1 className="text-xl font-bold text-white mt-2">No posts found</h1>
               <p className="text-[#a3a3a3] font-medium text-sm max-w-xs">
@@ -408,33 +475,109 @@ const Feed = () => {
       </div>
 
       {/* ── Right Sidebar (Widgets) ─────────────────────────────── */}
-      <div className="hidden xl:flex w-[320px] flex-col gap-6 sticky top-10">
+      <div className="hidden xl:flex w-[320px] flex-col gap-6 sticky top-10 pb-10">
         
         {/* Upgrade Banner */}
         {!user?.isPremium ? (
           <div 
             onClick={() => navigate("/premium")}
-            className="bg-[#a855f7]/10 border border-[#a855f7]/20 rounded-xl p-5 relative overflow-hidden group cursor-pointer hover:bg-[#a855f7]/20 transition-colors"
+            className="bg-[#a855f7]/10 border border-[#a855f7]/20 rounded-xl p-5 relative overflow-hidden group cursor-pointer hover:bg-[#a855f7]/20 transition-colors shrink-0"
           >
             <div className="absolute -right-4 -top-4 w-16 h-16 bg-[#a855f7]/30 rounded-full blur-xl group-hover:bg-[#a855f7]/50 transition-colors" />
-            <h3 className="text-[#a855f7] font-bold mb-2 flex items-center gap-2">
-              <FiArrowUp className="text-lg" /> Introducing Pro
+            <h3 className="text-[#a855f7] font-bold text-[16px] mb-2 flex items-center gap-2">
+              <FiArrowUp /> Introducing Pro
             </h3>
-            <p className="text-xs text-[#a3a3a3] font-medium mb-4 leading-relaxed">
+            <p className="text-[13px] text-[#a3a3a3] font-medium mb-5 leading-relaxed pr-2">
               Boost your visibility and access live collaborative sandboxes with premium features.
             </p>
-            <button className="w-full bg-[#a855f7] text-white font-medium text-xs py-2 rounded-lg hover:bg-[#9240de] transition-colors pointer-events-none">
-              Upgrade Now
-            </button>
+            <div className="flex gap-2">
+              <button className="flex-1 bg-[#a855f7] text-white font-medium text-xs py-2 rounded-lg hover:bg-[#9240de] transition-colors shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                Upgrade
+              </button>
+              <button className="flex-1 bg-white/5 text-[#e5e5e5] font-medium text-xs py-2 rounded-lg hover:bg-white/10 transition-colors">
+                Explore
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="bg-[#ccff00]/10 border border-[#ccff00]/20 rounded-xl p-5 relative overflow-hidden flex flex-col items-center justify-center text-center">
-            <div className="w-12 h-12 bg-[#ccff00]/20 rounded-full flex items-center justify-center mb-3 text-[#ccff00]">
-              <FiStar className="text-2xl" />
+          <div className="bg-[#a855f7]/10 border border-[#a855f7]/20 rounded-xl p-5 relative overflow-hidden shrink-0">
+            <div className="absolute -right-4 -top-4 w-16 h-16 bg-[#a855f7]/30 rounded-full blur-xl transition-colors" />
+            <div className="flex items-center justify-between relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#a855f7]/20 rounded-xl flex items-center justify-center text-[#a855f7]">
+                  <FiStar className="text-xl" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-sm">Pro Member</h3>
+                  <p className="text-[11px] text-[#a3a3a3] font-mono mt-0.5">Active Subscription</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => navigate("/premium")}
+                className="text-[12px] font-bold text-[#a855f7] hover:text-[#b873f8] transition-colors"
+              >
+                Manage
+              </button>
             </div>
-            <h3 className="text-[#ccff00] font-bold mb-1">Pro Member</h3>
           </div>
         )}
+
+        {/* Dynamic Trending Topics */}
+        <div className="dev-card p-5 shrink-0">
+          <h3 className="text-sm font-bold text-[#e5e5e5] mb-4">Trending Topics</h3>
+          <div className="flex flex-wrap gap-2">
+            {(globalTrendingTags.length > 0 ? globalTrendingTags : COMMON_TAGS.slice(0,6)).map(tag => (
+              <button 
+                key={tag}
+                onClick={() => setActiveTag(tag)}
+                className="text-xs font-mono text-[#a3a3a3] bg-white/5 border border-white/5 px-2.5 py-1 rounded-md hover:bg-white/10 hover:text-white cursor-pointer transition-colors"
+              >
+                #{tag.replace(/^#/, '')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Builders (Dynamic) */}
+        <div className="dev-card p-5 shrink-0">
+          <h3 className="text-sm font-bold text-[#e5e5e5] mb-4 flex items-center gap-2">
+            Top Builders
+          </h3>
+          <div className="flex flex-col gap-4">
+            {topBuilders.length > 0 ? topBuilders.map((builder) => (
+              <div key={builder._id} className="flex items-center justify-between group">
+                <div className="flex items-center gap-3 min-w-0">
+                  <img 
+                    src={builder.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
+                    alt={builder.firstName}
+                    className="w-8 h-8 rounded-lg object-cover border border-white/10"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium text-[#e5e5e5] truncate group-hover:text-white transition-colors">
+                      {builder.firstName} {builder.lastName}
+                    </span>
+                    <span className="text-[11px] text-[#737373] truncate">
+                      {builder.skills && builder.skills[0] ? builder.skills[0] : "Developer"}
+                    </span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => handleFollowToggle(builder._id)}
+                  className={`px-3 py-1 rounded text-xs font-semibold transition-colors ml-2 ${
+                    followedUsers.includes(builder._id)
+                      ? "text-[#ccff00] bg-[#ccff00]/10"
+                      : "text-white/50 bg-white/5 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {followedUsers.includes(builder._id) ? "Following" : "Follow"}
+                </button>
+              </div>
+            )) : (
+              <div className="text-xs text-[#737373]">No active builders yet.</div>
+            )}
+          </div>
+        </div>
+
 
       </div>
     </div>

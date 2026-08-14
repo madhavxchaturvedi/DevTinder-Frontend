@@ -17,29 +17,33 @@
     color: var(--color-neo-black);
     /* Custom scrollbar for webkit */
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 4px;
+      height: 4px;
     }
     ::-webkit-scrollbar-track {
-      background: #0a0a0a;
+      background: transparent;
     }
     ::-webkit-scrollbar-thumb {
       background: #262626;
-      border-radius: 4px;
     }
     ::-webkit-scrollbar-thumb:hover {
       background: #404040;
     }
+  }
+  
+  ::selection {
+    background-color: #ccff00;
+    color: #000000;
   }
 }
 
 /* Sleek Dark Theme utility classes (keeping old names for compatibility) */
 @layer utilities {
   .neo-card {
-    @apply bg-[#121212] border border-white/5 shadow-sm rounded-xl overflow-hidden;
+    @apply bg-[#121212] border border-white/5 shadow-sm rounded-2xl overflow-hidden;
   }
   .neo-card-dark {
-    @apply bg-[#121212] text-white border border-white/5 shadow-sm rounded-xl overflow-hidden;
+    @apply bg-[#121212] text-white border border-white/5 shadow-sm rounded-2xl overflow-hidden;
   }
   .neo-btn-primary {
     @apply bg-indigo-500 text-white font-medium rounded-lg px-6 py-2.5 transition-all hover:bg-indigo-400 active:scale-[0.98];
