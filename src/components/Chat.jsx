@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSend, FiArrowLeft, FiMoreVertical, FiCode, FiMessageSquare, FiZap } from "react-icons/fi";
+import { FiSend, FiArrowLeft, FiMoreVertical, FiCode, FiMessageSquare, FiZap, FiPhoneOff } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { getSocket } from "../utils/socket";
 
@@ -42,6 +42,7 @@ const Chat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
   const [isTargetInSandbox, setIsTargetInSandbox] = useState(false);
+  const [projectRoom, setProjectRoom] = useState(null);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -79,6 +80,23 @@ const Chat = () => {
     };
 
     if (targetId) fetchHistory();
+  }, [targetId]);
+
+  // Fetch project room if exists
+  useEffect(() => {
+    const fetchProjectRoom = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/project/room-by-members?userId=${targetId}`, {
+          withCredentials: true,
+        });
+        if (res.data.data) {
+          setProjectRoom(res.data.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch project room", err);
+      }
+    };
+    if (targetId) fetchProjectRoom();
   }, [targetId]);
 
   // Set up Socket.io
@@ -331,6 +349,14 @@ const Chat = () => {
                 </div>
               </div>
             )}
+            {projectRoom && (
+              <button
+                onClick={() => navigate(`/project/room/${projectRoom.roomId}`)}
+                className="hidden md:flex items-center gap-1.5 ml-2 bg-gradient-to-r from-[#a855f7] to-[#ccff00] text-black px-3 py-1.5 rounded-lg text-xs font-bold hover:scale-105 transition-transform"
+              >
+                🚀 Enter Project Room
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button 
@@ -384,6 +410,27 @@ const Chat = () => {
                 const isLastInSequence = idx === msgs.length - 1 || isMyMessage(msgs[idx + 1]) !== mine;
                 const isSandboxInvite = msg.text.includes("I launched a Live Sandbox! Click here to join: ");
                 
+                if (msg.type === "call_action") {
+                  return (
+                    <motion.div
+                      key={msg._id || idx}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex justify-center my-4"
+                    >
+                      <div className="bg-[#121212] border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3 max-w-[300px] shadow-lg">
+                        <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center">
+                          <FiPhoneOff size={14} />
+                        </div>
+                        <div>
+                          <p className="text-sm text-white font-medium">{msg.text}</p>
+                          <p className="text-[10px] text-[#a3a3a3] font-mono mt-0.5">{formatTime(msg.createdAt)}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                }
+
                 return (
                   <motion.div
                     key={msg._id || idx}
