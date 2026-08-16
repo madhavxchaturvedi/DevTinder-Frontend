@@ -7,7 +7,9 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { HiCode } from "react-icons/hi";
 import { FiImage, FiArrowUp, FiCode, FiX, FiLock, FiGlobe, FiUsers, FiGitMerge, FiSend, FiInbox, FiStar, FiPaperclip, FiFileText } from "react-icons/fi";
+import { FaRocket } from "react-icons/fa";
 import PostCard from "./PostCard";
+import ProjectCard from "./ProjectCard";
 
 const COMMON_TAGS = ["react", "node", "javascript", "python", "rustlang", "machinelearning", "webdev"];
 const LANGUAGES = ["javascript", "html", "css", "python", "java", "rust", "cpp", "go"];
@@ -20,6 +22,22 @@ const Feed = () => {
   
   const [loading, setLoading] = useState(false);
   const [activeTag, setActiveTag] = useState("");
+
+  // Feed Mode
+  const [feedMode, setFeedMode] = useState("all");
+
+  // Project Post State
+  const [projectTitle, setProjectTitle] = useState("");
+  const [projectTechStack, setProjectTechStack] = useState([]);
+  const [techInput, setTechInput] = useState("");
+  const [projectRoleNeeded, setProjectRoleNeeded] = useState("");
+  const [projectCommitment, setProjectCommitment] = useState("Ongoing");
+  const [projectStage, setProjectStage] = useState("💡 Idea");
+  
+  // Projects fetch data
+  const [userRequestsMap, setUserRequestsMap] = useState({});
+  const [requestCountsMap, setRequestCountsMap] = useState({});
+
   
   // Pagination State
   const [page, setPage] = useState(1);
@@ -36,6 +54,7 @@ const Feed = () => {
   const [forkedFrom, setForkedFrom] = useState(null); // Parent post object
   const [followedUsers, setFollowedUsers] = useState([]); // List of followed IDs
   const [globalTrendingTags, setGlobalTrendingTags] = useState([]);
+  const [globalTopBuilders, setGlobalTopBuilders] = useState([]);
 
   // Media State
   const [selectedImages, setSelectedImages] = useState([]);
@@ -45,14 +64,21 @@ const Feed = () => {
   const imageInputRef = useRef(null);
   const docInputRef = useRef(null);
 
-  const fetchPosts = async (tag = "", pageNum = 1) => {
+  
+  const fetchPosts = async (tag = "", pageNum = 1, currentFeedMode = feedMode) => {
     try {
       setLoading(true);
-      const url = tag ? `${BASE_URL}/feed/posts?tag=${tag}&page=${pageNum}` : `${BASE_URL}/feed/posts?page=${pageNum}`;
+      const endpoint = currentFeedMode === "projects" ? "/feed/projects" : "/feed/posts";
+      const url = tag ? `${BASE_URL}${endpoint}?tag=${tag}&page=${pageNum}` : `${BASE_URL}${endpoint}?page=${pageNum}`;
       const res = await axios.get(url, { withCredentials: true });
       
       const fetchedPosts = res?.data?.data || [];
       const userReactionsMap = res?.data?.userReactionsMap || {};
+      
+      if (currentFeedMode === "projects") {
+        setUserRequestsMap(prev => pageNum === 1 ? (res.data.userRequestsMap || {}) : {...prev, ...(res.data.userRequestsMap || {})});
+        setRequestCountsMap(prev => pageNum === 1 ? (res.data.requestCountsMap || {}) : {...prev, ...(res.data.requestCountsMap || {})});
+      }
       
       const postsWithReactions = fetchedPosts.map(p => ({
         ...p,
@@ -76,6 +102,7 @@ const Feed = () => {
     }
   };
 
+
   const handleFollowToggle = async (userId) => {
     const isFollowing = followedUsers.includes(userId);
     try {
@@ -93,17 +120,26 @@ const Feed = () => {
     }
   };
 
+  
+  // Fetch when mode changes
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+    setActiveTag("");
+    fetchPosts("", 1, feedMode);
+  }, [feedMode]);
+
   // Fetch when tag changes (reset to page 1)
   useEffect(() => {
     setPage(1);
     setHasMore(true);
-    fetchPosts(activeTag, 1);
+    fetchPosts(activeTag, 1, feedMode);
   }, [activeTag]);
 
   // Fetch when page changes (infinite scroll)
   useEffect(() => {
     if (page > 1) {
-      fetchPosts(activeTag, page);
+      fetchPosts(activeTag, page, feedMode);
     }
   }, [page]);
 
@@ -196,11 +232,20 @@ const Feed = () => {
       
       const extractedTags = content.match(/#[a-z0-9_]+/gi)?.map(t => t.slice(1).toLowerCase()) || [];
 
+      
+      let finalTechStack = [...projectTechStack];
+      if (type === "project" && techInput.trim()) {
+        const newTag = techInput.trim().toLowerCase();
+        if (!finalTechStack.includes(newTag)) {
+          finalTechStack.push(newTag);
+        }
+      }
+
       const payload = {
         type,
         content,
         visibility,
-        stackTags: extractedTags,
+        stackTags: type === "project" ? finalTechStack : extractedTags,
         images: uploadedImages,
         documentUrl: uploadedDocumentUrl
       };
@@ -208,6 +253,16 @@ const Feed = () => {
       if (type === "snippet") {
         payload.codeSnippet = { language, code };
       }
+      if (type === "project") {
+        payload.project = {
+          title: projectTitle,
+          techStack: finalTechStack,
+          roleNeeded: projectRoleNeeded,
+          commitment: projectCommitment,
+          stage: projectStage
+        };
+      }
+
       if (forkedFrom) {
         payload.forkedFrom = forkedFrom._id;
       }
@@ -217,6 +272,7 @@ const Feed = () => {
       // Prepend to Redux state
       dispatch(addPost(res?.data?.data));
       
+      
       // Reset form
       setContent("");
       setCode("");
@@ -225,6 +281,13 @@ const Feed = () => {
       setSelectedDocument(null);
       setType("standard");
       setVisibility("public");
+      setProjectTitle("");
+      setProjectTechStack([]);
+      setTechInput("");
+      setProjectRoleNeeded("");
+      setProjectCommitment("ongoing");
+      setProjectStage("idea");
+
       toast.success("Posted successfully!");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to post");
@@ -233,37 +296,43 @@ const Feed = () => {
     }
   };
 
+  // Compute Global Widgets (Trending Tags & Top Builders)
   useEffect(() => {
-    if (!posts || posts.length === 0 || activeTag !== "") return;
-    const tagCounts = {};
-    posts.forEach(post => {
-      if (post.stackTags && Array.isArray(post.stackTags)) {
-        post.stackTags.forEach(tag => {
-          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-        });
-      }
-    });
-    const sortedTags = Object.entries(tagCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([tag]) => tag);
+    if (!posts || posts.length === 0) return;
     
-    // Only update if we found tags, to prevent flashing empty
-    if (sortedTags.length > 0) {
-      setGlobalTrendingTags(sortedTags);
-    }
-  }, [posts, activeTag]);
-
-  const topBuilders = useMemo(() => {
-    if (!posts || posts.length === 0) return [];
-    const uniqueBuilders = {};
-    posts.forEach(post => {
-      if (post.authorId && post.authorId._id !== user?._id && !uniqueBuilders[post.authorId._id]) {
-        uniqueBuilders[post.authorId._id] = post.authorId;
+    // Only recalculate when NOT filtering by a tag, so the sidebar doesn't jump around
+    if (!activeTag) {
+      // Tags
+      const tagCounts = {};
+      posts.forEach(post => {
+        if (post.stackTags && Array.isArray(post.stackTags)) {
+          post.stackTags.forEach(tag => {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+          });
+        }
+      });
+      const sortedTags = Object.entries(tagCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([tag]) => tag);
+      
+      if (sortedTags.length > 0) {
+        setGlobalTrendingTags(sortedTags);
       }
-    });
-    return Object.values(uniqueBuilders).slice(0, 3);
-  }, [posts, user]);
+
+      // Builders
+      const uniqueBuilders = {};
+      posts.forEach(post => {
+        if (post.authorId && post.authorId._id !== user?._id && !uniqueBuilders[post.authorId._id]) {
+          uniqueBuilders[post.authorId._id] = post.authorId;
+        }
+      });
+      const buildersList = Object.values(uniqueBuilders).slice(0, 3);
+      if (buildersList.length > 0) {
+        setGlobalTopBuilders(buildersList);
+      }
+    }
+  }, [posts, activeTag, user]);
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col lg:flex-row items-start gap-8 px-4 pt-10">
@@ -298,7 +367,7 @@ const Feed = () => {
             {/* Input Area */}
             <div className="flex-1 min-w-0 pt-1">
               <textarea 
-                placeholder="What are you building today? Markdown is supported..."
+                placeholder={type === "project" ? "Describe your project and what you're looking to build..." : "What are you building today? Markdown is supported..."}
                 className="w-full bg-transparent text-[#e5e5e5] placeholder:text-[#555] outline-none resize-none text-[15px] min-h-[60px] p-0 transition-all duration-300 leading-relaxed"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -328,6 +397,81 @@ const Feed = () => {
               )}
             </div>
           </div>
+
+          
+          {type === "project" && (
+            <div className="mb-4 mt-2 bg-[#121212] border border-[#262626] rounded-xl p-4 flex flex-col gap-4">
+              <input 
+                type="text" 
+                placeholder="Project title..." 
+                value={projectTitle}
+                onChange={(e) => setProjectTitle(e.target.value)}
+                className="w-full bg-transparent text-[#e5e5e5] text-[15px] font-bold outline-none border-b border-[#262626] pb-2 focus:border-[#ccff00]/50 transition-colors"
+              />
+              
+              <div>
+                <input 
+                  type="text" 
+                  placeholder="Add tech (e.g. react, node) and press Enter..." 
+                  value={techInput}
+                  onChange={(e) => setTechInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && techInput.trim()) {
+                      e.preventDefault();
+                      if (!projectTechStack.includes(techInput.trim().toLowerCase())) {
+                        setProjectTechStack([...projectTechStack, techInput.trim().toLowerCase()]);
+                      }
+                      setTechInput("");
+                    }
+                  }}
+                  className="w-full bg-transparent text-[#a3a3a3] text-[13px] outline-none border-b border-[#262626] pb-2 focus:border-[#a855f7]/50 transition-colors"
+                />
+                {projectTechStack.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {projectTechStack.map(t => (
+                      <span key={t} className="flex items-center gap-1 text-[11px] font-mono bg-[#1a1a1a] text-[#e5e5e5] px-2 py-1 rounded-md border border-white/5">
+                        {t}
+                        <button onClick={() => setProjectTechStack(projectTechStack.filter(x => x !== t))} className="text-[#a3a3a3] hover:text-red-400"><FiX size={12}/></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <input 
+                type="text" 
+                placeholder="What kind of collaborator do you need? (e.g. Frontend dev for UI)" 
+                value={projectRoleNeeded}
+                onChange={(e) => setProjectRoleNeeded(e.target.value)}
+                className="w-full bg-transparent text-[#a3a3a3] text-[13px] outline-none border-b border-[#262626] pb-2 focus:border-white/50 transition-colors"
+              />
+
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" checked={projectCommitment === "one-time"} onChange={() => setProjectCommitment("one-time")} className="accent-[#ccff00]" />
+                    <span className="text-[12px] text-[#a3a3a3]">One-time</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" checked={projectCommitment === "ongoing"} onChange={() => setProjectCommitment("ongoing")} className="accent-[#ccff00]" />
+                    <span className="text-[12px] text-[#a3a3a3]">Ongoing</span>
+                  </label>
+                </div>
+                
+                <select 
+                  value={projectStage}
+                  onChange={(e) => setProjectStage(e.target.value)}
+                  className="bg-[#1a1a1a] border border-[#262626] text-[#e5e5e5] text-[12px] rounded-lg px-3 py-1.5 outline-none cursor-pointer hover:border-white/20 transition-colors"
+                >
+                  <option value="idea">💡 Idea</option>
+                  <option value="early-build">🔨 Early Build</option>
+                  <option value="mid-build">🏗️ Mid Build</option>
+                  <option value="needs-review">🔍 Needs Review</option>
+                </select>
+              </div>
+            </div>
+          )}
+
 
           {/* Full-width Code Snippet Editor */}
           {type === "snippet" && (
@@ -381,6 +525,18 @@ const Feed = () => {
                 <FiCode size={18} />
                 {type === "snippet" && <span className="text-[11px] font-bold">Snippet</span>}
               </button>
+              <button 
+                onClick={() => setType(type === "project" ? "standard" : "project")}
+                className={`p-2 rounded-full transition-all flex items-center gap-1.5 ml-1 ${
+                  type === "project" 
+                    ? "bg-[#ccff00]/10 text-[#ccff00]" 
+                    : "text-[#737373] hover:text-[#e5e5e5] hover:bg-white/5"
+                }`}
+              >
+                <FaRocket size={18} />
+                {type === "project" && <span className="text-[11px] font-bold">Project</span>}
+              </button>
+
             </div>
 
             {/* Right Actions (Visibility, Ship) */}
@@ -405,13 +561,36 @@ const Feed = () => {
                 disabled={isPosting || (!content.trim() && !code.trim() && selectedImages.length === 0 && !selectedDocument)}
                 className="bg-[#e5e5e5] text-[#09090b] hover:bg-white px-5 py-1.5 rounded-full font-bold text-[13px] flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_10px_rgba(255,255,255,0.1)] hover:shadow-[0_2px_15px_rgba(255,255,255,0.2)]"
               >
-                {isPosting ? "Shipping..." : "Ship It"} <FiSend size={12} />
+                {isPosting ? "Shipping..." : type === "project" ? "Post Project 🚀" : "Ship It"} <FiSend size={12} />
               </button>
             </div>
           </div>
         </div>
 
+        
+        {/* Feed Mode Toggle */}
+        <div className="flex gap-3 mb-6">
+          <button 
+            onClick={() => setFeedMode("all")}
+            className={`px-5 py-2 rounded-full text-[14px] font-bold transition-all duration-300 flex items-center gap-2 ${
+              feedMode === "all" ? "bg-[#e5e5e5] text-[#09090b] shadow-[0_0_15px_rgba(255,255,255,0.2)]" : "bg-[#151515] text-[#737373] border border-[#262626] hover:text-white"
+            }`}
+          >
+            All Feed
+          </button>
+          <button 
+            onClick={() => setFeedMode("projects")}
+            className={`px-5 py-2 rounded-full text-[14px] font-bold transition-all duration-300 flex items-center gap-2 ${
+              feedMode === "projects" ? "bg-[#ccff00] text-black shadow-[0_0_15px_rgba(204,255,0,0.2)]" : "bg-[#151515] text-[#737373] border border-[#262626] hover:text-white"
+            }`}
+          >
+            🚀 Projects
+          </button>
+        </div>
+
+
         {/* Stack Tag Filter Bar */}
+        {feedMode !== "projects" && (
         <div className="flex gap-2 overflow-x-auto pb-4 mb-4 custom-scrollbar items-center">
           <button 
             onClick={() => setActiveTag("")}
@@ -435,6 +614,7 @@ const Feed = () => {
             </button>
           ))}
         </div>
+        )}
 
         {/* Post Feed */}
         <div className="w-full flex flex-col">
@@ -455,7 +635,13 @@ const Feed = () => {
             </div>
           ) : (
             <>
-              {posts.map((post) => <PostCard key={post._id} post={post} onFork={handleFork} followedUsers={followedUsers} />)}
+              
+              {posts.map((post) => post.type === "project" ? (
+                <ProjectCard key={post._id} post={post} userRequestStatus={userRequestsMap[post._id]} requestCount={requestCountsMap[post._id]} />
+              ) : (
+                <PostCard key={post._id} post={post} onFork={handleFork} followedUsers={followedUsers} />
+              ))}
+
               
               {/* Infinite Scroll Loader */}
               {hasMore && (
@@ -544,7 +730,7 @@ const Feed = () => {
             Top Builders
           </h3>
           <div className="flex flex-col gap-4">
-            {topBuilders.length > 0 ? topBuilders.map((builder) => (
+            {globalTopBuilders.length > 0 ? globalTopBuilders.map((builder) => (
               <div key={builder._id} className="flex items-center justify-between group">
                 <div className="flex items-center gap-3 min-w-0">
                   <img 

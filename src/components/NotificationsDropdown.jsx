@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
-import { FiBell, FiHeart, FiMessageSquare, FiUserPlus, FiGitMerge, FiUsers } from "react-icons/fi";
+import { FiBell, FiHeart, FiMessageSquare, FiUserPlus, FiGitMerge, FiUsers, FiCode, FiCheckCircle, FiXCircle, FiPlay } from "react-icons/fi";
 import { getSocket } from "../utils/socket";
+import { useNavigate } from "react-router-dom";
 
 const formatTimeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -63,6 +64,33 @@ const getNotificationDetails = (notification) => {
         icon: <FiUserPlus className="text-yellow-500" />,
         avatar: firstActor.photoUrl
       };
+    case "project_join_request":
+      return {
+        text: `${nameStr} wants to join your project ${notification.post?.title || ''}`,
+        icon: <FiCode className="text-[#a855f7]" />,
+        avatar: firstActor.photoUrl,
+        link: `/project/${notification.post?._id || notification.postId}/requests`
+      };
+    case "project_accepted":
+      return {
+        text: `Your request to join ${notification.post?.title || ''} was accepted! Message them to start →`,
+        icon: <FiCheckCircle className="text-green-500" />,
+        avatar: firstActor.photoUrl,
+        link: `/chat/${firstActor._id}`
+      };
+    case "project_rejected":
+      return {
+        text: `Your request to join ${notification.post?.title || ''} was declined.`,
+        icon: <FiXCircle className="text-red-500" />,
+        avatar: firstActor.photoUrl
+      };
+    case "partner_in_room":
+      return {
+        text: `${nameStr} is in the ${notification.post?.title || 'project'} room — join now!`,
+        icon: <FiPlay className="text-[#ccff00]" />,
+        avatar: firstActor.photoUrl,
+        link: `/project/room/${notification.roomId || notification.metadata?.roomId}`
+      };
     default:
       return {
         text: `${nameStr} interacted with you`,
@@ -77,6 +105,7 @@ const NotificationsDropdown = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -169,7 +198,13 @@ const NotificationsDropdown = () => {
                 return (
                   <div 
                     key={notif._id} 
-                    className={`flex items-start gap-3 p-4 border-b border-white/5 hover:bg-white/5 transition-colors ${notif.read ? 'opacity-70' : 'bg-[#ccff00]/5'}`}
+                    onClick={() => {
+                      if (details.link) {
+                        setIsOpen(false);
+                        navigate(details.link);
+                      }
+                    }}
+                    className={`flex items-start gap-3 p-4 border-b border-white/5 hover:bg-white/5 transition-colors ${details.link ? 'cursor-pointer' : ''} ${notif.read ? 'opacity-70' : 'bg-[#ccff00]/5'}`}
                   >
                     <div className="relative flex-shrink-0 mt-1">
                       {details.avatar ? (
