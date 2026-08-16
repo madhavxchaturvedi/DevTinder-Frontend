@@ -13,6 +13,7 @@ import Discover from "./components/Discover";
 import Sandbox from "./components/Sandbox";
 import ProjectRequests from "./components/ProjectRequests";
 import ProjectRoom from "./components/ProjectRoom";
+import FullscreenPreview from "./components/FullscreenPreview";
 
 import { WebRTCProvider } from "./context/WebRTCContext";
 
@@ -37,6 +38,7 @@ const App = () => {
         </Route>
         <Route path="/sandbox/:roomId" element={<Sandbox />} />
         <Route path="/project/room/:roomId" element={<ProjectRoom />} />
+        <Route path="/project/preview/:roomId" element={<FullscreenPreview />} />
         </Routes>
       </WebRTCProvider>
     </BrowserRouter>

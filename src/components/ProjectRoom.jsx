@@ -94,8 +94,11 @@ const SandpackSyncer = ({ roomId }) => {
       const activeFile = sandpack.activeFile;
       const code = sandpack.files[activeFile].code;
       sock.emit("codeChange", { roomId, files: { [activeFile]: { code } } });
+      
+      // Also instantly sync to any open preview tabs via localStorage
+      localStorage.setItem(`sandpack_code_${roomId}`, code);
     }
-  }, [sandpack.files]);
+  }, [sandpack.files, roomId]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -134,10 +137,33 @@ const CustomRunButton = () => {
           setTimeout(() => setIsRunning(false), 500); // Reset button state
         }, 600);
       }}
-      className={`flex items-center gap-1.5 px-3 py-1.5 ${isRunning ? 'bg-[#bbf000] opacity-70 cursor-not-allowed' : 'bg-[#ccff00] hover:bg-[#bbf000]'} text-[#141415] text-[10px] font-bold uppercase tracking-widest rounded transition-all shadow-[0_0_10px_rgba(204,255,0,0.1)]`}
+      className={`flex items-center gap-1.5 px-3 py-1.5 ${isRunning ? 'bg-[#bbf000] opacity-70 cursor-not-allowed' : 'bg-[#ccff00] hover:bg-[#bbf000]'} text-[#141415] text-[10px] font-bold uppercase tracking-widest rounded transition-all shadow-[0_0_10px_rgba(204,255,0,0.1)] whitespace-nowrap`}
     >
       {isRunning ? <FiRefreshCw className="animate-spin" size={12} /> : <FiPlay size={12} />} 
-      {isRunning ? "Running..." : "Run / Restart"}
+      <span className="hidden xl:inline">{isRunning ? "Running..." : "Run / Restart"}</span>
+      <span className="xl:hidden">{isRunning ? "..." : "Run"}</span>
+    </button>
+  );
+};
+
+// Custom button that opens our standalone FullscreenPreview route in a new tab
+const CustomOpenBrowserButton = ({ roomId }) => {
+  const { sandpack } = useSandpack();
+  
+  return (
+    <button 
+      onClick={() => {
+        // Guarantee the new tab gets the absolute latest code immediately
+        const activeFile = sandpack.activeFile;
+        if (activeFile && sandpack.files[activeFile]) {
+           localStorage.setItem(`sandpack_code_${roomId}`, sandpack.files[activeFile].code);
+        }
+        window.open(`/project/preview/${roomId}`, "_blank");
+      }}
+      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#a855f7] hover:bg-[#9333ea] text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all shadow-[0_0_10px_rgba(168,85,247,0.3)] whitespace-nowrap"
+    >
+      <FiExternalLink size={12} /> 
+      <span className="hidden xl:inline">New Tab</span>
     </button>
   );
 };
@@ -635,7 +661,10 @@ const ProjectRoom = () => {
                            <FiTerminal size={12} /><span style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em" }}>Console</span>
                          </button>
                        </div>
-                       <CustomRunButton />
+                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                         <CustomOpenBrowserButton roomId={roomId} />
+                         <CustomRunButton />
+                       </div>
                     </div>
 
                     {/* Preview — always rendered, shown/hidden via display */}
