@@ -231,6 +231,17 @@ export const WebRTCProvider = ({ children }) => {
         stream.getAudioTracks()[0].enabled = false;
       }
       
+      // Create a 1x1 black synthetic video track so the WebRTC channel is negotiated immediately
+      const canvas = document.createElement("canvas");
+      canvas.width = 1; canvas.height = 1;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, 1, 1);
+      const dummyStream = canvas.captureStream(1); // 1 FPS
+      const dummyVideoTrack = dummyStream.getVideoTracks()[0];
+      dummyVideoTrack.enabled = false; // Just keep it disabled so it doesn't render
+      stream.addTrack(dummyVideoTrack);
+      
       setLocalStream(stream);
       localStreamRef.current = stream;
       
@@ -313,16 +324,21 @@ export const WebRTCProvider = ({ children }) => {
         const vidStream = await navigator.mediaDevices.getUserMedia({ video: true });
         const newVideoTrack = vidStream.getVideoTracks()[0];
         
+        // Remove old (dummy or previous) video track from local stream
+        const oldVideoTrack = localStreamRef.current.getVideoTracks()[0];
+        if (oldVideoTrack) {
+          localStreamRef.current.removeTrack(oldVideoTrack);
+        }
+        
         localStreamRef.current.addTrack(newVideoTrack);
         
+        // Use the existing video sender and replace the track directly! No renegotiation!
         const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
         if (sender) {
           sender.replaceTrack(newVideoTrack);
         } else {
+          // Fallback just in case (should not happen due to dummy track)
           pc.addTrack(newVideoTrack, localStreamRef.current);
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          getSocket()?.emit('webrtc:offer', { roomId: currentRoomId, offer });
         }
         
         setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
