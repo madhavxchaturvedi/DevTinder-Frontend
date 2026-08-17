@@ -22,8 +22,10 @@ export const WebRTCProvider = ({ children }) => {
   const [isMuted, setIsMuted] = useState(true);
   const [isVideoOff, setIsVideoOff] = useState(true);
   const [isRemoteVideoOff, setIsRemoteVideoOff] = useState(true);
+  const [isRemoteMuted, setIsRemoteMuted] = useState(true);
   const [remoteUser, setRemoteUser] = useState(null);
-
+  const [localReaction, setLocalReaction] = useState(null);
+  const [remoteReaction, setRemoteReaction] = useState(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
   const makingOfferRef = useRef(false);
@@ -32,6 +34,10 @@ export const WebRTCProvider = ({ children }) => {
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const remoteAudioContextRef = useRef(null);
+  const remoteAnalyserRef = useRef(null);
+  const [isRemoteSpeaking, setIsRemoteSpeaking] = useState(false);
 
   const initPeerConnection = useCallback((roomId) => {
     if (peerConnectionRef.current) return peerConnectionRef.current;
@@ -141,6 +147,7 @@ export const WebRTCProvider = ({ children }) => {
     
     const handleMedia = ({ videoOff, muted }) => {
       if (videoOff !== undefined) setIsRemoteVideoOff(videoOff);
+      if (muted !== undefined) setIsRemoteMuted(muted);
     };
 
     const handleEnd = () => {
@@ -152,12 +159,18 @@ export const WebRTCProvider = ({ children }) => {
       initPeerConnection(currentRoomId);
     };
 
+    const handleReaction = ({ emoji }) => {
+      setRemoteReaction(emoji);
+      setTimeout(() => setRemoteReaction(null), 3000); // Clear after 3 seconds
+    };
+
     sock.on('webrtc:join', handleJoin);
     sock.on('webrtc:offer', handleOffer);
     sock.on('webrtc:answer', handleAnswer);
     sock.on('webrtc:ice', handleIce);
     sock.on('webrtc:media', handleMedia);
     sock.on('webrtc:end', handleEnd);
+    sock.on('webrtc:reaction', handleReaction);
     
     return () => {
       sock.off('webrtc:join', handleJoin);
@@ -166,6 +179,7 @@ export const WebRTCProvider = ({ children }) => {
       sock.off('webrtc:ice', handleIce);
       sock.off('webrtc:media', handleMedia);
       sock.off('webrtc:end', handleEnd);
+      sock.off('webrtc:reaction', handleReaction);
     };
   }, [currentRoomId, myUserId, isInCall, initPeerConnection]);
 
@@ -212,35 +226,83 @@ export const WebRTCProvider = ({ children }) => {
     }
   }, [localStream, isMuted]);
 
+  useEffect(() => {
+    if (remoteStream && !isRemoteMuted) {
+      if (!remoteAudioContextRef.current) {
+        remoteAudioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        remoteAnalyserRef.current = remoteAudioContextRef.current.createAnalyser();
+        remoteAnalyserRef.current.fftSize = 256;
+      }
+      
+      const audioCtx = remoteAudioContextRef.current;
+      const analyser = remoteAnalyserRef.current;
+      let source;
+      
+      try {
+        source = audioCtx.createMediaStreamSource(remoteStream);
+        source.connect(analyser);
+      } catch (e) {
+      }
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      let animationId;
+
+      const checkVolume = () => {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i];
+        }
+        const average = sum / dataArray.length;
+        setIsRemoteSpeaking(average > 15);
+        animationId = requestAnimationFrame(checkVolume);
+      };
+      
+      checkVolume();
+
+      return () => {
+        cancelAnimationFrame(animationId);
+        if (source) source.disconnect();
+      };
+    } else {
+      setIsRemoteSpeaking(false);
+    }
+  }, [remoteStream, isRemoteMuted]);
+
   const joinCall = async (roomId, targetUser = null) => {
     try {
       if (targetUser) setRemoteUser(targetUser);
       setCurrentRoomId(roomId);
       
-      let stream;
+      const stream = new MediaStream();
+
+      // Dummy Audio Track (silent) so WebRTC negotiates audio immediately
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getAudioTracks()[0].enabled = false;
-      } catch (err) {
-        console.warn("No audio device found, creating dummy track");
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = ctx.createOscillator();
         const dst = oscillator.connect(ctx.createMediaStreamDestination());
         oscillator.start();
-        stream = dst.stream;
-        stream.getAudioTracks()[0].enabled = false;
+        const dummyAudioTrack = dst.stream.getAudioTracks()[0];
+        dummyAudioTrack.enabled = false;
+        stream.addTrack(dummyAudioTrack);
+      } catch (err) {
+        console.warn("Could not create dummy audio track", err);
       }
       
-      // Create a 1x1 black synthetic video track so the WebRTC channel is negotiated immediately
-      const canvas = document.createElement("canvas");
-      canvas.width = 1; canvas.height = 1;
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, 1, 1);
-      const dummyStream = canvas.captureStream(1); // 1 FPS
-      const dummyVideoTrack = dummyStream.getVideoTracks()[0];
-      dummyVideoTrack.enabled = false; // Just keep it disabled so it doesn't render
-      stream.addTrack(dummyVideoTrack);
+      // Dummy Video Track (black 1x1) so WebRTC negotiates video immediately
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1; canvas.height = 1;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, 1, 1);
+        const dummyStream = canvas.captureStream(1); // 1 FPS
+        const dummyVideoTrack = dummyStream.getVideoTracks()[0];
+        dummyVideoTrack.enabled = false; 
+        stream.addTrack(dummyVideoTrack);
+      } catch (err) {
+        console.warn("Could not create dummy video track", err);
+      }
       
       setLocalStream(stream);
       localStreamRef.current = stream;
@@ -282,8 +344,16 @@ export const WebRTCProvider = ({ children }) => {
     setIsInCall(false);
     
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      if (audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
       audioContextRef.current = null;
+    }
+    if (remoteAudioContextRef.current) {
+      if (remoteAudioContextRef.current.state !== 'closed') {
+        remoteAudioContextRef.current.close();
+      }
+      remoteAudioContextRef.current = null;
     }
     
     const sock = getSocket();
@@ -300,19 +370,52 @@ export const WebRTCProvider = ({ children }) => {
     setCurrentRoomId(null);
   };
   
-  const toggleMute = () => {
-    if (localStreamRef.current) {
+  const toggleMute = async () => {
+    const pc = peerConnectionRef.current;
+    if (!pc || !localStreamRef.current) return;
+
+    if (isMuted) {
+      try {
+        const audStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const newAudioTrack = audStream.getAudioTracks()[0];
+        
+        const oldAudioTrack = localStreamRef.current.getAudioTracks()[0];
+        if (oldAudioTrack) {
+          oldAudioTrack.stop();
+          localStreamRef.current.removeTrack(oldAudioTrack);
+        }
+        
+        localStreamRef.current.addTrack(newAudioTrack);
+        
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+        if (sender) {
+          sender.replaceTrack(newAudioTrack);
+        } else {
+          pc.addTrack(newAudioTrack, localStreamRef.current);
+        }
+        
+        setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
+        setIsMuted(false);
+        getSocket()?.emit("webrtc:media", { roomId: currentRoomId, muted: false });
+      } catch (err) {
+        console.error("Failed to turn on audio", err);
+      }
+    } else {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsMuted(!audioTrack.enabled);
+        audioTrack.stop();
+        localStreamRef.current.removeTrack(audioTrack);
         
-        const sock = getSocket();
-        if (sock?.connected) sock.emit("webrtc:media", { roomId: currentRoomId, muted: !audioTrack.enabled });
-        return !audioTrack.enabled;
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+        if (sender) {
+          sender.replaceTrack(null);
+        }
+        
+        setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
+        setIsMuted(true);
+        getSocket()?.emit("webrtc:media", { roomId: currentRoomId, muted: true });
       }
     }
-    return true;
   };
   
   const handleToggleVideo = async () => {
@@ -353,9 +456,21 @@ export const WebRTCProvider = ({ children }) => {
         videoTrack.stop(); 
         localStreamRef.current.removeTrack(videoTrack);
         
+        // Inject dummy video track to keep WebRTC connection alive without dropping
+        const canvas = document.createElement("canvas");
+        canvas.width = 1; canvas.height = 1;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, 1, 1);
+        const dummyStream = canvas.captureStream(1);
+        const dummyVideoTrack = dummyStream.getVideoTracks()[0];
+        dummyVideoTrack.enabled = false;
+        
+        localStreamRef.current.addTrack(dummyVideoTrack);
+        
         const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
         if (sender) {
-          sender.replaceTrack(null);
+          sender.replaceTrack(dummyVideoTrack);
         }
         
         setLocalStream(new MediaStream(localStreamRef.current.getTracks()));
@@ -363,6 +478,13 @@ export const WebRTCProvider = ({ children }) => {
         getSocket()?.emit("webrtc:media", { roomId: currentRoomId, videoOff: true });
       }
     }
+  };
+
+  const sendReaction = (emoji) => {
+    if (!isInCall || !currentRoomId) return;
+    setLocalReaction(emoji);
+    setTimeout(() => setLocalReaction(null), 3000);
+    getSocket()?.emit('webrtc:reaction', { roomId: currentRoomId, emoji });
   };
 
   const isProjectRoom = location.pathname.startsWith('/project/room/');
@@ -379,9 +501,14 @@ export const WebRTCProvider = ({ children }) => {
       handleToggleVideo,
       isMuted,
       isVideoOff,
+      isRemoteMuted,
       isRemoteVideoOff,
       isSpeaking,
-      remoteUser
+      isRemoteSpeaking,
+      remoteUser,
+      localReaction,
+      remoteReaction,
+      sendReaction
     }}>
       {children}
       

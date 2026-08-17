@@ -32,6 +32,8 @@ const ProjectCard = ({ post, userRequestStatus, requestCount }) => {
 
   const isMyPost = loggedInUser?._id === authorId._id;
   const isProjectOpen = project.isOpen !== false; 
+  const onlineUsers = useSelector((store) => store.onlineUsers) || [];
+  const isAuthorOnline = onlineUsers.includes(authorId._id);
 
   const getStageColor = (stage) => {
     switch (stage?.toLowerCase()) {
@@ -65,14 +67,20 @@ const ProjectCard = ({ post, userRequestStatus, requestCount }) => {
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <Link to={`/user/${authorId._id}`} className="flex items-center gap-3 group">
-            <img 
-              src={authorId.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
-              alt={authorId.firstName} 
-              className="w-10 h-10 rounded-full object-cover border border-white/10 group-hover:border-[#ccff00] transition-colors"
-            />
+            <div className="relative">
+              <img 
+                src={authorId.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
+                alt={authorId.firstName} 
+                className="w-10 h-10 rounded-full object-cover border border-white/10 group-hover:border-[#ccff00] transition-colors"
+              />
+              {isAuthorOnline && (
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#151515]"></div>
+              )}
+            </div>
             <div className="flex flex-col">
-              <span className="font-bold text-white group-hover:text-[#ccff00] transition-colors text-[15px]">
+              <span className="font-bold text-white group-hover:text-[#ccff00] transition-colors text-[15px] flex items-center gap-1.5">
                 {authorId.firstName} {authorId.lastName}
+                {isAuthorOnline && <span className="text-[9px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">Online</span>}
               </span>
               <span className="text-xs text-[#a3a3a3] flex items-center gap-1">
                 posted a project <span className="text-[10px]">•</span> {timeAgo(createdAt)}

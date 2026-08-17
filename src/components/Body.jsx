@@ -9,6 +9,7 @@ import axios from "axios";
 import { Toaster } from "react-hot-toast";
 import { getSocket } from "../utils/socket";
 import { addNotification, setNotifications } from "../redux/notificationSlice";
+import { setOnlineUsers } from "../redux/onlineUsersSlice";
 
 const Body = () => {
   const userData = useSelector((store) => store.user);
@@ -59,8 +60,13 @@ const Body = () => {
     const handleNewNotification = (notification) => {
       dispatch(addNotification(notification));
     };
+    
+    const handleOnlineUsers = (usersArray) => {
+      dispatch(setOnlineUsers(usersArray));
+    };
 
     socket.on("newNotification", handleNewNotification);
+    socket.on("onlineUsers", handleOnlineUsers);
 
     if (window.location.pathname === "/login" || window.location.pathname === "/") {
       navigate("/feed");
@@ -68,6 +74,7 @@ const Body = () => {
 
     return () => {
       socket.off("newNotification", handleNewNotification);
+      socket.off("onlineUsers", handleOnlineUsers);
     };
   }, [userData]);
 
