@@ -268,6 +268,7 @@ const ProjectRoom = () => {
 
   const EMOJIS = ["👍", "🔥", "🚀", "💡", "😂"];
   const [showReactions, setShowReactions] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
     if (socketConnected && !hasJoinedCallRef.current && !isInCall) {
@@ -385,6 +386,10 @@ const ProjectRoom = () => {
   }, [user, roomId, isInitializing, roomData, targetId]);
 
   const handleExitRoom = () => {
+    setIsExiting(true);
+  };
+
+  const handleConfirmExit = () => {
     const completedTasks = roomData?.tasks?.filter(t => t.completed).length || 0;
     const totalTasks = roomData?.tasks?.length || 0;
     
@@ -685,14 +690,16 @@ const ProjectRoom = () => {
                    className="absolute top-0 left-0 w-1.5 h-full cursor-col-resize bg-white/5 hover:bg-[#ccff00] z-50 transition-colors"
                  />
 
-                 {/* Top Section: Camera Feed */}
-                 <div style={{ flex: openTabs.length > 0 ? "0 0 auto" : 1, height: isVideoExpanded ? (openTabs.length > 0 ? (isCorrectRoom ? "280px" : "200px") : "100%") : "40px", borderBottom: "1px solid rgba(255,255,255,0.05)", overflow: "hidden", background: "#141415", display: "flex", flexDirection: "column", transition: "all 0.3s ease" }}>
-                    <div className="px-4 py-2.5 border-b border-white/5 bg-[#1a1a1c] flex items-center justify-between shrink-0 cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setIsVideoExpanded(!isVideoExpanded)}>
-                       <span className="text-[10px] font-bold text-[#737373] uppercase tracking-widest">Camera Feed</span>
+                 {/* Top Section: Camera Feed or Rejoin Banner */}
+                 {isCorrectRoom ? (
+                   <div style={{ flex: "0 0 auto", height: isVideoExpanded ? (openTabs.length > 0 ? "280px" : "320px") : "40px", borderBottom: "1px solid rgba(255,255,255,0.05)", overflow: "hidden", background: "#141415", display: "flex", flexDirection: "column", transition: "all 0.3s ease" }}>
+                     <div className="px-4 py-2.5 border-b border-white/5 bg-[#1a1a1c] flex items-center justify-between shrink-0 cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setIsVideoExpanded(!isVideoExpanded)}>
+                       <span className="text-[10px] font-bold text-[#737373] uppercase tracking-widest flex items-center gap-2">
+                         Camera Feed
+                       </span>
                        {isVideoExpanded ? <FiChevronUp className="text-[#737373]" size={14} /> : <FiChevronDown className="text-[#737373]" size={14} />}
-                    </div>
-                    {isVideoExpanded && (
-                      isCorrectRoom ? (
+                     </div>
+                     {isVideoExpanded && (
                         <div className={`flex-1 w-full p-3 flex gap-3 ${openTabs.length > 0 ? "flex-row items-stretch justify-center" : "flex-col items-stretch justify-center"}`}>
                           {remoteStream && (
                           <div className={`relative flex-1 bg-[#0d0d0e] rounded-xl overflow-hidden shadow-lg border transition-all duration-300 ${isRemoteSpeaking ? 'border-[#ccff00] shadow-[0_0_15px_rgba(204,255,0,0.15)]' : 'border-white/5'}`} style={{ minHeight: '100px' }}>
@@ -700,7 +707,7 @@ const ProjectRoom = () => {
                               <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <img src={partner?.photoUrl || "https://geographyandyou.com/images/user-profile.png"} alt="Partner" className="w-16 h-16 rounded-full object-cover opacity-50" />
+                                <img src={partner?.photoUrl || "https://geographyandyou.com/images/user-profile.png"} alt="Partner" className="w-16 h-16 rounded-full object-cover border-2 border-white/10" />
                               </div>
                             )}
                             
@@ -718,9 +725,16 @@ const ProjectRoom = () => {
                             )}
 
                             {/* Remote Reaction */}
+                            {remoteReactions?.length > 0 && (
+                              <div className="absolute top-4 right-4 text-4xl animate-[fadeInOut_2s_ease-out_forwards] drop-shadow-xl z-50 pointer-events-none">
+                                {remoteReactions[remoteReactions.length - 1].emoji}
+                              </div>
+                            )}
                             {remoteReactions?.map(reaction => (
-                              <div key={reaction.id} className="absolute top-4 right-4 text-4xl animate-[floatUp_2s_ease-out_forwards] drop-shadow-xl z-50 pointer-events-none">
-                                {reaction.emoji}
+                              <div key={reaction.id} className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
+                                <div className="absolute bottom-0 text-3xl animate-[floatUp_2s_ease-out_forwards] opacity-0" style={{ animationDelay: '0s', left: '30%' }}>{reaction.emoji}</div>
+                                <div className="absolute bottom-0 text-2xl animate-[floatUp_2s_ease-out_forwards] opacity-0" style={{ animationDelay: '0.2s', left: '50%' }}>{reaction.emoji}</div>
+                                <div className="absolute bottom-0 text-4xl animate-[floatUp_2s_ease-out_forwards] opacity-0" style={{ animationDelay: '0.4s', left: '70%' }}>{reaction.emoji}</div>
                               </div>
                             ))}
 
@@ -738,7 +752,7 @@ const ProjectRoom = () => {
                               <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <img src={user?.photoUrl || "https://geographyandyou.com/images/user-profile.png"} alt="You" className="w-16 h-16 rounded-full object-cover opacity-50" />
+                                <img src={user?.photoUrl || "https://geographyandyou.com/images/user-profile.png"} alt="You" className="w-16 h-16 rounded-full object-cover border-2 border-[#a855f7]/40" />
                               </div>
                             )}
 
@@ -756,9 +770,16 @@ const ProjectRoom = () => {
                             )}
                             
                             {/* Local Reaction Overlay */}
+                            {localReactions?.length > 0 && (
+                              <div className="absolute top-4 right-4 text-4xl animate-[fadeInOut_2s_ease-out_forwards] drop-shadow-xl z-50 pointer-events-none">
+                                {localReactions[localReactions.length - 1].emoji}
+                              </div>
+                            )}
                             {localReactions?.map(reaction => (
-                              <div key={reaction.id} className="absolute top-4 right-4 text-4xl animate-[floatUp_2s_ease-out_forwards] drop-shadow-xl z-50 pointer-events-none">
-                                {reaction.emoji}
+                              <div key={reaction.id} className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
+                                <div className="absolute bottom-0 text-3xl animate-[floatUp_2s_ease-out_forwards] opacity-0" style={{ animationDelay: '0s', left: '30%' }}>{reaction.emoji}</div>
+                                <div className="absolute bottom-0 text-2xl animate-[floatUp_2s_ease-out_forwards] opacity-0" style={{ animationDelay: '0.2s', left: '50%' }}>{reaction.emoji}</div>
+                                <div className="absolute bottom-0 text-4xl animate-[floatUp_2s_ease-out_forwards] opacity-0" style={{ animationDelay: '0.4s', left: '70%' }}>{reaction.emoji}</div>
                               </div>
                             ))}
 
@@ -774,7 +795,7 @@ const ProjectRoom = () => {
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                {/* Reaction Menu popout */}
                                {showReactions && (
-                                 <div className="absolute top-[20%] flex items-center gap-2 bg-[#1a1a1c]/90 backdrop-blur-md p-2 rounded-full border border-white/10 shadow-2xl animate-[fadeInUp_0.2s_ease-out]">
+                                 <div className="absolute bottom-[calc(20%+60px)] flex items-center gap-2 bg-[#1a1a1c]/90 backdrop-blur-md p-2 rounded-full border border-white/10 shadow-2xl animate-[fadeInUp_0.2s_ease-out]">
                                    {EMOJIS.map(emoji => (
                                      <button 
                                        key={emoji}
@@ -806,30 +827,37 @@ const ProjectRoom = () => {
                             </div>
                           </div>
                         )}
-                      </div>
-                    ) : (
-                      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-                        <div className="w-16 h-16 bg-[#a855f7]/10 rounded-full flex items-center justify-center mb-4 border border-[#a855f7]/20">
-                          <FiVideo className="text-[#a855f7]" size={24} />
-                        </div>
-                        <h4 className="text-white font-bold mb-2">Camera & Mic Disabled</h4>
-                        <p className="text-[#737373] text-xs mb-6 max-w-[200px]">You are disconnected from the voice call but still in the room.</p>
-                        <button onClick={() => {
-                          const targetUser = roomData?.members?.find(m => String(m._id) === String(targetId));
-                          joinCall(roomId, targetUser);
-                        }} className="bg-[#a855f7] hover:bg-[#9333ea] text-white px-6 py-2 rounded-full font-bold text-sm transition-all flex items-center gap-2">
-                          <FiPhoneOff size={14} className="rotate-[135deg]" /> Rejoin Call
-                        </button>
-                      </div>
-                    )
-                  )}
+                     </div>
+                   )}
                  </div>
+                 ) : (
+                   <div className="w-full shrink-0 p-4 border-b border-white/5 bg-[#141415]">
+                     <div className="bg-[#1a1a1c] border border-[#a855f7]/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between shadow-lg w-full max-w-2xl mx-auto gap-4">
+                       <div className="flex items-center gap-4 w-full sm:w-auto">
+                         <div className="w-12 h-12 bg-[#a855f7]/10 rounded-full flex shrink-0 items-center justify-center border border-[#a855f7]/20">
+                           <FiVideoOff className="text-[#a855f7]" size={20} />
+                         </div>
+                         <div className="flex-1 text-left">
+                           <h4 className="text-white font-bold text-sm">Camera Disabled</h4>
+                           <p className="text-[#737373] text-[11px] mt-0.5 line-clamp-1">Disconnected from voice call.</p>
+                         </div>
+                       </div>
+                       <button onClick={() => {
+                         const targetUser = roomData?.members?.find(m => String(m._id) === String(targetId));
+                         joinCall(roomId, targetUser);
+                       }} className="w-full sm:w-auto bg-[#a855f7] hover:bg-[#9333ea] text-white px-6 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(168,85,247,0.4)] shrink-0">
+                         <FiPhoneOff size={14} className="rotate-[135deg]" /> Rejoin
+                       </button>
+                     </div>
+                   </div>
+                 )}
 
-                 {/* Bottom Section: Preview & Console Tabs */}
-                 <div style={{ flex: 1, display: openTabs.length > 0 ? "flex" : "none", flexDirection: "column", minHeight: 0 }}>
-                      
-                      {/* Dynamic Tabs Header */}
-                      <div className="flex items-center border-b border-white/5 bg-[#141415] shrink-0 overflow-x-auto custom-scrollbar">
+                 {/* Bottom Section: Preview, Console Tabs, OR Empty State */}
+                 <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, backgroundColor: openTabs.length === 0 ? "#121212" : "transparent" }}>
+                      {openTabs.length > 0 ? (
+                        <>
+                          {/* Dynamic Tabs Header */}
+                          <div className="flex items-center border-b border-white/5 bg-[#141415] shrink-0 overflow-x-auto custom-scrollbar">
                          {openTabs.map((tabId) => (
                            <div 
                              key={tabId}
@@ -883,13 +911,110 @@ const ProjectRoom = () => {
                           <TeamChat roomId={roomId} initialChats={roomData?.chats || []} />
                         </div>
                       </div>
-                   </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-transparent min-h-0">
+                      <div className="w-full max-w-lg flex flex-col items-center text-center">
+                        <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.02)] rotate-3">
+                          <FiTerminal className="text-white/40" size={20} />
+                        </div>
+                        <h3 className="text-white font-bold text-lg mb-1 tracking-tight">Workspace is empty</h3>
+                        <p className="text-[#737373] text-xs mb-6 text-center max-w-sm">Select a tool to launch it in your workspace.</p>
+                      
+                        <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+                          <button onClick={() => { setOpenTabs(prev => [...prev, "tasks"]); setActiveTab("tasks"); }} className="flex items-center gap-3 bg-[#141415] hover:bg-[#1a1a1c] p-3 rounded-xl border border-white/5 transition-all hover:border-white/10 group shadow-sm text-left">
+                            <div className="p-2 bg-[#a855f7]/10 rounded-lg group-hover:scale-110 transition-transform">
+                              <FiCheckSquare className="text-[#a855f7]" size={16} />
+                            </div>
+                            <span className="text-white font-bold text-xs">Project Tasks</span>
+                          </button>
+                          
+                          <button onClick={() => { setOpenTabs(prev => [...prev, "chat"]); setActiveTab("chat"); }} className="flex items-center gap-3 bg-[#141415] hover:bg-[#1a1a1c] p-3 rounded-xl border border-white/5 transition-all hover:border-white/10 group shadow-sm text-left">
+                            <div className="p-2 bg-[#3b82f6]/10 rounded-lg group-hover:scale-110 transition-transform">
+                              <FiMessageCircle className="text-[#3b82f6]" size={16} />
+                            </div>
+                            <span className="text-white font-bold text-xs">Team Chat</span>
+                          </button>
+                          
+                          <button onClick={() => { setOpenTabs(prev => [...prev, "preview"]); setActiveTab("preview"); }} className="flex items-center gap-3 bg-[#141415] hover:bg-[#1a1a1c] p-3 rounded-xl border border-white/5 transition-all hover:border-white/10 group shadow-sm text-left">
+                            <div className="p-2 bg-[#ccff00]/10 rounded-lg group-hover:scale-110 transition-transform">
+                              <FiGlobe className="text-[#ccff00]" size={16} />
+                            </div>
+                            <span className="text-white font-bold text-xs">Live Preview</span>
+                          </button>
+                          
+                          <button onClick={() => { setOpenTabs(prev => [...prev, "console"]); setActiveTab("console"); }} className="flex items-center gap-3 bg-[#141415] hover:bg-[#1a1a1c] p-3 rounded-xl border border-white/5 transition-all hover:border-white/10 group shadow-sm text-left">
+                            <div className="p-2 bg-[#10b981]/10 rounded-lg group-hover:scale-110 transition-transform">
+                              <FiTerminal className="text-[#10b981]" size={16} />
+                            </div>
+                            <span className="text-white font-bold text-xs">Terminal</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                 </div>
 
               </div>
 
           </div>
         </div>
       </div>
+      
+      {/* Session Summary Modal */}
+      {isExiting && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1c] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-[fadeInUp_0.3s_ease-out]">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-[#a855f7]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#a855f7]/20 shadow-[0_0_30px_rgba(168,85,247,0.15)]">
+                <FiLogOut className="text-[#a855f7] ml-1" size={24} />
+              </div>
+              <h2 className="text-white text-xl font-bold mb-2">Session Summary</h2>
+              <p className="text-[#737373] text-sm mb-6">You're about to leave the project room.</p>
+              
+              <div className="bg-[#121212] rounded-xl p-5 border border-white/5 mb-6 text-left">
+                <div className="flex flex-col mb-4">
+                  <span className="text-[#737373] text-[10px] font-bold uppercase tracking-widest mb-1">Project</span>
+                  <span className="text-white font-bold text-sm truncate">{post?.project?.title || "Project Room"}</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-[#1a1a1c] rounded-lg p-3 border border-white/5">
+                    <span className="block text-[#a3a3a3] text-[10px] font-bold uppercase tracking-widest mb-1">Tasks Completed</span>
+                    <div className="flex items-end gap-1.5">
+                      <span className="text-white font-bold text-xl leading-none">{roomData?.tasks?.filter(t => t.completed).length || 0}</span>
+                      <span className="text-[#737373] text-sm font-semibold mb-[2px]">/ {roomData?.tasks?.length || 0}</span>
+                    </div>
+                  </div>
+                  <div className="bg-[#1a1a1c] rounded-lg p-3 border border-white/5">
+                    <span className="block text-[#a3a3a3] text-[10px] font-bold uppercase tracking-widest mb-1">Collaborators</span>
+                    <div className="flex items-end gap-1.5">
+                      <span className="text-white font-bold text-xl leading-none flex items-center gap-2">
+                        <FiVideo size={16} className="text-[#ccff00]" /> {roomData?.members?.length || 1}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setIsExiting(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 text-white font-bold text-sm hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleConfirmExit}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-colors shadow-lg"
+                >
+                  Exit & End Session
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </SandpackProvider>
   );
