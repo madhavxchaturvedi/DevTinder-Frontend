@@ -24,8 +24,8 @@ export const WebRTCProvider = ({ children }) => {
   const [isRemoteVideoOff, setIsRemoteVideoOff] = useState(true);
   const [isRemoteMuted, setIsRemoteMuted] = useState(true);
   const [remoteUser, setRemoteUser] = useState(null);
-  const [localReaction, setLocalReaction] = useState(null);
-  const [remoteReaction, setRemoteReaction] = useState(null);
+  const [localReactions, setLocalReactions] = useState([]);
+  const [remoteReactions, setRemoteReactions] = useState([]);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
   const makingOfferRef = useRef(false);
@@ -160,8 +160,11 @@ export const WebRTCProvider = ({ children }) => {
     };
 
     const handleReaction = ({ emoji }) => {
-      setRemoteReaction(emoji);
-      setTimeout(() => setRemoteReaction(null), 3000); // Clear after 3 seconds
+      const id = Date.now() + Math.random();
+      setRemoteReactions(prev => [...prev, { id, emoji }]);
+      setTimeout(() => {
+        setRemoteReactions(prev => prev.filter(r => r.id !== id));
+      }, 2000);
     };
 
     sock.on('webrtc:join', handleJoin);
@@ -481,10 +484,15 @@ export const WebRTCProvider = ({ children }) => {
   };
 
   const sendReaction = (emoji) => {
-    if (!isInCall || !currentRoomId) return;
-    setLocalReaction(emoji);
-    setTimeout(() => setLocalReaction(null), 3000);
-    getSocket()?.emit('webrtc:reaction', { roomId: currentRoomId, emoji });
+    const id = Date.now() + Math.random();
+    setLocalReactions(prev => [...prev, { id, emoji }]);
+    setTimeout(() => {
+      setLocalReactions(prev => prev.filter(r => r.id !== id));
+    }, 2000);
+    
+    if (currentRoomId) {
+      getSocket()?.emit('webrtc:reaction', { roomId: currentRoomId, emoji });
+    }
   };
 
   const isProjectRoom = location.pathname.startsWith('/project/room/');
@@ -506,8 +514,8 @@ export const WebRTCProvider = ({ children }) => {
       isSpeaking,
       isRemoteSpeaking,
       remoteUser,
-      localReaction,
-      remoteReaction,
+      localReactions,
+      remoteReactions,
       sendReaction
     }}>
       {children}

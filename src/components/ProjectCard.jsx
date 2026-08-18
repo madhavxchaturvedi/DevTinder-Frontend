@@ -80,7 +80,6 @@ const ProjectCard = ({ post, userRequestStatus, requestCount }) => {
             <div className="flex flex-col">
               <span className="font-bold text-white group-hover:text-[#ccff00] transition-colors text-[15px] flex items-center gap-1.5">
                 {authorId.firstName} {authorId.lastName}
-                {isAuthorOnline && <span className="text-[9px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">Online</span>}
               </span>
               <span className="text-xs text-[#a3a3a3] flex items-center gap-1">
                 posted a project <span className="text-[10px]">•</span> {timeAgo(createdAt)}

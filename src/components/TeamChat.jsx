@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FiSend } from 'react-icons/fi';
+import { FiSend, FiMessageCircle } from 'react-icons/fi';
 import { getSocket } from '../utils/socket';
 import { useSelector } from 'react-redux';
 
@@ -54,17 +54,13 @@ const TeamChat = ({ roomId, initialChats = [] }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0d0d0e]">
-      <div className="p-4 border-b border-white/5 bg-[#141415] flex-shrink-0">
-        <h3 className="text-[#e5e5e5] font-bold text-sm tracking-wide">Team Chat</h3>
-        <p className="text-[#737373] text-[11px] mt-0.5">Share snippets and ideas</p>
-      </div>
+    <div className="flex flex-col h-full bg-[#121212] overflow-hidden">
 
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar flex flex-col gap-4">
         {chats.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center">
+          <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
             <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
-              <FiSend className="text-[#a3a3a3]" size={20} />
+              <FiMessageCircle className="text-[#737373]" size={24} />
             </div>
             <p className="text-[#737373] text-xs">No messages yet.<br/>Say hello to your partner!</p>
           </div>
@@ -76,7 +72,7 @@ const TeamChat = ({ roomId, initialChats = [] }) => {
             if (isSystem) {
               return (
                 <div key={chat._id} className="flex justify-center my-2">
-                  <div className="bg-[#ccff00]/10 border border-[#ccff00]/20 text-[#ccff00] px-3 py-1.5 rounded-full text-[11px] font-bold">
+                  <div className="bg-[#a855f7]/10 border border-[#a855f7]/20 text-[#a855f7] px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wide shadow-sm">
                     {chat.text}
                   </div>
                 </div>
@@ -88,7 +84,7 @@ const TeamChat = ({ roomId, initialChats = [] }) => {
                 <img 
                   src={chat.senderId?.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
                   alt={chat.senderId?.firstName} 
-                  className="w-8 h-8 rounded-full object-cover shrink-0 mt-auto"
+                  className="w-8 h-8 rounded-full object-cover shrink-0 mt-auto shadow-sm"
                 />
                 <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                   <div className="flex items-center gap-2 mb-1">
@@ -97,9 +93,9 @@ const TeamChat = ({ roomId, initialChats = [] }) => {
                     </span>
                     <span className="text-[9px] text-[#525252]">{formatTime(chat.createdAt)}</span>
                   </div>
-                  <div className={`px-4 py-2 rounded-2xl text-[13px] leading-relaxed break-words ${
+                  <div className={`px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed break-words shadow-sm transition-all duration-300 hover:shadow-md ${
                     isMe 
-                      ? 'bg-blue-600 text-white rounded-br-sm' 
+                      ? 'bg-[#a855f7] text-white rounded-br-sm' 
                       : 'bg-[#1a1a1c] border border-white/5 text-[#e5e5e5] rounded-bl-sm'
                   }`}>
                     {chat.text}
@@ -112,16 +108,16 @@ const TeamChat = ({ roomId, initialChats = [] }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-[#141415] border-t border-white/5 flex-shrink-0">
+      <div className="p-4 bg-[#1a1a1c]/80 backdrop-blur-xl border-t border-white/5 flex-shrink-0">
         <form onSubmit={sendMessage} className="relative">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="w-full bg-[#1a1a1c] border border-white/10 rounded-xl py-2.5 pl-4 pr-10 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-blue-500"
+            className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] transition-all shadow-inner"
           />
-          <button type="submit" disabled={!newMessage.trim()} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors disabled:opacity-50 disabled:hover:bg-transparent">
+          <button type="submit" disabled={!newMessage.trim()} className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 bg-[#a855f7] text-white hover:bg-[#9333ea] rounded-lg transition-all disabled:opacity-50 disabled:bg-white/10 disabled:text-[#737373]">
             <FiSend size={16} />
           </button>
         </form>
