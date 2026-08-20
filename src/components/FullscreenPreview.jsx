@@ -20,6 +20,7 @@ const SandpackSyncerReadOnly = ({ roomId }) => {
     if (!sock) return;
 
     const handleReceiveFiles = ({ files }) => {
+      if (!files) return;
       Object.keys(files).forEach((path) => {
         if (sandpack.files[path]?.code !== files[path].code) {
           sandpack.updateFile(path, files[path].code);
@@ -56,6 +57,7 @@ const FullscreenPreview = () => {
 
   const [isInitializing, setIsInitializing] = useState(true);
   const [initialFiles, setInitialFiles] = useState({});
+  const [roomData, setRoomData] = useState(null);
 
   useEffect(() => {
     const fetchUserAndRoom = async () => {
@@ -69,6 +71,7 @@ const FullscreenPreview = () => {
 
         const roomRes = await axios.get(BASE_URL + "/project/room/" + roomId, { withCredentials: true });
         const data = roomRes.data.data;
+        setRoomData(data);
 
         if (data.files) {
           setInitialFiles(data.files);
@@ -123,32 +126,25 @@ const FullscreenPreview = () => {
     );
   }
 
-  const savedAppCode = 
-    localStorage.getItem(`sandpack_code_${roomId}`) ||
-    initialFiles["/App.js"]?.code || 
-    initialFiles["App.js"]?.code || 
-    initialFiles["/src/App.js"]?.code ||
-    null;
+  const template = roomData?.template || 'react';
 
-  const cleanFiles = {
-    "/App.js": {
-      code: savedAppCode || `export default function App() {
-  return (
-    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
-      <h1 style={{ color: "#a855f7" }}>Loading preview...</h1>
-    </div>
-  );
-}`,
-      active: true,
-    },
-  };
+  // Use all saved files, or fall back to localStorage/default
+  const savedFiles = Object.keys(initialFiles).length > 0 
+    ? initialFiles 
+    : null;
+
+  const lsCode = localStorage.getItem(`sandpack_code_${roomId}`);
+
+  const filesToUse = savedFiles || (lsCode ? { "/App.js": { code: lsCode } } : {
+    "/App.js": { code: `export default function App() { return <div>Loading preview...</div>; }`, active: true }
+  });
 
   return (
     <div className="h-screen w-full bg-[#0d0d0e]">
       <SandpackProvider
-        template="react"
+        template={template}
         theme="dark"
-        files={cleanFiles}
+        files={filesToUse}
         options={{ autorun: true, autoReload: true }}
       >
         <SandpackSyncerReadOnly roomId={roomId} />

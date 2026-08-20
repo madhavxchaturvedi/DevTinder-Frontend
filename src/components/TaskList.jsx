@@ -3,10 +3,15 @@ import { FiCheck, FiCircle, FiPlus, FiTrash2, FiCheckSquare } from 'react-icons/
 import { getSocket } from '../utils/socket';
 import { useSelector } from 'react-redux';
 
-const TaskList = ({ roomId, initialTasks = [] }) => {
+const TaskList = ({ roomId, initialTasks = [], onTasksChange }) => {
   const [tasks, setTasks] = useState(initialTasks);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const user = useSelector(store => store.user);
+
+  // Report task changes to parent
+  useEffect(() => {
+    if (onTasksChange) onTasksChange(tasks);
+  }, [tasks, onTasksChange]);
 
   useEffect(() => {
     const socket = getSocket();
