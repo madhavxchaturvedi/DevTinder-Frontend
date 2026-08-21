@@ -10,6 +10,7 @@ import {
   FiLogOut, FiTerminal, FiX, FiCheck, FiClock, FiWifi, FiWifiOff,
   FiChevronRight, FiCopy, FiDownload, FiZap, FiLayers
 } from "react-icons/fi";
+import { SiReact, SiVuedotjs, SiAngular } from "react-icons/si";
 import { getSocket } from "../utils/socket";
 import { BASE_URL } from "../utils/constants";
 import axios from "axios";
@@ -23,7 +24,8 @@ import {
   SandpackPreview,
   SandpackFileExplorer,
   SandpackConsole,
-  useSandpack
+  useSandpack,
+  useSandpackConsole
 } from "@codesandbox/sandpack-react";
 
 // ─── Splitter Hooks ─────────────────────────────────────────────
@@ -99,6 +101,9 @@ const DEFAULT_FILES = {
 }`,
       active: true,
     },
+    "/package.json": {
+      code: `{\n  "dependencies": {\n    "react": "^18.0.0",\n    "react-dom": "^18.0.0"\n  }\n}`,
+    }
   },
   vue: {
     "/src/App.vue": {
@@ -128,6 +133,9 @@ p { color: #a3a3a3; }
 </style>`,
       active: true,
     },
+    "/package.json": {
+      code: `{\n  "dependencies": {\n    "vue": "^3.0.0"\n  }\n}`,
+    }
   },
   angular: {
     "/src/app/app.component.ts": {
@@ -145,6 +153,9 @@ p { color: #a3a3a3; }
 export class AppComponent {}`,
       active: true,
     },
+    "/package.json": {
+      code: `{\n  "dependencies": {\n    "@angular/core": "^15.0.0"\n  }\n}`,
+    }
   },
 };
 
@@ -154,8 +165,16 @@ const SandpackSyncer = ({ roomId, onSaveStatusChange }) => {
   const isRemoteUpdateRef = useRef(new Set());
   const prevFileKeysRef = useRef("");
   const emitTimerRef = useRef(null);
+  
+  const filesRef = useRef(sandpack.files);
+  const activeFileRef = useRef(sandpack.activeFile);
+  
+  useEffect(() => {
+    filesRef.current = sandpack.files;
+    activeFileRef.current = sandpack.activeFile;
+  }, [sandpack.files, sandpack.activeFile]);
 
-  // Receive code changes from partner
+  // Receive code changes from partner (Mount once to avoid thrashing)
   useEffect(() => {
     const sock = getSocket();
     if (!sock) return;
@@ -163,7 +182,7 @@ const SandpackSyncer = ({ roomId, onSaveStatusChange }) => {
     const handleReceiveFiles = ({ files }) => {
       if (!files) return;
       Object.keys(files).forEach((path) => {
-        if (sandpack.files[path]?.code !== files[path].code) {
+        if (filesRef.current[path]?.code !== files[path].code) {
           isRemoteUpdateRef.current.add(path);
           sandpack.updateFile(path, files[path].code);
         }
@@ -171,16 +190,16 @@ const SandpackSyncer = ({ roomId, onSaveStatusChange }) => {
     };
 
     const handleFileCreated = ({ path, code }) => {
-      if (path && !sandpack.files[path]) {
+      if (path && !filesRef.current[path]) {
         isRemoteUpdateRef.current.add(path);
         sandpack.addFile({ [path]: { code: code || "" } });
       }
     };
 
     const handleFileDeleted = ({ path }) => {
-      if (path && sandpack.files[path]) {
+      if (path && filesRef.current[path]) {
         isRemoteUpdateRef.current.add(path);
-        try { sandpack.deleteFile(path); } catch (e) { /* active file */ }
+        try { sandpack.deleteFile(path); } catch (e) { /* ignore */ }
       }
     };
 
@@ -193,7 +212,7 @@ const SandpackSyncer = ({ roomId, onSaveStatusChange }) => {
       sock.off("file:created", handleFileCreated);
       sock.off("file:deleted", handleFileDeleted);
     };
-  }, [sandpack.files]);
+  }, []); 
 
   // Emit code changes to partner (debounced 150ms)
   useEffect(() => {
@@ -213,11 +232,11 @@ const SandpackSyncer = ({ roomId, onSaveStatusChange }) => {
     if (emitTimerRef.current) clearTimeout(emitTimerRef.current);
     emitTimerRef.current = setTimeout(() => {
       sock.emit("codeChange", { roomId, files: { [activeFile]: { code } } });
-      localStorage.setItem(`sandpack_code_${roomId}`, code);
+      localStorage.setItem(`sandpack_code_${roomId}`, JSON.stringify(sandpack.files));
     }, 150);
 
     if (onSaveStatusChange) onSaveStatusChange("unsaved");
-  }, [sandpack.files, sandpack.activeFile, roomId]);
+  }, [sandpack.files[sandpack.activeFile]?.code, sandpack.activeFile, roomId]);
 
   // Detect file creates/deletes by diffing keys
   useEffect(() => {
@@ -242,28 +261,29 @@ const SandpackSyncer = ({ roomId, onSaveStatusChange }) => {
           sock.emit("file:deleted", { roomId, path });
         }
       });
+      
+      isRemoteUpdateRef.current.clear();
     }
 
     prevFileKeysRef.current = currentKeys;
-    isRemoteUpdateRef.current.clear();
   }, [Object.keys(sandpack.files).sort().join(","), roomId]);
 
-  // Auto-save ALL files every 15 seconds
+  // Auto-save ALL files every 15 seconds (Fixed interval!)
   useEffect(() => {
     const interval = setInterval(() => {
       const sock = getSocket();
       if (!sock?.connected) return;
 
       const allFiles = {};
-      Object.keys(sandpack.files).forEach((path) => {
-        allFiles[path] = { code: sandpack.files[path].code };
+      Object.keys(filesRef.current).forEach((path) => {
+        allFiles[path] = { code: filesRef.current[path].code };
       });
 
       sock.emit("saveProjectFiles", { roomId, files: allFiles });
       if (onSaveStatusChange) onSaveStatusChange("saved");
     }, 15000);
     return () => clearInterval(interval);
-  }, [sandpack.files, roomId]);
+  }, [roomId]);
 
   return null;
 };
@@ -302,91 +322,361 @@ const ManualSaveHandler = ({ roomId, onSaveStatusChange }) => {
   return null;
 };
 
-// ─── Custom File Creator ────────────────────────────────────────
-const CustomFileCreator = () => {
+// ─── NPM Dependency Manager ──────────────────────────────────────
+const DependencyManager = () => {
   const { sandpack } = useSandpack();
-  const [isCreating, setIsCreating] = useState(false);
-  const [createType, setCreateType] = useState("file"); // 'file' | 'folder'
-  const [filename, setFilename] = useState("");
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [installingPkg, setInstallingPkg] = useState(null);
+  
+  // Parse current dependencies from sandpack.files
+  const packageJsonStr = sandpack.files["/package.json"]?.code || '{\n  "dependencies": {}\n}';
+  let currentDeps = {};
+  try {
+    const parsed = JSON.parse(packageJsonStr);
+    currentDeps = parsed.dependencies || {};
+  } catch (e) {
+    console.error("Failed to parse package.json", e);
+  }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!filename.trim()) {
-      setIsCreating(false);
+  // Debounced Search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
       return;
     }
-    
-    let path = filename.startsWith("/") ? filename : `/${filename}`;
-    
-    if (createType === "folder") {
-      // Sandpack relies on files to create folders, so we add a hidden .keep file
-      path = `${path}/.keep`;
-    }
 
+    setIsSearching(true);
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(searchQuery)}&size=5`);
+        const data = await res.json();
+        setSearchResults(data.objects || []);
+      } catch (err) {
+        console.error("NPM Search error:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const addDependency = (pkgName, version) => {
+    setInstallingPkg(pkgName);
+    
+    // Read the LATEST file to avoid race conditions
+    const latestPackageStr = sandpack.files["/package.json"]?.code || '{\n  "dependencies": {}\n}';
+    let parsed = { dependencies: {} };
     try {
-      if (!sandpack.files[path]) {
-        sandpack.addFile(path, "");
-      }
-      if (createType === "file") {
-        sandpack.setActiveFile(path);
-      }
-    } catch (err) {
-      console.error(err);
+      parsed = JSON.parse(latestPackageStr);
+      if (!parsed.dependencies) parsed.dependencies = {};
+    } catch (e) {}
+
+    parsed.dependencies[pkgName] = `^${version}`;
+    
+    const newCode = JSON.stringify(parsed, null, 2);
+    if (!sandpack.files["/package.json"]) {
+      sandpack.addFile("/package.json", newCode);
+    } else {
+      sandpack.updateFile("/package.json", newCode);
     }
-    setFilename("");
-    setIsCreating(false);
+    
+    setSearchQuery("");
+    setTimeout(() => setInstallingPkg(null), 500); // UI feedback
+  };
+
+  const removeDependency = (pkgName) => {
+    const latestPackageStr = sandpack.files["/package.json"]?.code || '{\n  "dependencies": {}\n}';
+    let parsed = { dependencies: {} };
+    try {
+      parsed = JSON.parse(latestPackageStr);
+      if (!parsed.dependencies) parsed.dependencies = {};
+    } catch (e) {}
+
+    delete parsed.dependencies[pkgName];
+    
+    sandpack.updateFile("/package.json", JSON.stringify(parsed, null, 2));
   };
 
   return (
-    <div className="px-3 pb-2 pt-1 border-b border-white/[0.04] mb-1 flex flex-col gap-2 shrink-0">
-      <div className="flex items-center justify-between group">
+    <div className="flex flex-col shrink-0 border-t border-white/[0.04]">
+      {/* Header */}
+      <div 
+        className="flex items-center justify-between px-3 py-2 cursor-pointer group"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <span className="text-[10px] font-bold text-[#525252] uppercase tracking-[0.1em] group-hover:text-[#737373] transition-colors">
+          Dependencies
+        </span>
+        <span className="text-[#525252] group-hover:text-[#e1e1e3] transition-colors">
+          {isExpanded ? <FiChevronDown size={12} /> : <FiChevronRight size={12} />}
+        </span>
+      </div>
+
+      {isExpanded && (
+        <div className="px-3 pb-3 flex flex-col gap-2">
+          {/* Current Dependencies */}
+          {Object.keys(currentDeps).length > 0 && (
+            <div className="flex flex-col gap-1 mb-1">
+              {Object.entries(currentDeps).map(([name, version]) => (
+                <div key={name} className="flex items-center justify-between group/dep">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <FiLayers size={10} className="text-[#a3a3a3] shrink-0" />
+                    <span className="text-[11px] text-[#cccccc] truncate">{name}</span>
+                  </div>
+                  <button 
+                    onClick={() => removeDependency(name)}
+                    className="opacity-0 group-hover/dep:opacity-100 p-0.5 text-[#737373] hover:text-red-400 transition-all shrink-0"
+                    title="Remove Package"
+                  >
+                    <FiX size={10} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Search Input */}
+          <div className="relative">
+            <FiSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-[#737373]" size={10} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Add npm package..."
+              className="w-full bg-[#1e1e1e] border border-white/5 rounded-md text-[11px] text-[#e1e1e3] pl-6 pr-2 py-1.5 outline-none focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7]/30 transition-all"
+            />
+          </div>
+
+          {/* Search Results */}
+          {searchQuery && (
+            <div className="flex flex-col gap-1 mt-1 max-h-[150px] overflow-y-auto custom-scrollbar">
+              {isSearching ? (
+                <div className="text-[10px] text-[#737373] py-1 text-center flex items-center justify-center gap-1">
+                  <FiRefreshCw className="animate-spin" size={10} /> Searching...
+                </div>
+              ) : searchResults.length > 0 ? (
+                searchResults.map(({ package: pkg }) => (
+                  <div key={pkg.name} className="flex items-center justify-between py-1 px-1.5 hover:bg-white/5 rounded-md group/res">
+                    <div className="flex flex-col min-w-0 flex-1 pr-2">
+                      <span className="text-[11px] text-[#e1e1e3] font-medium truncate">{pkg.name}</span>
+                      <span className="text-[9px] text-[#737373] truncate">{pkg.version}</span>
+                    </div>
+                    {installingPkg === pkg.name ? (
+                      <FiRefreshCw className="animate-spin text-[#a855f7] shrink-0" size={12} />
+                    ) : (
+                      <button 
+                        onClick={() => addDependency(pkg.name, pkg.version)}
+                        className="opacity-0 group-hover/res:opacity-100 text-[#a855f7] hover:text-[#c084fc] shrink-0"
+                        title="Add Package"
+                      >
+                        <FiDownload size={12} />
+                      </button>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-[10px] text-[#737373] py-1 text-center">
+                  No package found
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Custom File Explorer Tree ──────────────────────────────────
+const buildFileTree = (files) => {
+  const root = { name: "root", path: "/", type: "folder", children: {}, isExpanded: true };
+  
+  Object.keys(files).forEach((filePath) => {
+    const parts = filePath.split("/").filter(Boolean);
+    let current = root;
+    let currentPath = "";
+    
+    parts.forEach((part, index) => {
+      currentPath += `/${part}`;
+      if (index === parts.length - 1) {
+        if (part !== ".keep") {
+          current.children[part] = { name: part, path: currentPath, type: "file" };
+        }
+      } else {
+        if (!current.children[part]) {
+          current.children[part] = { name: part, path: currentPath, type: "folder", children: {} };
+        }
+        current = current.children[part];
+      }
+    });
+  });
+  
+  return root;
+};
+
+const CustomFileExplorer = ({ projectName }) => {
+  const { sandpack } = useSandpack();
+  const [expandedFolders, setExpandedFolders] = useState(new Set(["/"]));
+  const [selectedPath, setSelectedPath] = useState("/");
+  const [creating, setCreating] = useState(null); // { type: 'file' | 'folder', path: '/src' }
+  const [newItemName, setNewItemName] = useState("");
+
+  const tree = useMemo(() => buildFileTree(sandpack.files), [sandpack.files]);
+
+  const toggleFolder = (path, e) => {
+    e?.stopPropagation();
+    const newExpanded = new Set(expandedFolders);
+    if (newExpanded.has(path)) newExpanded.delete(path);
+    else newExpanded.add(path);
+    setExpandedFolders(newExpanded);
+    setSelectedPath(path);
+  };
+
+  const handleSelect = (path, type, e) => {
+    e?.stopPropagation();
+    setSelectedPath(path);
+    if (type === "file") {
+      sandpack.setActiveFile(path);
+    }
+  };
+
+  const startCreating = (type) => {
+    let targetPath = selectedPath;
+    if (targetPath !== "/" && sandpack.files[targetPath]) {
+      targetPath = targetPath.substring(0, targetPath.lastIndexOf("/")) || "/";
+    }
+    
+    if (targetPath !== "/") {
+      setExpandedFolders(prev => new Set(prev).add(targetPath));
+    }
+    
+    setCreating({ type, path: targetPath });
+    setNewItemName("");
+  };
+
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    if (!newItemName.trim() || !creating) {
+      setCreating(null);
+      return;
+    }
+    
+    const parentPath = creating.path === "/" ? "" : creating.path;
+    let newPath = `${parentPath}/${newItemName}`;
+    
+    if (creating.type === "folder") {
+      newPath = `${newPath}/.keep`;
+    }
+
+    try {
+      if (!sandpack.files[newPath]) {
+        sandpack.addFile(newPath, "");
+      }
+      if (creating.type === "file") {
+        sandpack.setActiveFile(newPath);
+      }
+      setExpandedFolders(prev => new Set(prev).add(creating.type === "folder" ? `${parentPath}/${newItemName}` : parentPath === "" ? "/" : parentPath));
+    } catch (err) {
+      console.error(err);
+    }
+    
+    setCreating(null);
+    setNewItemName("");
+  };
+
+  const renderNode = (node, level = 0) => {
+    const isExpanded = expandedFolders.has(node.path) || node.path === "/";
+    const isSelected = selectedPath === node.path;
+    const isActiveFile = sandpack.activeFile === node.path;
+    const isRoot = node.path === "/";
+
+    const isCreatingHere = creating && creating.path === node.path;
+
+    const children = Object.values(node.children || {}).sort((a, b) => {
+      if (a.type === b.type) return a.name.localeCompare(b.name);
+      return a.type === "folder" ? -1 : 1;
+    });
+
+    return (
+      <div key={node.path}>
+        {!isRoot && (
+          <div 
+            onClick={(e) => node.type === "folder" ? toggleFolder(node.path, e) : handleSelect(node.path, node.type, e)}
+            className={`flex items-center gap-1.5 py-1 px-2 cursor-pointer select-none group transition-colors ${isSelected || isActiveFile ? "bg-[#37373d]/60 text-white" : "text-[#cccccc] hover:bg-[#2a2d2e]"}`}
+            style={{ paddingLeft: `${level * 12 + 8}px` }}
+          >
+            {node.type === "folder" ? (
+              <span className="text-[#a3a3a3] w-4 flex justify-center">
+                {isExpanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
+              </span>
+            ) : (
+              <span className="w-4 flex justify-center">
+                {node.name.endsWith('.js') || node.name.endsWith('.jsx') ? <span className="text-[#cbce58] text-[10px] font-bold">JS</span> :
+                 node.name.endsWith('.css') ? <span className="text-[#519aba] text-[10px] font-bold">#</span> :
+                 node.name.endsWith('.json') ? <span className="text-[#cbcb41] text-[10px] font-bold">{"{}"}</span> :
+                 <FiFile size={12} className="text-[#a3a3a3]" />}
+              </span>
+            )}
+            <span className={`text-[12px] truncate ${isActiveFile ? "text-[#ccff00]" : ""}`}>{node.name}</span>
+          </div>
+        )}
+
+        {(isExpanded || isRoot) && (
+          <div>
+            {isCreatingHere && (
+              <div className="flex items-center gap-1.5 py-1 pr-2" style={{ paddingLeft: `${(level + (isRoot ? 0 : 1)) * 12 + 8}px` }}>
+                <span className="w-4 flex justify-center text-[#a3a3a3]">
+                  {creating.type === "folder" ? <FiChevronRight size={14} /> : <FiFile size={12} />}
+                </span>
+                <form onSubmit={handleCreateSubmit} className="flex-1 min-w-0">
+                  <input
+                    type="text"
+                    value={newItemName}
+                    onChange={(e) => setNewItemName(e.target.value)}
+                    className="w-full bg-[#1e1e1e] border border-[#007fd4] rounded-sm text-[12px] text-white px-1 py-0.5 outline-none focus:border-[#007fd4]"
+                    autoFocus
+                    onBlur={() => setCreating(null)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setCreating(null); }}
+                  />
+                </form>
+              </div>
+            )}
+            {children.map(child => renderNode(child, isRoot ? 0 : level + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col flex-1 min-h-0 bg-[#141415] text-[#cccccc] font-sans">
+      <div className="flex items-center justify-between px-3 pb-2 pt-1 border-b border-white/[0.04] mb-1 group shrink-0">
+        <span className="text-[10px] font-bold text-[#525252] uppercase tracking-[0.1em] cursor-pointer group-hover:text-[#737373] transition-colors" onClick={() => setSelectedPath("/")}>
           Files
         </span>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={() => { setCreateType("file"); setIsCreating(true); }}
-            className="p-1 rounded hover:bg-white/10 text-[#737373] hover:text-[#e1e1e3] transition-colors relative"
-            title="New File"
-          >
+          <button onClick={() => startCreating("file")} className="p-1 rounded hover:bg-white/10 text-[#737373] hover:text-[#e1e1e3] transition-colors relative" title="New File">
             <FiFile size={12} />
             <span className="absolute top-0 right-0 text-[10px] font-bold leading-none bg-[#141415] rounded-full">+</span>
           </button>
-          <button
-            onClick={() => { setCreateType("folder"); setIsCreating(true); }}
-            className="p-1 rounded hover:bg-white/10 text-[#737373] hover:text-[#e1e1e3] transition-colors relative"
-            title="New Folder"
-          >
+          <button onClick={() => startCreating("folder")} className="p-1 rounded hover:bg-white/10 text-[#737373] hover:text-[#e1e1e3] transition-colors relative" title="New Folder">
             <FiFolder size={12} />
             <span className="absolute top-0 right-0 text-[10px] font-bold leading-none bg-[#141415] rounded-full">+</span>
+          </button>
+          <button onClick={() => { setExpandedFolders(new Set(["/"])); setSelectedPath("/"); }} className="p-1 rounded hover:bg-white/10 text-[#737373] hover:text-[#e1e1e3] transition-colors" title="Collapse All">
+            <FiChevronUp size={12} />
           </button>
         </div>
       </div>
       
-      {isCreating && (
-        <form onSubmit={handleSubmit} className="flex items-center gap-1 mt-1">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={filename}
-              onChange={(e) => setFilename(e.target.value)}
-              placeholder={createType === "file" ? "e.g. index.js" : "e.g. components"}
-              className="w-full bg-[#0d0d0e] border border-[#a855f7]/50 rounded-md text-[11px] text-[#e1e1e3] pl-2 pr-2 py-1.5 outline-none focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7]/30 transition-all shadow-inner"
-              autoFocus
-              onBlur={() => {
-                if (!filename.trim()) setIsCreating(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setIsCreating(false);
-                  setFilename("");
-                }
-              }}
-            />
-          </div>
-          <button type="submit" className="hidden" />
-        </form>
-      )}
+      <div className="flex-1 overflow-y-auto custom-scrollbar" onClick={() => setSelectedPath("/")}>
+        {renderNode(tree)}
+      </div>
     </div>
   );
 };
@@ -474,72 +764,113 @@ const SearchPanel = () => {
 
 // ─── Settings Panel ─────────────────────────────────────────────
 const SettingsPanel = ({ post, techStack, template, onTemplateChange, sessionTime }) => {
+  const templates = [
+    { id: "react", name: "React", icon: SiReact, color: "#61DAFB" },
+    { id: "vue", name: "Vue", icon: SiVuedotjs, color: "#4FC08D" },
+    { id: "angular", name: "Angular", icon: SiAngular, color: "#DD0031" }
+  ];
+
   return (
-    <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5 custom-scrollbar">
-      {/* Template */}
-      <div>
-        <span className="text-[9px] font-bold text-[#525252] uppercase tracking-[0.15em] flex items-center gap-1.5 mb-2.5">
-          <FiLayers size={10} /> Template
-        </span>
-        <div className="grid grid-cols-3 gap-1.5">
-          {["react", "vue", "angular"].map((t) => (
-            <button key={t} onClick={() => onTemplateChange(t)} className={`px-2.5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${template === t ? "bg-[#a855f7]/15 border-[#a855f7]/40 text-[#a855f7]" : "bg-[#0d0d0e] border-white/5 text-[#525252] hover:text-[#a3a3a3] hover:border-white/10"}`}>
-              {t === "react" ? "⚛️" : t === "vue" ? "💚" : "🅰️"} {t}
-            </button>
-          ))}
+    <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6 custom-scrollbar text-[#e1e1e3]">
+      
+      {/* Template Selection */}
+      <section>
+        <h3 className="text-xs font-semibold text-[#a3a3a3] flex items-center gap-2 mb-3">
+          <FiLayers size={14} /> Environment Template
+        </h3>
+        <div className="grid grid-cols-3 gap-3">
+          {templates.map((t) => {
+            const Icon = t.icon;
+            const isActive = template === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => onTemplateChange(t.id)}
+                className={`flex flex-col items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all duration-200 ${
+                  isActive 
+                    ? "bg-[#1e1e20] border-[#a855f7] shadow-[0_0_10px_rgba(168,85,247,0.15)]" 
+                    : "bg-[#0d0d0e] border-white/5 hover:border-white/20 hover:bg-[#141415]"
+                }`}
+              >
+                <Icon size={24} color={isActive ? t.color : "#737373"} className="transition-colors" />
+                <span className={`text-[11px] font-medium ${isActive ? "text-white" : "text-[#737373]"}`}>
+                  {t.name}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <p className="text-[9px] text-[#3a3a3a] mt-1.5 italic">Changing template resets all files</p>
-      </div>
+        <p className="text-[10px] text-[#737373] mt-2 flex items-center gap-1">
+          <FiInfo size={10} /> Changing the template will reset all current files.
+        </p>
+      </section>
+
+      <hr className="border-white/5" />
 
       {/* Project Details */}
-      <div>
-        <span className="text-[9px] font-bold text-[#525252] uppercase tracking-[0.15em] flex items-center gap-1.5 mb-2.5">
-          <FiInfo size={10} /> Project Details
-        </span>
-        <p className="text-[#737373] text-[11px] leading-relaxed bg-[#0d0d0e] rounded-lg p-3 border border-white/5">
-          {post?.content || "No project description provided."}
-        </p>
-      </div>
-
-      {post?.project?.roleNeeded && (
-        <div>
-          <span className="text-[9px] font-bold text-[#525252] uppercase tracking-[0.15em] block mb-2">Seeking Role</span>
-          <span className="inline-block px-2.5 py-1.5 bg-[#ccff00]/10 border border-[#ccff00]/15 text-[#ccff00] text-[10px] font-mono rounded-md">{post.project.roleNeeded}</span>
+      <section>
+        <h3 className="text-xs font-semibold text-[#a3a3a3] flex items-center gap-2 mb-3">
+          <FiInfo size={14} /> Project Overview
+        </h3>
+        <div className="bg-[#0d0d0e] rounded-xl p-4 border border-white/5">
+          <p className="text-[#a3a3a3] text-xs leading-relaxed">
+            {post?.content || "No project description provided."}
+          </p>
+          
+          {post?.project?.roleNeeded && (
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-[10px] text-[#737373]">Seeking:</span>
+              <span className="px-2 py-1 bg-[#ccff00]/10 border border-[#ccff00]/20 text-[#ccff00] text-[10px] font-medium rounded-md">
+                {post.project.roleNeeded}
+              </span>
+            </div>
+          )}
         </div>
-      )}
+      </section>
 
+      {/* Tech Stack */}
       {techStack.length > 0 && (
-        <div>
-          <span className="text-[9px] font-bold text-[#525252] uppercase tracking-[0.15em] block mb-2">Tech Stack</span>
-          <div className="flex flex-wrap gap-1.5">
+        <section>
+          <h3 className="text-xs font-semibold text-[#a3a3a3] mb-3">Tech Stack</h3>
+          <div className="flex flex-wrap gap-2">
             {techStack.map((tech, idx) => (
-              <span key={idx} className="px-2 py-1 bg-[#0d0d0e] border border-white/5 text-[#737373] text-[10px] rounded-md">{tech}</span>
+              <span key={idx} className="px-2.5 py-1 bg-[#1a1a1c] border border-white/5 text-[#a3a3a3] text-[11px] rounded-md shadow-sm">
+                {tech}
+              </span>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      <div>
-        <span className="text-[9px] font-bold text-[#525252] uppercase tracking-[0.15em] flex items-center gap-1.5 mb-2"><FiClock size={10} /> Session</span>
-        <div className="bg-[#0d0d0e] rounded-lg p-3 border border-white/5">
-          <div className="flex items-center justify-between">
-            <span className="text-[#525252] text-[10px]">Duration</span>
-            <span className="text-[#a3a3a3] text-[11px] font-mono">{sessionTime}</span>
+      {/* Session & Shortcuts */}
+      <div className="flex flex-col gap-4 mt-2">
+        <section>
+          <h3 className="text-xs font-semibold text-[#a3a3a3] flex items-center gap-2 mb-3">
+            <FiClock size={14} /> Session Time
+          </h3>
+          <div className="bg-[#0d0d0e] rounded-xl p-3 border border-white/5 flex items-center justify-between">
+            <span className="text-[#737373] text-[11px]">Duration</span>
+            <span className="text-[#e1e1e3] text-xs font-mono bg-white/5 px-2 py-1 rounded">{sessionTime}</span>
           </div>
-        </div>
+        </section>
+
+        <section>
+          <h3 className="text-xs font-semibold text-[#a3a3a3] flex items-center gap-2 mb-3">
+            <FiZap size={14} /> Quick Shortcuts
+          </h3>
+          <div className="space-y-2">
+            {[["⌘/Ctrl + S", "Save"], ["⌘/Ctrl + B", "Sidebar"]].map(([keys, desc]) => (
+              <div key={keys} className="flex items-center justify-between py-1.5">
+                <span className="text-[11px] text-[#737373]">{desc}</span>
+                <kbd className="text-[10px] text-[#a855f7] bg-[#a855f7]/10 border border-[#a855f7]/20 px-1.5 py-0.5 rounded font-mono">
+                  {keys}
+                </kbd>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
-      <div>
-        <span className="text-[9px] font-bold text-[#525252] uppercase tracking-[0.15em] flex items-center gap-1.5 mb-2.5"><FiZap size={10} /> Shortcuts</span>
-        <div className="space-y-1.5">
-          {[["⌘/Ctrl + S", "Save project"], ["⌘/Ctrl + B", "Toggle sidebar"]].map(([keys, desc]) => (
-            <div key={keys} className="flex items-center justify-between py-1.5 px-2 bg-[#0d0d0e] rounded-md border border-white/5">
-              <span className="text-[10px] text-[#525252]">{desc}</span>
-              <kbd className="text-[9px] text-[#a855f7] bg-[#a855f7]/8 px-1.5 py-0.5 rounded font-mono">{keys}</kbd>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
@@ -572,10 +903,67 @@ const PreviewControls = ({ roomId }) => {
           window.open(`/project/preview/${roomId}`, "_blank");
         }}
         className="p-1.5 bg-[#1a1a1c]/90 hover:bg-[#a855f7] text-[#737373] hover:text-white rounded-md transition-all backdrop-blur-sm"
-        title="Open in New Tab"
+        title="Open Local Preview in New Tab"
       >
         <FiExternalLink size={12} />
       </button>
+    </div>
+  );
+};
+
+// ─── Custom Terminal Console ────────────────────────────────────
+const CustomTerminal = () => {
+  const { sandpack } = useSandpack();
+  
+  if (sandpack.status === "idle" || sandpack.status === "initializing") {
+    return (
+      <div className="flex flex-col w-full h-full bg-[#0d0d0e] font-mono text-[13px]">
+        <div className="flex items-center justify-between px-3 py-2 bg-[#1a1a1c] border-b border-white/5 shrink-0">
+          <div className="flex items-center gap-2 text-[#a3a3a3]">
+            <FiTerminal size={12} />
+            <span className="text-xs">bash - user@workspace</span>
+          </div>
+        </div>
+        <div className="flex-1 p-3 flex items-center justify-center text-[#737373]">
+          <div className="flex items-center gap-2"><FiRefreshCw className="animate-spin" /> Booting shell environment...</div>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="flex flex-col w-full h-full bg-[#0d0d0e] font-mono text-[13px]">
+      {/* Terminal Header */}
+      <div className="flex items-center justify-between px-3 py-2 bg-[#1a1a1c] border-b border-white/5 shrink-0">
+        <div className="flex items-center gap-2 text-[#a3a3a3]">
+          <FiTerminal size={12} />
+          <span className="text-xs">bash - user@workspace</span>
+        </div>
+      </div>
+      
+      {/* Terminal Body */}
+      <div className="flex-1 p-3 overflow-y-auto custom-scrollbar flex flex-col relative">
+        {/* Startup Prompt */}
+        <div className="flex items-center gap-2 text-[#ccff00] mb-2 opacity-80 shrink-0">
+          <span>user@workspace:~/project$</span>
+          <span className="text-[#e1e1e3]">npm start</span>
+        </div>
+        
+        {/* Real Console */}
+        <div className="flex-1 relative" style={{ minHeight: '150px' }}>
+          <SandpackConsole 
+             showHeader={false} 
+             resetOnPreviewRestart={false} 
+             style={{ width: "100%", height: "100%", background: "transparent" }}
+          />
+        </div>
+        
+        {/* Blinking Cursor */}
+        <div className="flex items-center gap-2 text-[#ccff00] mt-2 mt-auto shrink-0">
+          <span>user@workspace:~/project$</span>
+          <span className="animate-pulse w-2 h-4 bg-[#ccff00] inline-block"></span>
+        </div>
+      </div>
     </div>
   );
 };
@@ -817,6 +1205,10 @@ const ProjectRoom = () => {
   // Template change
   const handleTemplateChange = (newTemplate) => {
     if (newTemplate === template) return;
+    const confirmed = window.confirm(
+      `Switching template to ${newTemplate.toUpperCase()} will reset your project files to the default template. Are you sure you want to proceed?`
+    );
+    if (!confirmed) return;
     setTemplate(newTemplate);
     const sock = getSocket();
     if (sock?.connected) {
@@ -937,8 +1329,8 @@ const ProjectRoom = () => {
                     </div>
                   </div>
                   <div className="flex flex-col flex-1 min-h-0">
-                    <CustomFileCreator />
-                    <div className="flex-1 overflow-y-auto pl-1 custom-scrollbar"><SandpackFileExplorer /></div>
+                    <CustomFileExplorer projectName={post?.project?.title} />
+                    <DependencyManager />
                   </div>
                 </>
               )}
@@ -971,15 +1363,39 @@ const ProjectRoom = () => {
                       <div className={`flex-1 w-full p-2 flex gap-2 ${openTabs.length > 0 ? "flex-row" : "flex-col"} items-stretch justify-center`}>
                         {remoteStream && (
                           <div className={`relative flex-1 bg-[#0a0a0b] rounded-xl overflow-hidden border transition-all duration-300 ${isRemoteSpeaking ? "border-[#ccff00]/50" : "border-white/[0.04]"}`} style={{ minHeight: "80px" }}>
-                            {!isRemoteVideoOff ? <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><img src={partner?.photoUrl || "https://geographyandyou.com/images/user-profile.png"} alt="Partner" className="w-12 h-12 rounded-full object-cover border border-white/10" /></div>}
+                            {!isRemoteVideoOff ? (
+                              <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                {partner?.photoUrl ? (
+                                  <img src={partner.photoUrl} alt="Partner" className="w-12 h-12 rounded-full object-cover border border-white/10" />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-white font-bold text-sm border border-white/10 shadow-lg">
+                                    {(partner?.firstName?.[0] || "P").toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                             {isRemoteSpeaking && <div className="absolute bottom-1.5 right-1.5 pointer-events-none flex items-center gap-[2px] h-4 opacity-60">{[40, 100, 60, 80, 50].map((h, i) => <div key={i} className="w-[2px] bg-[#ccff00] rounded-full animate-[waveform_1s_infinite_ease-in-out]" style={{ height: `${h}%`, animationDelay: `${i * 0.15}s` }} />)}</div>}
                             {remoteReactions?.length > 0 && <div className="absolute top-2 right-2 text-2xl animate-[fadeInOut_2s_ease-out_forwards] pointer-events-none">{remoteReactions[remoteReactions.length - 1].emoji}</div>}
-                            <div className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded-md flex items-center gap-1.5"><span className="text-white text-[9px] font-medium truncate">{partner?.firstName}</span>{isRemoteMuted && <FiMicOff size={8} className="text-red-400 shrink-0" />}</div>
+                            <div className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded-md flex items-center gap-1.5"><span className="text-white text-[9px] font-medium truncate">{partner?.firstName || "Partner"}</span>{isRemoteMuted && <FiMicOff size={8} className="text-red-400 shrink-0" />}</div>
                           </div>
                         )}
                         {localStream && (
                           <div className={`relative flex-1 bg-[#0a0a0b] rounded-xl overflow-hidden border group transition-all duration-300 ${isSpeaking ? "border-[#ccff00]/50" : "border-white/[0.04]"}`} style={{ minHeight: "80px" }}>
-                            {!isVideoOff ? <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" /> : <div className="w-full h-full flex items-center justify-center"><img src={user?.photoUrl || "https://geographyandyou.com/images/user-profile.png"} alt="You" className="w-12 h-12 rounded-full object-cover border border-[#a855f7]/30" /></div>}
+                            {!isVideoOff ? (
+                              <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                {user?.photoUrl ? (
+                                  <img src={user.photoUrl} alt="You" className="w-12 h-12 rounded-full object-cover border border-[#a855f7]/30" />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#a855f7] to-[#7c3aed] flex items-center justify-center text-white font-bold text-sm border border-[#a855f7]/30 shadow-lg">
+                                    {(user?.firstName?.[0] || "U").toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                             {isSpeaking && <div className="absolute bottom-1.5 right-1.5 pointer-events-none flex items-center gap-[2px] h-4 opacity-60">{[40, 100, 60, 80, 50].map((h, i) => <div key={i} className="w-[2px] bg-[#ccff00] rounded-full animate-[waveform_1s_infinite_ease-in-out]" style={{ height: `${h}%`, animationDelay: `${i * 0.15}s` }} />)}</div>}
                             {localReactions?.length > 0 && <div className="absolute top-2 right-2 text-2xl animate-[fadeInOut_2s_ease-out_forwards] pointer-events-none">{localReactions[localReactions.length - 1].emoji}</div>}
                             <div className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded-md flex items-center gap-1.5 group-hover:opacity-0 transition-opacity"><span className="text-white text-[9px] font-medium truncate">{user?.firstName} (You)</span>{isMuted && <FiMicOff size={8} className="text-red-400 shrink-0" />}</div>
@@ -988,7 +1404,6 @@ const ProjectRoom = () => {
                               <div className="flex items-center gap-1.5 bg-[#1a1a1c]/90 backdrop-blur-xl px-2.5 py-1.5 rounded-full border border-white/10 shadow-2xl">
                                 <button onClick={toggleMute} className={`p-1.5 rounded-full transition-colors ${isMuted ? "bg-red-500 text-white" : "bg-white/5 hover:bg-[#a855f7] text-white"}`}>{isMuted ? <FiMicOff size={12} /> : <FiMic size={12} />}</button>
                                 <button onClick={handleToggleVideo} className={`p-1.5 rounded-full transition-colors ${isVideoOff ? "bg-red-500 text-white" : "bg-white/5 hover:bg-[#a855f7] text-white"}`}>{isVideoOff ? <FiVideoOff size={12} /> : <FiVideo size={12} />}</button>
-                                <button className="p-1.5 rounded-full bg-white/5 text-white/30 cursor-not-allowed" title="Screenshare (Soon)"><FiMonitor size={12} /></button>
                                 <button onClick={() => setShowReactions(!showReactions)} className="p-1.5 rounded-full bg-white/5 hover:bg-[#a855f7] text-white transition-colors"><FiSmile size={12} /></button>
                                 <button onClick={leaveCall} className="p-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white transition-colors"><FiPhoneOff size={12} /></button>
                               </div>
@@ -1026,11 +1441,28 @@ const ProjectRoom = () => {
                           </div>
                         ))}
                       </div>
-                      <div style={{ flex: 1, position: "relative", minHeight: 0, background: "#0d0d0e" }}>
-                        {openTabs.includes("preview") && <div style={{ display: activeTab === "preview" ? "block" : "none", width: "100%", height: "100%" }}><PreviewControls roomId={roomId} /><SandpackPreview showOpenInCodeSandbox={false} showRefreshButton={false} style={{ width: "100%", height: "100%" }} /></div>}
-                        {openTabs.includes("console") && <div style={{ display: activeTab === "console" ? "block" : "none", width: "100%", height: "100%" }}><SandpackConsole showHeader={false} resetOnPreviewRestart={false} style={{ width: "100%", height: "100%" }} /></div>}
-                        {openTabs.includes("tasks") && <div style={{ display: activeTab === "tasks" ? "block" : "none", width: "100%", height: "100%" }}><TaskList roomId={roomId} initialTasks={roomData?.tasks || []} onTasksChange={setLiveTasks} /></div>}
-                        {openTabs.includes("chat") && <div style={{ display: activeTab === "chat" ? "block" : "none", width: "100%", height: "100%" }}><TeamChat roomId={roomId} initialChats={roomData?.chats || []} /></div>}
+                      <div style={{ flex: 1, position: "relative", minHeight: 0, background: "#0d0d0e", display: "flex", flexDirection: "column" }}>
+                        {(openTabs.includes("preview") || openTabs.includes("console")) && (
+                          <div style={{ display: activeTab === "preview" ? "flex" : "none", flexDirection: "column", width: "100%", height: "100%", flex: 1 }}>
+                            <PreviewControls roomId={roomId} />
+                            <SandpackPreview showOpenInCodeSandbox={false} showRefreshButton={false} style={{ flex: 1, width: "100%", height: "100%" }} />
+                          </div>
+                        )}
+                        {openTabs.includes("console") && (
+                          <div style={{ display: activeTab === "console" ? "flex" : "none", flexDirection: "column", width: "100%", height: "100%", flex: 1, overflow: "hidden" }}>
+                            <CustomTerminal />
+                          </div>
+                        )}
+                        {openTabs.includes("tasks") && (
+                          <div style={{ display: activeTab === "tasks" ? "block" : "none", width: "100%", height: "100%", flex: 1, overflow: "auto" }}>
+                            <TaskList roomId={roomId} initialTasks={roomData?.tasks || []} onTasksChange={setLiveTasks} />
+                          </div>
+                        )}
+                        {openTabs.includes("chat") && (
+                          <div style={{ display: activeTab === "chat" ? "flex" : "none", flexDirection: "column", width: "100%", height: "100%", flex: 1 }}>
+                            <TeamChat roomId={roomId} initialChats={roomData?.chats || []} />
+                          </div>
+                        )}
                       </div>
                     </>
                   ) : (
