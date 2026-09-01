@@ -6,7 +6,8 @@ import { addFeed } from "../redux/feedSlice";
 import axios from "axios";
 import { SkeletonUserCard } from "./Skeletons";
 import toast from "react-hot-toast";
-import { FiSearch, FiX, FiImage, FiCheckCircle, FiArrowUp } from "react-icons/fi";
+import { Link } from "react-router-dom";
+import { FiSearch, FiX, FiCheckCircle, FiArrowUp, FiFilter, FiUsers, FiTarget } from "react-icons/fi";
 import MatchSplash from "./MatchSplash";
 import { AnimatePresence } from "framer-motion";
 
@@ -15,11 +16,14 @@ const Discover = () => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [skillInput, setSkillInput] = useState("");
-  const [activeSkills, setActiveSkills] = useState(""); // Track currently applied skills
+  const [activeSkills, setActiveSkills] = useState("");
   const [matchedUser, setMatchedUser] = useState(null);
+  
+  const [showFilter, setShowFilter] = useState(false);
+  const [bestMatches, setBestMatches] = useState([]);
+  const [networkStats, setNetworkStats] = useState({ connectionCount: 0, pendingCount: 0, connectionsThisWeek: 0 });
 
   const getFeed = async (forceRefetch = false, skillsToFetch = "") => {
-    // If not forcing, and we already have feed data, and we aren't changing filters, skip
     if (!forceRefetch && feed && feed.length > 0 && skillsToFetch === activeSkills) return;
 
     try {
@@ -41,8 +45,33 @@ const Discover = () => {
     }
   };
 
+  const getBestMatches = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/user/best-matches`, { withCredentials: true });
+      setBestMatches(res.data?.data || []);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const getNetworkStats = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/user/network-stats`, { withCredentials: true });
+      const data = res.data?.data || res.data || {};
+      setNetworkStats({
+        connectionCount: data.connectionCount || 0,
+        pendingCount: data.pendingCount || 0,
+        connectionsThisWeek: data.connectionsThisWeek || 0
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   useEffect(() => {
     getFeed(false, activeSkills);
+    getBestMatches();
+    getNetworkStats();
   }, []);
 
   const handleApplyFilter = (e) => {
@@ -65,24 +94,25 @@ const Discover = () => {
       {/* ── Center Column (Timeline) ───────────────────────────── */}
       <div className="flex-1 flex flex-col w-full min-h-[800px]">
         
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white tracking-tight">Discover Builders</h2>
-          <p className="text-[#a3a3a3] text-sm mt-1">Swipe right to connect with other developers, or use filters to find specific skills.</p>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-white tracking-tight">Explore Developers</h2>
+          <p className="text-[#525252] text-sm mt-1">Find developers who share your stack and connect to collaborate.</p>
         </div>
 
-        {/* Discovery Feed (Legacy Cards) */}
+        {/* Discovery Feed */}
         <div className="w-full flex justify-center mt-4">
           {loading ? (
             <div className="mt-4"><SkeletonUserCard /></div>
           ) : (!feed || feed.length === 0) ? (
-            <div className="flex flex-col items-center justify-center mt-12 gap-4 text-center px-4 dev-card w-full max-w-md py-12">
-              <FiCheckCircle className="text-5xl text-[#ccff00]" />
-              <h1 className="text-2xl font-bold text-white">
-                You're all caught up!
-              </h1>
-              <p className="text-[#a3a3a3] font-medium text-sm max-w-xs">
-                Check back later to meet new builders and see top discussions.
-              </p>
+            <div className="w-full bg-[#141415] border border-[#262626] rounded-xl py-16 px-8 text-center flex flex-col items-center">
+              <FiUsers className="text-[#525252] mb-4" size={40} />
+              <h2 className="text-xl font-semibold text-white mb-2">You've seen everyone for now</h2>
+              <p className="text-sm text-[#525252] max-w-sm mb-2">{networkStats.connectionCount || 0} connections made so far</p>
+              <p className="text-sm text-[#525252] max-w-sm mb-6">New developers join every day. Come back tomorrow!</p>
+              <div className="flex gap-3">
+                <Link to="/connections" className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-[#e1e1e3] transition-colors">Check Connections</Link>
+                <Link to="/feed" className="px-4 py-2 bg-[#a855f7] hover:bg-[#9333ea] rounded-lg text-sm text-white font-medium transition-colors">Browse Feed</Link>
+              </div>
             </div>
           ) : (
             <div className="relative z-0 flex justify-center w-full max-w-sm h-[600px]">
@@ -117,40 +147,74 @@ const Discover = () => {
           </div>
         </div>
 
-        {/* Trending Topics */}
-        <div className="dev-card p-5">
-          <h3 className="text-sm font-bold text-[#e5e5e5] mb-4">Trending Topics</h3>
-          <div className="flex flex-wrap gap-2">
-            {["#react", "#nextjs", "#machinelearning", "#rustlang", "#indiehacker", "#devtinder"].map((tag, i) => (
-              <span key={i} className="text-xs font-mono text-[#a3a3a3] bg-white/5 border border-white/5 px-2.5 py-1 rounded-md hover:bg-white/10 hover:text-white cursor-pointer transition-colors">
-                {tag}
-              </span>
-            ))}
-          </div>
+        {/* Best Matches */}
+        <div className="dev-card p-5 shrink-0">
+          <h3 className="text-sm font-bold text-[#e5e5e5] mb-4 flex items-center gap-2">
+            <FiTarget className="text-[#a855f7]" /> Best Matches
+          </h3>
+          
+          {bestMatches.length === 0 ? (
+            <p className="text-xs text-[#525252]">Connect with more developers to see recommendations</p>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {bestMatches.map(match => {
+                const initials = `${(match.firstName || '?')[0]}${(match.lastName || '')[0] || ''}`.toUpperCase();
+                return (
+                <Link to={`/user/${match._id}`} key={match._id} className="flex items-center gap-3 group">
+                   {match.photoUrl ? (
+                     <img src={match.photoUrl} alt={match.firstName} className="w-8 h-8 rounded-lg object-cover border border-white/10" />
+                   ) : (
+                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#a855f7] to-[#7c3aed] flex items-center justify-center text-[10px] font-bold text-white border border-white/10">
+                       {initials}
+                     </div>
+                   )}
+                   <div className="flex-1 min-w-0 flex flex-col">
+                     <span className="text-sm font-medium text-[#e5e5e5] group-hover:text-white truncate transition-colors">
+                       {match.firstName} {match.lastName}
+                     </span>
+                     <div className="flex flex-wrap gap-1 mt-1">
+                       {(match.sharedSkills || match.skills || []).slice(0, 2).map((skill, i) => (
+                         <span key={i} className="text-[10px] bg-[#ccff00]/10 text-[#ccff00] px-1.5 py-0.5 rounded-md">{skill}</span>
+                       ))}
+                     </div>
+                   </div>
+                   {match.compatibilityPercent > 0 && (
+                     <span className="text-xs font-bold text-[#ccff00] bg-[#ccff00]/10 px-2 py-1 rounded-md">{match.compatibilityPercent}%</span>
+                   )}
+                </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Official Channels */}
-        <div className="dev-card p-5">
-          <h3 className="text-sm font-bold text-[#e5e5e5] mb-4 flex items-center gap-2">
-            Official Channels <span className="text-[#a855f7]">✓</span>
-          </h3>
-          <div className="flex flex-col gap-4">
-            {["VS Code", "React", "Tailwind CSS"].map((channel, i) => (
-              <div key={i} className="flex items-center justify-between group cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center font-bold text-xs">
-                    {channel[0]}
-                  </div>
-                  <span className="text-sm font-medium text-[#a3a3a3] group-hover:text-white transition-colors">
-                    {channel}
-                  </span>
-                </div>
-                <button className="text-xs font-semibold text-white/50 bg-white/5 px-3 py-1 rounded hover:bg-white/10 transition-colors">
-                  Follow
-                </button>
-              </div>
-            ))}
-          </div>
+        {/* Your Network */}
+        <div className="dev-card p-5 shrink-0">
+           <h3 className="text-sm font-bold text-[#e5e5e5] mb-4 flex items-center gap-2">
+             <FiUsers className="text-[#ccff00]" /> Your Network
+           </h3>
+           <div className="flex flex-col gap-3">
+             <div className="flex justify-between items-center text-sm">
+                <span className="text-[#a3a3a3]">Connections</span>
+                <span className="text-white font-bold">{networkStats.connectionCount || 0}</span>
+             </div>
+             <div className="flex justify-between items-center text-sm">
+                <span className="text-[#a3a3a3]">Pending</span>
+                <span className="text-white font-bold">{networkStats.pendingCount || 0}</span>
+             </div>
+             <div className="h-px bg-white/5 my-1" />
+             {networkStats.connectionsThisWeek > 0 ? (
+                <p className="text-xs text-[#ccff00] font-medium">{networkStats.connectionsThisWeek} new this week</p>
+             ) : (
+                <p className="text-xs text-[#525252]">No new connections this week</p>
+             )}
+             
+             {networkStats.pendingCount > 0 && (
+               <Link to="/requests" className="text-xs text-[#a855f7] hover:text-[#9333ea] transition-colors mt-2 inline-block font-medium">
+                 View requests →
+               </Link>
+             )}
+           </div>
         </div>
       </div>
 

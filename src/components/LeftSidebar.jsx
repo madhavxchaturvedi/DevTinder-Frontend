@@ -40,7 +40,7 @@ const LeftSidebar = () => {
 
   const coreNav = [
     { name: "My Feed", path: "/feed", icon: <FiHome size={18} /> },
-    { name: "Discover", path: "/discover", icon: <FiCompass size={18} /> },
+    { name: "Explore", path: "/discover", icon: <FiCompass size={18} /> },
     { name: "Messages", path: "/chat", icon: <FiMessageSquare size={18} /> },
     { name: "My Projects", path: "/projects", icon: <FiCode size={18} /> },
   ];

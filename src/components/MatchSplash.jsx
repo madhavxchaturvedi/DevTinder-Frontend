@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import Confetti from 'react-confetti';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { FiMessageSquare, FiCompass } from 'react-icons/fi';
 
 const MatchSplash = ({ matchedUser, onClose }) => {
   const navigate = useNavigate();
@@ -10,66 +10,54 @@ const MatchSplash = ({ matchedUser, onClose }) => {
   
   if (!currentUser || !matchedUser) return null;
 
+  const getInitials = (first, last) => {
+    return `${(first || '?')[0]}${(last || '')[0] || ''}`.toUpperCase();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0a0a0a]/80 backdrop-blur-lg">
-      <Confetti 
-        width={window.innerWidth} 
-        height={window.innerHeight} 
-        recycle={false} 
-        numberOfPieces={400} 
-        gravity={0.15}
-        colors={['#ccff00', '#a855f7', '#0a0a0a', '#ffffff']}
-      />
-      
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0a0a0a]/80 backdrop-blur-md">
       <motion.div 
-        initial={{ scale: 0.8, opacity: 0, y: 20 }}
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.8, opacity: 0, y: 20 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        className="w-full max-w-sm neo-card p-8 flex flex-col items-center relative overflow-hidden"
+        className="w-full max-w-sm bg-[#141415] border border-white/[0.06] rounded-2xl p-8 flex flex-col items-center"
       >
-        {/* Abstract background shape */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#ccff00] rounded-full border-4 border-[#0a0a0a] shadow-[8px_8px_0px_#0a0a0a] opacity-20" />
-
-        <h2 className="text-4xl font-black text-[#a855f7] mb-8 text-center uppercase tracking-wider drop-shadow-[2px_2px_0px_#0a0a0a] relative z-10">
-          It's a Match!
-        </h2>
-
-        <div className="flex items-center justify-center mb-8 relative z-10">
-          <motion.img
-            initial={{ x: -80, opacity: 0, rotate: -15 }}
-            animate={{ x: 15, opacity: 1, rotate: -5 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
-            src={currentUser.photoUrl}
-            alt="You"
-            className="w-28 h-28 rounded-full object-cover border-4 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] z-10 bg-white"
-          />
-          <motion.img
-            initial={{ x: 80, opacity: 0, rotate: 15 }}
-            animate={{ x: -15, opacity: 1, rotate: 5 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
-            src={matchedUser.photoUrl}
-            alt={matchedUser.firstName}
-            className="w-28 h-28 rounded-full object-cover border-4 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] z-0 bg-white"
-          />
+        {/* Avatars side by side */}
+        <div className="flex items-center justify-center mb-6 -space-x-4">
+          {currentUser.photoUrl ? (
+            <img src={currentUser.photoUrl} alt="You" className="w-16 h-16 rounded-full object-cover border-2 border-[#141415] z-10" />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#a855f7] to-[#7c3aed] flex items-center justify-center text-lg font-bold text-white border-2 border-[#141415] z-10">
+              {getInitials(currentUser.firstName, currentUser.lastName)}
+            </div>
+          )}
+          {matchedUser.photoUrl ? (
+            <img src={matchedUser.photoUrl} alt={matchedUser.firstName} className="w-16 h-16 rounded-full object-cover border-2 border-[#141415]" />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#ccff00] to-[#a3e635] flex items-center justify-center text-lg font-bold text-black border-2 border-[#141415]">
+              {getInitials(matchedUser.firstName, matchedUser.lastName)}
+            </div>
+          )}
         </div>
 
-        <p className="text-gray-700 text-center mb-10 text-[15px] font-bold leading-relaxed relative z-10">
-          You and <span className="text-[#0a0a0a]">{matchedUser.firstName}</span> have connected and can now start chatting.
+        <h2 className="text-xl font-bold text-white mb-1">Connected with {matchedUser.firstName}</h2>
+        <p className="text-sm text-[#a3a3a3] text-center mb-8">
+          You can now message each other and collaborate on projects.
         </p>
 
-        <div className="w-full flex flex-col gap-3 relative z-10">
+        <div className="w-full flex flex-col gap-3">
           <button
             onClick={() => navigate(`/chat/${matchedUser._id}`)}
-            className="neo-btn-primary w-full"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#ccff00] hover:bg-[#bbf000] text-black font-bold rounded-xl transition-colors"
           >
-            Send Message
+            <FiMessageSquare size={16} /> Send Message
           </button>
           <button
             onClick={onClose}
-            className="neo-btn-secondary w-full"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 text-[#a3a3a3] hover:text-white font-medium rounded-xl transition-colors border border-white/[0.06]"
           >
-            Keep Swiping
+            <FiCompass size={16} /> Keep Exploring
           </button>
         </div>
       </motion.div>
