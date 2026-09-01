@@ -60,16 +60,9 @@ const FullscreenPreview = () => {
   const [roomData, setRoomData] = useState(null);
 
   useEffect(() => {
-    const fetchUserAndRoom = async () => {
+    const fetchRoom = async () => {
       try {
-        let currentUser = user;
-        if (!currentUser) {
-          const res = await axios.get(BASE_URL + "/profile/view", { withCredentials: true });
-          dispatch(addUser(res.data));
-          currentUser = res.data;
-        }
-
-        const roomRes = await axios.get(BASE_URL + "/project/room/" + roomId, { withCredentials: true });
+        const roomRes = await axios.get(BASE_URL + "/project/room/public/" + roomId);
         const data = roomRes.data.data;
         setRoomData(data);
 
@@ -88,16 +81,13 @@ const FullscreenPreview = () => {
           }
         }
       } catch (err) {
-        console.error(err);
-        if (err?.response?.status === 401 || err?.response?.status === 403) {
-          navigate("/feed");
-        }
+        console.error("Public preview fetch failed:", err);
       } finally {
         setIsInitializing(false);
       }
     };
-    fetchUserAndRoom();
-  }, [user, dispatch, navigate, roomId]);
+    fetchRoom();
+  }, [roomId]);
 
   useEffect(() => {
     if (isInitializing || !user || !roomId) return;

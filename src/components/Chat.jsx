@@ -42,15 +42,28 @@ const Chat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
   const [isTargetInSandbox, setIsTargetInSandbox] = useState(false);
-  const [projectRoom, setProjectRoom] = useState(null);
+  const [projectRooms, setProjectRooms] = useState([]);
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   // Scroll to bottom when messages change
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowProjectDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -90,7 +103,7 @@ const Chat = () => {
           withCredentials: true,
         });
         if (res.data.data) {
-          setProjectRoom(res.data.data);
+          setProjectRooms(res.data.data || []);
         }
       } catch (err) {
         console.error("Failed to fetch project room", err);
@@ -349,13 +362,37 @@ const Chat = () => {
                 </div>
               </div>
             )}
-            {projectRoom && (
+            {projectRooms.length === 1 && (
               <button
-                onClick={() => navigate(`/project/room/${projectRoom.roomId}`)}
-                className="hidden md:flex items-center gap-1.5 ml-2 bg-gradient-to-r from-[#a855f7] to-[#ccff00] text-black px-3 py-1.5 rounded-lg text-xs font-bold hover:scale-105 transition-transform"
+                onClick={() => navigate(`/project/room/${projectRooms[0].roomId}`)}
+                className="flex items-center gap-1.5 ml-2 bg-gradient-to-r from-[#a855f7] to-[#ccff00] text-black px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold hover:scale-105 transition-transform"
               >
-                🚀 Enter Project Room
+                <FiCode size={12} /> Project Room
               </button>
+            )}
+            {projectRooms.length > 1 && (
+              <div className="relative block ml-2" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-[#a855f7] to-[#ccff00] text-black px-3 py-1.5 rounded-lg text-xs font-bold hover:scale-105 transition-transform"
+                >
+                  <FiCode size={12} /> Projects ({projectRooms.length})
+                </button>
+                {showProjectDropdown && (
+                  <div className="absolute top-full right-0 mt-2 w-56 bg-[#1a1a1c] border border-white/10 rounded-xl shadow-2xl z-50 py-1 overflow-hidden">
+                    {projectRooms.map((room) => (
+                      <button
+                        key={room.roomId}
+                        onClick={() => { navigate(`/project/room/${room.roomId}`); setShowProjectDropdown(false); }}
+                        className="w-full text-left px-4 py-2.5 text-[12px] text-[#cccccc] hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
+                      >
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${room.template === 'react' ? 'bg-[#61dafb]' : room.template === 'vue' ? 'bg-[#42b883]' : 'bg-[#dd1b16]'}`} />
+                        <span className="truncate">{room.title || room.projectPostId?.project?.title || "Untitled Project"}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
           <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { FiHome, FiUsers, FiMessageSquare, FiCompass, FiSettings, FiLogOut, FiMoreHorizontal, FiUserPlus } from "react-icons/fi";
+import { FiHome, FiUsers, FiMessageSquare, FiCompass, FiSettings, FiLogOut, FiMoreHorizontal, FiUserPlus, FiCode } from "react-icons/fi";
 import { HiCode } from "react-icons/hi";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
@@ -42,6 +42,7 @@ const LeftSidebar = () => {
     { name: "My Feed", path: "/feed", icon: <FiHome size={18} /> },
     { name: "Discover", path: "/discover", icon: <FiCompass size={18} /> },
     { name: "Messages", path: "/chat", icon: <FiMessageSquare size={18} /> },
+    { name: "My Projects", path: "/projects", icon: <FiCode size={18} /> },
   ];
 
   const networkNav = [

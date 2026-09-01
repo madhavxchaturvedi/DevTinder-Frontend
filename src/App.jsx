@@ -14,6 +14,7 @@ import Sandbox from "./components/Sandbox";
 import ProjectRequests from "./components/ProjectRequests";
 import ProjectRoom from "./components/ProjectRoom";
 import FullscreenPreview from "./components/FullscreenPreview";
+import MyProjects from "./components/MyProjects";
 
 import { WebRTCProvider } from "./context/WebRTCContext";
 
@@ -33,6 +34,7 @@ const App = () => {
           <Route path="/premium" element={<Premium />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/chat/:targetId" element={<Chat />} />
+          <Route path="/projects" element={<MyProjects />} />
           <Route path="/user/:userId" element={<UserProfilePage />} />
           <Route path="/project/:postId/requests" element={<ProjectRequests />} />
         </Route>

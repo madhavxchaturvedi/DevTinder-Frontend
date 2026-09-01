@@ -36,11 +36,12 @@ const ProjectCard = ({ post, userRequestStatus, requestCount }) => {
   const isAuthorOnline = onlineUsers.includes(authorId._id);
 
   const getStageColor = (stage) => {
-    switch (stage?.toLowerCase()) {
-      case "💡 idea": return "bg-blue-500/10 text-blue-400 border-blue-500/20";
-      case "🔨 early build": return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
-      case "🏗️ mid build": return "bg-orange-500/10 text-orange-400 border-orange-500/20";
-      case "🔍 needs review": return "bg-green-500/10 text-green-400 border-green-500/20";
+    const s = stage?.toLowerCase()?.replace(/[^\w\s]/g, '').trim();
+    switch (s) {
+      case "idea": return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+      case "early build": return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+      case "mid build": return "bg-orange-500/10 text-orange-400 border-orange-500/20";
+      case "needs review": return "bg-green-500/10 text-green-400 border-green-500/20";
       default: return "bg-gray-500/10 text-gray-400 border-gray-500/20";
     }
   };
@@ -99,7 +100,7 @@ const ProjectCard = ({ post, userRequestStatus, requestCount }) => {
             {project.title}
           </h2>
           <div className={`px-2.5 py-1 rounded-full border text-[11px] font-bold whitespace-nowrap ${getStageColor(project.stage)}`}>
-            {project.stage || "Project"}
+            {(project.stage || "Project").replace(/[^\w\s]/g, '').trim()}
           </div>
         </div>
 

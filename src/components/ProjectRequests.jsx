@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
-import { FiCheck, FiX, FiArrowLeft } from "react-icons/fi";
+import { FiCheck, FiX, FiArrowLeft, FiCode } from "react-icons/fi";
 import toast from "react-hot-toast";
 
 const ProjectRequests = () => {
@@ -11,6 +11,7 @@ const ProjectRequests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [acceptedPartner, setAcceptedPartner] = useState(null);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -29,15 +30,18 @@ const ProjectRequests = () => {
     fetchRequests();
   }, [postId]);
 
-  const handleReview = async (requestId, status) => {
+  const handleReview = async (req, status) => {
     try {
       await axios.post(
-        `${BASE_URL}/project/review/${requestId}/${status}`,
+        `${BASE_URL}/project/review/${req._id}/${status}`,
         {},
         { withCredentials: true }
       );
       toast.success(`Request ${status} successfully!`);
-      setRequests((prev) => prev.filter((r) => r._id !== requestId));
+      if (status === 'accepted') {
+        setAcceptedPartner({ name: req.requesterId?.firstName || 'your partner', postId });
+      }
+      setRequests((prev) => prev.filter((r) => r._id !== req._id));
     } catch (err) {
       toast.error(err.response?.data?.message || "Something went wrong.");
     }
@@ -86,11 +90,17 @@ const ProjectRequests = () => {
                 className="bg-[#151515] border border-[#262626] rounded-2xl overflow-hidden hover:border-white/20 transition-all flex flex-col"
               >
                 <div className="p-6 flex gap-4">
-                  <img
-                    src={user.photoUrl || "https://geographyandyou.com/images/user-profile.png"}
-                    alt={user.firstName}
-                    className="w-16 h-16 rounded-full object-cover border border-white/10"
-                  />
+                  {user.photoUrl ? (
+                    <img
+                      src={user.photoUrl}
+                      alt={user.firstName}
+                      className="w-16 h-16 rounded-full object-cover border border-white/10"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xl font-bold text-white">
+                      {user.firstName?.charAt(0) || "U"}
+                    </div>
+                  )}
                   <div>
                     <h3 className="text-lg font-bold text-white">
                       {user.firstName} {user.lastName}
@@ -129,13 +139,13 @@ const ProjectRequests = () => {
 
                 <div className="p-4 bg-white/5 border-t border-white/10 flex gap-3">
                   <button
-                    onClick={() => handleReview(req._id, "accepted")}
+                    onClick={() => handleReview(req, "accepted")}
                     className="flex-1 bg-[#ccff00] text-[#0a0a0a] font-bold py-2 rounded-xl hover:bg-[#bbf000] transition-all flex items-center justify-center gap-2"
                   >
                     <FiCheck size={18} /> Accept
                   </button>
                   <button
-                    onClick={() => handleReview(req._id, "rejected")}
+                    onClick={() => handleReview(req, "rejected")}
                     className="flex-1 bg-white/10 text-white font-bold py-2 rounded-xl hover:bg-white/20 transition-all flex items-center justify-center gap-2"
                   >
                     <FiX size={18} /> Decline
@@ -144,6 +154,24 @@ const ProjectRequests = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {acceptedPartner && (
+        <div className="mt-8 bg-[#141415] border border-[#ccff00]/20 rounded-2xl p-8 text-center">
+          <div className="w-14 h-14 rounded-full bg-[#ccff00]/10 flex items-center justify-center mx-auto mb-4">
+            <FiCheck className="text-[#ccff00]" size={28} />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Partner Accepted!</h2>
+          <p className="text-[#a3a3a3] text-sm mb-6">
+            Your workspace with {acceptedPartner.name} is ready. Start coding together.
+          </p>
+          <button
+            onClick={() => navigate(`/project/room/project_${acceptedPartner.postId}`)}
+            className="px-6 py-3 bg-[#ccff00] hover:bg-[#bbf000] text-black font-bold rounded-xl transition-colors inline-flex items-center gap-2"
+          >
+            <FiCode size={16} /> Open Workspace
+          </button>
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import JSZip from 'jszip';
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { addUser } from "../redux/userSlice";
@@ -8,7 +9,7 @@ import {
   FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneOff, FiMonitor, FiSmile,
   FiArrowLeft, FiCode, FiSave, FiInfo, FiCheckSquare, FiMessageCircle,
   FiLogOut, FiTerminal, FiX, FiCheck, FiClock, FiWifi, FiWifiOff,
-  FiChevronRight, FiCopy, FiDownload, FiZap, FiLayers
+  FiChevronRight, FiCopy, FiDownload, FiZap, FiLayers, FiEdit2, FiTrash2, FiMousePointer
 } from "react-icons/fi";
 import { SiReact, SiVuedotjs, SiAngular } from "react-icons/si";
 import { getSocket } from "../utils/socket";
@@ -323,7 +324,7 @@ const ManualSaveHandler = ({ roomId, onSaveStatusChange }) => {
 };
 
 // ─── NPM Dependency Manager ──────────────────────────────────────
-const DependencyManager = () => {
+const DependencyManager = ({ roomId }) => {
   const { sandpack } = useSandpack();
   const [isExpanded, setIsExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -384,6 +385,13 @@ const DependencyManager = () => {
     } else {
       sandpack.updateFile("/package.json", newCode);
     }
+
+    if (roomId) {
+      const sock = getSocket();
+      if (sock?.connected) {
+        sock.emit("codeChange", { roomId, files: { "/package.json": { code: newCode } } });
+      }
+    }
     
     setSearchQuery("");
     setTimeout(() => setInstallingPkg(null), 500); // UI feedback
@@ -399,7 +407,15 @@ const DependencyManager = () => {
 
     delete parsed.dependencies[pkgName];
     
-    sandpack.updateFile("/package.json", JSON.stringify(parsed, null, 2));
+    const newCode = JSON.stringify(parsed, null, 2);
+    sandpack.updateFile("/package.json", newCode);
+
+    if (roomId) {
+      const sock = getSocket();
+      if (sock?.connected) {
+        sock.emit("codeChange", { roomId, files: { "/package.json": { code: newCode } } });
+      }
+    }
   };
 
   return (
@@ -519,12 +535,83 @@ const buildFileTree = (files) => {
   return root;
 };
 
+// ─── Live Mouse Cursors ──────────────────────────────────────────
+const LiveCursors = ({ roomId }) => {
+  const user = useSelector(s => s.user);
+  const [cursors, setCursors] = useState({});
+
+  useEffect(() => {
+    const sock = getSocket();
+    if (!sock) return;
+
+    let lastEmit = 0;
+    const handleMouseMove = (e) => {
+      const now = Date.now();
+      if (now - lastEmit < 50) return; // limit to ~20fps
+      lastEmit = now;
+      sock.emit("cursorMove", {
+        roomId,
+        position: { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight },
+        userName: user?.firstName || "Anonymous"
+      });
+    };
+
+    const handleRemoteCursor = ({ userId, userName, position }) => {
+      setCursors(prev => ({
+        ...prev,
+        [userId]: { position, userName, lastUpdate: Date.now() }
+      }));
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    sock.on("receiveCursorMove", handleRemoteCursor);
+
+    const cleanup = setInterval(() => {
+      const now = Date.now();
+      setCursors(prev => {
+        const next = { ...prev };
+        let changed = false;
+        Object.keys(next).forEach(k => {
+          if (now - next[k].lastUpdate > 3000) { delete next[k]; changed = true; } // fade after 3s inactivity
+        });
+        return changed ? next : prev;
+      });
+    }, 1000);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      sock.off("receiveCursorMove", handleRemoteCursor);
+      clearInterval(cleanup);
+    };
+  }, [roomId, user]);
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
+      {Object.entries(cursors).map(([id, cursor]) => (
+        <div
+          key={id}
+          className="absolute flex flex-col items-start transition-all duration-75 ease-out"
+          style={{ transform: `translate(${cursor.position.x * window.innerWidth}px, ${cursor.position.y * window.innerHeight}px)` }}
+        >
+          <FiMousePointer size={18} className="text-[#a855f7]" style={{ filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))' }} fill="#a855f7" />
+          <div className="bg-[#a855f7] text-white text-[10px] px-2 py-0.5 rounded-full font-bold ml-3 -mt-1 shadow-md">
+            {cursor.userName}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const CustomFileExplorer = ({ projectName }) => {
   const { sandpack } = useSandpack();
   const [expandedFolders, setExpandedFolders] = useState(new Set(["/"]));
   const [selectedPath, setSelectedPath] = useState("/");
   const [creating, setCreating] = useState(null); // { type: 'file' | 'folder', path: '/src' }
   const [newItemName, setNewItemName] = useState("");
+  
+  const [renaming, setRenaming] = useState(null); // path being renamed
+  const [renameValue, setRenameValue] = useState("");
 
   const tree = useMemo(() => buildFileTree(sandpack.files), [sandpack.files]);
 
@@ -589,6 +676,60 @@ const CustomFileExplorer = ({ projectName }) => {
     setNewItemName("");
   };
 
+  const handleDelete = (path, type, e) => {
+    e.stopPropagation();
+    if (window.confirm(`Are you sure you want to delete '${path}'?`)) {
+      if (type === "file") {
+        sandpack.deleteFile(path);
+      } else {
+        const filesToDelete = Object.keys(sandpack.files).filter(f => f.startsWith(path + "/") || f === path + "/.keep");
+        filesToDelete.forEach(f => sandpack.deleteFile(f));
+      }
+    }
+  };
+
+  const startRenaming = (path, name, e) => {
+    e.stopPropagation();
+    setRenaming(path);
+    setRenameValue(name);
+  };
+
+  const handleRenameSubmit = (e, path, type, oldName) => {
+    e.preventDefault();
+    if (!renameValue.trim() || renameValue === oldName) {
+      setRenaming(null);
+      return;
+    }
+    
+    const parentPath = path.substring(0, path.lastIndexOf("/"));
+    const newPath = parentPath === "" ? `/${renameValue}` : `${parentPath}/${renameValue}`;
+    
+    if (type === "file") {
+      const code = sandpack.files[path]?.code || "";
+      sandpack.addFile(newPath, code);
+      sandpack.deleteFile(path);
+      if (sandpack.activeFile === path) sandpack.setActiveFile(newPath);
+    } else {
+      const filesToMove = Object.keys(sandpack.files).filter(f => f.startsWith(path + "/") || f === path + "/.keep");
+      filesToMove.forEach(f => {
+        const relative = f.substring(path.length);
+        const code = sandpack.files[f]?.code || "";
+        sandpack.addFile(newPath + relative, code);
+        sandpack.deleteFile(f);
+        if (sandpack.activeFile === f) sandpack.setActiveFile(newPath + relative);
+      });
+      setExpandedFolders(prev => {
+        const next = new Set(prev);
+        if (next.has(path)) {
+          next.delete(path);
+          next.add(newPath);
+        }
+        return next;
+      });
+    }
+    setRenaming(null);
+  };
+
   const renderNode = (node, level = 0) => {
     const isExpanded = expandedFolders.has(node.path) || node.path === "/";
     const isSelected = selectedPath === node.path;
@@ -596,6 +737,7 @@ const CustomFileExplorer = ({ projectName }) => {
     const isRoot = node.path === "/";
 
     const isCreatingHere = creating && creating.path === node.path;
+    const isRenamingThis = renaming === node.path;
 
     const children = Object.values(node.children || {}).sort((a, b) => {
       if (a.type === b.type) return a.name.localeCompare(b.name);
@@ -611,18 +753,45 @@ const CustomFileExplorer = ({ projectName }) => {
             style={{ paddingLeft: `${level * 12 + 8}px` }}
           >
             {node.type === "folder" ? (
-              <span className="text-[#a3a3a3] w-4 flex justify-center">
+              <span className="text-[#a3a3a3] w-4 flex justify-center shrink-0">
                 {isExpanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
               </span>
             ) : (
-              <span className="w-4 flex justify-center">
+              <span className="w-4 flex justify-center shrink-0">
                 {node.name.endsWith('.js') || node.name.endsWith('.jsx') ? <span className="text-[#cbce58] text-[10px] font-bold">JS</span> :
                  node.name.endsWith('.css') ? <span className="text-[#519aba] text-[10px] font-bold">#</span> :
                  node.name.endsWith('.json') ? <span className="text-[#cbcb41] text-[10px] font-bold">{"{}"}</span> :
                  <FiFile size={12} className="text-[#a3a3a3]" />}
               </span>
             )}
-            <span className={`text-[12px] truncate ${isActiveFile ? "text-[#ccff00]" : ""}`}>{node.name}</span>
+            
+            {isRenamingThis ? (
+              <form onSubmit={(e) => handleRenameSubmit(e, node.path, node.type, node.name)} className="flex-1 min-w-0" onClick={e => e.stopPropagation()}>
+                <input
+                  type="text"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  className="w-full bg-[#1e1e1e] border border-[#007fd4] rounded-sm text-[12px] text-white px-1 py-0.5 outline-none focus:border-[#007fd4]"
+                  autoFocus
+                  onBlur={() => setRenaming(null)}
+                  onKeyDown={(e) => { if (e.key === 'Escape') setRenaming(null); }}
+                />
+              </form>
+            ) : (
+              <span className={`text-[12px] truncate flex-1 ${isActiveFile ? "text-[#ccff00]" : ""}`}>{node.name}</span>
+            )}
+
+            {/* Actions (Rename, Delete) */}
+            {!isRenamingThis && (
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <button onClick={(e) => startRenaming(node.path, node.name, e)} className="p-1 rounded hover:bg-white/10 text-[#737373] hover:text-[#e1e1e3] transition-colors" title="Rename">
+                  <FiEdit2 size={10} />
+                </button>
+                <button onClick={(e) => handleDelete(node.path, node.type, e)} className="p-1 rounded hover:bg-red-500/20 text-[#737373] hover:text-red-400 transition-colors" title="Delete">
+                  <FiTrash2 size={10} />
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -630,7 +799,7 @@ const CustomFileExplorer = ({ projectName }) => {
           <div>
             {isCreatingHere && (
               <div className="flex items-center gap-1.5 py-1 pr-2" style={{ paddingLeft: `${(level + (isRoot ? 0 : 1)) * 12 + 8}px` }}>
-                <span className="w-4 flex justify-center text-[#a3a3a3]">
+                <span className="w-4 flex justify-center text-[#a3a3a3] shrink-0">
                   {creating.type === "folder" ? <FiChevronRight size={14} /> : <FiFile size={12} />}
                 </span>
                 <form onSubmit={handleCreateSubmit} className="flex-1 min-w-0">
@@ -763,114 +932,198 @@ const SearchPanel = () => {
 };
 
 // ─── Settings Panel ─────────────────────────────────────────────
-const SettingsPanel = ({ post, techStack, template, onTemplateChange, sessionTime }) => {
-  const templates = [
-    { id: "react", name: "React", icon: SiReact, color: "#61DAFB" },
-    { id: "vue", name: "Vue", icon: SiVuedotjs, color: "#4FC08D" },
-    { id: "angular", name: "Angular", icon: SiAngular, color: "#DD0031" }
-  ];
+const SettingsPanel = ({ post, techStack, template, onTemplateChange, sessionTime, roomId, roomData, user, navigate, setRoomData }) => {
+  const { sandpack } = useSandpack();
+  const [confirmAction, setConfirmAction] = useState(null); // 'complete' | 'archive' | 'delete' | null
+
+  const handleDownloadZip = async () => {
+    const zip = new JSZip();
+    Object.entries(sandpack.files).forEach(([path, file]) => {
+      const zipPath = path.startsWith('/') ? path.substring(1) : path;
+      zip.file(zipPath, file.code || '');
+    });
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${post?.project?.title || 'project'}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-6 custom-scrollbar text-[#e1e1e3]">
-      
-      {/* Template Selection */}
-      <section>
-        <h3 className="text-xs font-semibold text-[#a3a3a3] flex items-center gap-2 mb-3">
-          <FiLayers size={14} /> Environment Template
-        </h3>
-        <div className="grid grid-cols-3 gap-3">
-          {templates.map((t) => {
-            const Icon = t.icon;
-            const isActive = template === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => onTemplateChange(t.id)}
-                className={`flex flex-col items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all duration-200 ${
-                  isActive 
-                    ? "bg-[#1e1e20] border-[#a855f7] shadow-[0_0_10px_rgba(168,85,247,0.15)]" 
-                    : "bg-[#0d0d0e] border-white/5 hover:border-white/20 hover:bg-[#141415]"
-                }`}
-              >
-                <Icon size={24} color={isActive ? t.color : "#737373"} className="transition-colors" />
-                <span className={`text-[11px] font-medium ${isActive ? "text-white" : "text-[#737373]"}`}>
-                  {t.name}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <p className="text-[10px] text-[#737373] mt-2 flex items-center gap-1">
-          <FiInfo size={10} /> Changing the template will reset all current files.
-        </p>
-      </section>
-
-      <hr className="border-white/5" />
-
-      {/* Project Details */}
-      <section>
-        <h3 className="text-xs font-semibold text-[#a3a3a3] flex items-center gap-2 mb-3">
-          <FiInfo size={14} /> Project Overview
-        </h3>
-        <div className="bg-[#0d0d0e] rounded-xl p-4 border border-white/5">
-          <p className="text-[#a3a3a3] text-xs leading-relaxed">
-            {post?.content || "No project description provided."}
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar p-4 animate-in slide-in-from-right-4 duration-300">
+      <div className="mb-6">
+        <h3 className="text-[11px] font-bold text-[#525252] uppercase tracking-wider mb-3">Project Metadata</h3>
+        <div className="bg-[#141415] border border-white/5 rounded-xl p-3">
+          <p className="text-[13px] font-medium text-[#e1e1e3] mb-1">
+            {post?.project?.title || "Untitled Project"}
           </p>
-          
-          {post?.project?.roleNeeded && (
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-[10px] text-[#737373]">Seeking:</span>
-              <span className="px-2 py-1 bg-[#ccff00]/10 border border-[#ccff00]/20 text-[#ccff00] text-[10px] font-medium rounded-md">
-                {post.project.roleNeeded}
-              </span>
-            </div>
-          )}
+          <p className="text-[11px] text-[#737373] line-clamp-2">
+            {post?.content || "No description provided."}
+          </p>
         </div>
-      </section>
+      </div>
 
-      {/* Tech Stack */}
-      {techStack.length > 0 && (
-        <section>
-          <h3 className="text-xs font-semibold text-[#a3a3a3] mb-3">Tech Stack</h3>
-          <div className="flex flex-wrap gap-2">
-            {techStack.map((tech, idx) => (
-              <span key={idx} className="px-2.5 py-1 bg-[#1a1a1c] border border-white/5 text-[#a3a3a3] text-[11px] rounded-md shadow-sm">
-                {tech}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Session & Shortcuts */}
-      <div className="flex flex-col gap-4 mt-2">
-        <section>
-          <h3 className="text-xs font-semibold text-[#a3a3a3] flex items-center gap-2 mb-3">
-            <FiClock size={14} /> Session Time
-          </h3>
-          <div className="bg-[#0d0d0e] rounded-xl p-3 border border-white/5 flex items-center justify-between">
-            <span className="text-[#737373] text-[11px]">Duration</span>
-            <span className="text-[#e1e1e3] text-xs font-mono bg-white/5 px-2 py-1 rounded">{sessionTime}</span>
-          </div>
-        </section>
-
-        <section>
-          <h3 className="text-xs font-semibold text-[#a3a3a3] flex items-center gap-2 mb-3">
-            <FiZap size={14} /> Quick Shortcuts
-          </h3>
-          <div className="space-y-2">
-            {[["⌘/Ctrl + S", "Save"], ["⌘/Ctrl + B", "Sidebar"]].map(([keys, desc]) => (
-              <div key={keys} className="flex items-center justify-between py-1.5">
-                <span className="text-[11px] text-[#737373]">{desc}</span>
-                <kbd className="text-[10px] text-[#a855f7] bg-[#a855f7]/10 border border-[#a855f7]/20 px-1.5 py-0.5 rounded font-mono">
-                  {keys}
-                </kbd>
+      <div className="flex-1">
+        <h3 className="text-[11px] font-bold text-[#525252] uppercase tracking-wider mb-3 flex items-center justify-between">
+          <span>Members ({roomData?.members?.length || 0})</span>
+        </h3>
+        
+        <section className="bg-white/[0.02] border border-white/5 rounded-xl overflow-hidden mb-6">
+          <div className="flex flex-col">
+            {roomData?.members?.map((member) => (
+              <div 
+                key={member._id}
+                className="flex items-center justify-between p-3 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <img 
+                    src={member.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
+                    alt={member.firstName}
+                    className="w-7 h-7 rounded-full object-cover border border-[#2a2a2a]"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-[12px] font-semibold text-white leading-tight">
+                      {member.firstName} {member.lastName}
+                    </span>
+                    <span className="text-[10px] text-[#737373]">
+                      {member._id === roomData?.ownerId ? 'Project Owner' : 'Collaborator'}
+                    </span>
+                  </div>
+                </div>
+                {member._id === user?._id && (
+                  <span className="text-[9px] uppercase tracking-wider font-bold text-[#ccff00] bg-[#ccff00]/10 px-1.5 py-0.5 rounded">You</span>
+                )}
               </div>
             ))}
           </div>
         </section>
       </div>
 
+      <div className="mt-auto pt-4 border-t border-white/5">
+        <h3 className="text-[11px] font-bold text-[#525252] uppercase tracking-wider mb-3 flex items-center gap-2">
+          <FiSettings size={14} /> Project Actions
+        </h3>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={handleDownloadZip}
+            className="w-full flex items-center gap-2 px-3 py-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-lg text-[12px] text-[#a3a3a3] hover:text-white transition-all"
+          >
+            <FiDownload size={14} /> Download as ZIP
+          </button>
+          {roomData?.ownerId === user?._id && roomData?.status !== "completed" && (
+            <div>
+              <button
+                onClick={() => setConfirmAction(confirmAction === 'complete' ? null : 'complete')}
+                className="w-full flex items-center gap-2 px-3 py-2 bg-[#ccff00]/5 hover:bg-[#ccff00]/10 border border-[#ccff00]/10 rounded-lg text-[12px] text-[#ccff00]/80 hover:text-[#ccff00] transition-all"
+              >
+                <FiCheck size={14} /> Mark as Completed
+              </button>
+              {confirmAction === 'complete' && (
+                <div className="mt-2 p-3 bg-[#ccff00]/5 border border-[#ccff00]/10 rounded-lg">
+                  <p className="text-[11px] text-[#ccff00]/80 mb-2">
+                    This will move the project to your Completed tab.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await axios.patch(`${BASE_URL}/project/room/${roomId}/status`, { status: "completed" }, { withCredentials: true });
+                          if (setRoomData) setRoomData(prev => ({ ...prev, status: "completed" }));
+                          setConfirmAction(null);
+                        } catch (err) { setConfirmAction(null); }
+                      }}
+                      className="flex-1 px-2 py-1.5 bg-[#ccff00]/20 text-[#ccff00] rounded text-[11px] font-medium hover:bg-[#ccff00]/30 transition-colors"
+                    >
+                      Confirm Complete
+                    </button>
+                    <button
+                      onClick={() => setConfirmAction(null)}
+                      className="flex-1 px-2 py-1.5 bg-white/5 text-[#a3a3a3] rounded text-[11px] font-medium hover:bg-white/10 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {roomData?.ownerId === user?._id && (
+            <div>
+              <button
+                onClick={() => setConfirmAction(confirmAction === 'archive' ? null : 'archive')}
+                className="w-full flex items-center gap-2 px-3 py-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-lg text-[12px] text-[#a3a3a3] hover:text-white transition-all"
+              >
+                <FiLayers size={14} /> Archive Project
+              </button>
+              {confirmAction === 'archive' && (
+                <div className="mt-2 p-3 bg-white/[0.03] border border-white/10 rounded-lg">
+                  <p className="text-[11px] text-[#a3a3a3] mb-2">
+                    This will hide the project from your active view. You can restore it later.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await axios.patch(`${BASE_URL}/project/room/${roomId}/status`, { status: "archived" }, { withCredentials: true });
+                          if (setRoomData) setRoomData(prev => ({ ...prev, status: "archived" }));
+                          setConfirmAction(null);
+                        } catch (err) { setConfirmAction(null); }
+                      }}
+                      className="flex-1 px-2 py-1.5 bg-white/10 text-white rounded text-[11px] font-medium hover:bg-white/20 transition-colors"
+                    >
+                      Confirm Archive
+                    </button>
+                    <button
+                      onClick={() => setConfirmAction(null)}
+                      className="flex-1 px-2 py-1.5 bg-white/5 text-[#a3a3a3] rounded text-[11px] font-medium hover:bg-white/10 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {roomData?.ownerId === user?._id && roomData?.status !== "completed" && (
+            <div>
+              <button
+                onClick={() => setConfirmAction(confirmAction === 'delete' ? null : 'delete')}
+                className="w-full flex items-center gap-2 px-3 py-2 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 rounded-lg text-[12px] text-red-400/80 hover:text-red-400 transition-all"
+              >
+                <FiTrash2 size={14} /> Delete Project
+              </button>
+              {confirmAction === 'delete' && (
+                <div className="mt-2 p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
+                  <p className="text-[11px] text-red-400 mb-2">
+                    This will permanently delete your partner's copy too, including all code, chat, and tasks.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await axios.delete(`${BASE_URL}/project/room/${roomId}`, { withCredentials: true });
+                          navigate("/projects");
+                        } catch (err) { setConfirmAction(null); }
+                      }}
+                      className="flex-1 px-2 py-1.5 bg-red-500/20 text-red-400 rounded text-[11px] font-medium hover:bg-red-500/30 transition-colors"
+                    >
+                      Confirm Delete
+                    </button>
+                    <button
+                      onClick={() => setConfirmAction(null)}
+                      className="flex-1 px-2 py-1.5 bg-white/5 text-[#a3a3a3] rounded text-[11px] font-medium hover:bg-white/10 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -895,15 +1148,27 @@ const PreviewControls = ({ roomId }) => {
       </button>
       <button
         onClick={() => {
+          navigator.clipboard.writeText(`${window.location.origin}/project/preview/${roomId}`);
+          alert("Public Preview Link Copied!");
+        }}
+        className="p-1.5 bg-[#1a1a1c]/90 hover:bg-[#a855f7] text-[#737373] hover:text-white rounded-md transition-all backdrop-blur-sm"
+        title="Copy Public Preview Link"
+      >
+        <FiCopy size={12} />
+      </button>
+      <button
+        onClick={() => {
+          // Force a save so the public endpoint has the latest code
+          const sock = getSocket();
           const allFiles = {};
           Object.keys(sandpack.files).forEach((p) => { allFiles[p] = { code: sandpack.files[p].code }; });
-          localStorage.setItem(`sandpack_files_${roomId}`, JSON.stringify(allFiles));
-          const activeFile = sandpack.activeFile;
-          if (activeFile) localStorage.setItem(`sandpack_code_${roomId}`, sandpack.files[activeFile]?.code || "");
+          if (sock && sock.connected) {
+             sock.emit("saveProjectFiles", { roomId, files: allFiles });
+          }
           window.open(`/project/preview/${roomId}`, "_blank");
         }}
         className="p-1.5 bg-[#1a1a1c]/90 hover:bg-[#a855f7] text-[#737373] hover:text-white rounded-md transition-all backdrop-blur-sm"
-        title="Open Local Preview in New Tab"
+        title="Open Public Preview in New Tab"
       >
         <FiExternalLink size={12} />
       </button>
@@ -912,8 +1177,18 @@ const PreviewControls = ({ roomId }) => {
 };
 
 // ─── Custom Terminal Console ────────────────────────────────────
-const CustomTerminal = () => {
+const CustomTerminal = ({ template }) => {
   const { sandpack } = useSandpack();
+  
+  const getStartCommand = (tmpl) => {
+    switch (tmpl) {
+      case 'vue': return 'npm run dev';
+      case 'angular': return 'ng serve';
+      case 'react':
+      default: return 'npm start';
+    }
+  };
+  const startCommand = getStartCommand(template);
   
   if (sandpack.status === "idle" || sandpack.status === "initializing") {
     return (
@@ -946,7 +1221,7 @@ const CustomTerminal = () => {
         {/* Startup Prompt */}
         <div className="flex items-center gap-2 text-[#ccff00] mb-2 opacity-80 shrink-0">
           <span>user@workspace:~/project$</span>
-          <span className="text-[#e1e1e3]">npm start</span>
+          <span className="text-[#e1e1e3]">{startCommand}</span>
         </div>
         
         {/* Real Console */}
@@ -1103,19 +1378,43 @@ const ProjectRoom = () => {
         if (data.template) setTemplate(data.template);
 
         // Load files: prefer data.files (Mixed object), fall back to lastCode
+        let filesToLoad = null;
         if (data.files && typeof data.files === "object" && Object.keys(data.files).length > 0) {
-          setInitialFiles(data.files);
+          filesToLoad = data.files;
         } else if (data.lastCode) {
           try {
             const parsed = JSON.parse(data.lastCode);
             if (typeof parsed === "object" && !parsed.code) {
-              setInitialFiles(parsed);
+              filesToLoad = parsed;
             } else {
-              setInitialFiles({ "/App.js": { code: data.lastCode, active: true } });
+              filesToLoad = { "/App.js": { code: data.lastCode, active: true } };
             }
           } catch (e) {
-            setInitialFiles({ "/App.js": { code: data.lastCode, active: true } });
+            filesToLoad = { "/App.js": { code: data.lastCode, active: true } };
           }
+        }
+
+        // Check for local storage crash backup
+        const localBackup = localStorage.getItem(`sandpack_code_${roomId}`) || localStorage.getItem(`sandpack_files_${roomId}`);
+        if (localBackup) {
+          try {
+            const parsedBackup = JSON.parse(localBackup);
+            if (parsedBackup && Object.keys(parsedBackup).length > 0) {
+              const shouldRestore = window.confirm("We found unsaved changes from a previous session or crash. Would you like to restore them?");
+              if (shouldRestore) {
+                filesToLoad = parsedBackup;
+              }
+              // Clean up the backup so we don't prompt repeatedly
+              localStorage.removeItem(`sandpack_code_${roomId}`);
+              localStorage.removeItem(`sandpack_files_${roomId}`);
+            }
+          } catch (e) {
+            console.error("Failed to parse local backup", e);
+          }
+        }
+
+        if (filesToLoad) {
+          setInitialFiles(filesToLoad);
         }
 
         if (data.tasks) setLiveTasks(data.tasks);
@@ -1250,7 +1549,8 @@ const ProjectRoom = () => {
       <SandpackSyncer roomId={roomId} onSaveStatusChange={setSaveStatus} />
       <ManualSaveHandler roomId={roomId} onSaveStatusChange={setSaveStatus} />
 
-      <div className="h-screen w-full flex flex-col bg-[#0d0d0e] text-[#e1e1e3] font-sans overflow-hidden select-none">
+      <div className="h-screen w-full flex flex-col bg-[#0d0d0e] text-[#e1e1e3] font-sans overflow-hidden select-none relative">
+        <LiveCursors roomId={roomId} />
 
         {/* ═══ HEADER ═══ */}
         <header className="h-12 bg-[#141415] border-b border-white/[0.04] flex items-center justify-between px-3 z-20 shrink-0">
@@ -1259,7 +1559,11 @@ const ProjectRoom = () => {
             <button onClick={handleExitRoom} className="p-1.5 hover:bg-white/5 rounded-md text-[#525252] hover:text-white transition-all shrink-0"><FiArrowLeft size={15} /></button>
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-5 h-5 rounded-md bg-gradient-to-br from-[#a855f7] to-[#7c3aed] flex items-center justify-center shrink-0"><FiCode className="text-white" size={10} /></div>
-              <span className="text-white font-semibold text-[13px] tracking-tight truncate max-w-[160px]">{post?.project?.title || "CodeSphere"}</span>
+              {post?.project?.title ? (
+                <span className="text-white font-semibold text-[13px] tracking-tight truncate max-w-[160px]">{post.project.title}</span>
+              ) : (
+                <span className="text-[#737373] italic font-medium text-[13px] tracking-tight truncate max-w-[160px]">Untitled Workspace</span>
+              )}
               <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-[0.1em] shrink-0 ${template === "react" ? "bg-[#61dafb]/10 text-[#61dafb]" : template === "vue" ? "bg-[#42b883]/10 text-[#42b883]" : "bg-[#dd1b16]/10 text-[#dd1b16]"}`}>{template}</span>
             </div>
           </div>
@@ -1323,19 +1627,19 @@ const ProjectRoom = () => {
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 rounded-md bg-gradient-to-br from-[#a855f7] to-[#7c3aed] flex items-center justify-center shrink-0"><FiCode className="text-white" size={9} /></div>
                       <div className="min-w-0">
-                        <p className="text-[11px] text-[#a3a3a3] font-semibold truncate">{post?.project?.title || "Workspace"}</p>
+                        <p className="text-[11px] text-[#a3a3a3] font-semibold truncate">{post?.project?.title || "untitled-workspace"}</p>
                         <p className="text-[9px] text-[#3a3a3a]">{Object.keys(filesToLoad).length} files</p>
                       </div>
                     </div>
                   </div>
                   <div className="flex flex-col flex-1 min-h-0">
                     <CustomFileExplorer projectName={post?.project?.title} />
-                    <DependencyManager />
+                    <DependencyManager roomId={roomId} />
                   </div>
                 </>
               )}
               {activeLeftTab === "search" && <SearchPanel />}
-              {activeLeftTab === "settings" && <SettingsPanel post={post} techStack={techStack} template={template} onTemplateChange={handleTemplateChange} sessionTime={sessionTime} />}
+              {activeLeftTab === "settings" && <SettingsPanel post={post} techStack={techStack} template={template} onTemplateChange={handleTemplateChange} sessionTime={sessionTime} roomId={roomId} roomData={roomData} user={user} navigate={navigate} setRoomData={setRoomData} />}
             </div>
           )}
 
@@ -1450,7 +1754,7 @@ const ProjectRoom = () => {
                         )}
                         {openTabs.includes("console") && (
                           <div style={{ display: activeTab === "console" ? "flex" : "none", flexDirection: "column", width: "100%", height: "100%", flex: 1, overflow: "hidden" }}>
-                            <CustomTerminal />
+                            <CustomTerminal template={template} />
                           </div>
                         )}
                         {openTabs.includes("tasks") && (
@@ -1492,7 +1796,7 @@ const ProjectRoom = () => {
         <div className="h-6 bg-[#141415] border-t border-white/[0.04] flex items-center justify-between px-3 shrink-0 z-10">
           <div className="flex items-center gap-3">
             <span className={`text-[9px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded ${template === "react" ? "bg-[#61dafb]/8 text-[#61dafb]" : template === "vue" ? "bg-[#42b883]/8 text-[#42b883]" : "bg-[#dd1b16]/8 text-[#dd1b16]"}`}>{template}</span>
-            <span className="text-[9px] text-[#3a3a3a] font-mono">{post?.project?.title || "CodeSphere"}</span>
+            <span className="text-[9px] text-[#3a3a3a] font-mono">{post?.project?.title || "untitled-workspace"}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-[9px] text-[#3a3a3a] flex items-center gap-1"><FiClock size={9} /> {sessionTime}</span>

@@ -32,7 +32,7 @@ const Feed = () => {
   const [techInput, setTechInput] = useState("");
   const [projectRoleNeeded, setProjectRoleNeeded] = useState("");
   const [projectCommitment, setProjectCommitment] = useState("Ongoing");
-  const [projectStage, setProjectStage] = useState("💡 Idea");
+  const [projectStage, setProjectStage] = useState("Idea");
   
   // Projects fetch data
   const [userRequestsMap, setUserRequestsMap] = useState({});
@@ -463,10 +463,10 @@ const Feed = () => {
                   onChange={(e) => setProjectStage(e.target.value)}
                   className="bg-[#1a1a1a] border border-[#262626] text-[#e5e5e5] text-[12px] rounded-lg px-3 py-1.5 outline-none cursor-pointer hover:border-white/20 transition-colors"
                 >
-                  <option value="idea">💡 Idea</option>
-                  <option value="early-build">🔨 Early Build</option>
-                  <option value="mid-build">🏗️ Mid Build</option>
-                  <option value="needs-review">🔍 Needs Review</option>
+                  <option value="idea">Idea</option>
+                  <option value="early-build">Early Build</option>
+                  <option value="mid-build">Mid Build</option>
+                  <option value="needs-review">Needs Review</option>
                 </select>
               </div>
             </div>
@@ -561,7 +561,7 @@ const Feed = () => {
                 disabled={isPosting || (!content.trim() && !code.trim() && selectedImages.length === 0 && !selectedDocument)}
                 className="bg-[#e5e5e5] text-[#09090b] hover:bg-white px-5 py-1.5 rounded-full font-bold text-[13px] flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_10px_rgba(255,255,255,0.1)] hover:shadow-[0_2px_15px_rgba(255,255,255,0.2)]"
               >
-                {isPosting ? "Shipping..." : type === "project" ? "Post Project 🚀" : "Ship It"} <FiSend size={12} />
+                {isPosting ? "Shipping..." : type === "project" ? "Post Project" : "Ship It"} <FiSend size={12} />
               </button>
             </div>
           </div>
@@ -584,7 +584,7 @@ const Feed = () => {
               feedMode === "projects" ? "bg-[#ccff00] text-black shadow-[0_0_15px_rgba(204,255,0,0.2)]" : "bg-[#151515] text-[#737373] border border-[#262626] hover:text-white"
             }`}
           >
-            🚀 Projects
+            <FaRocket size={12} /> Projects
           </button>
         </div>
 
