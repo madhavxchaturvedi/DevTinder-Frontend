@@ -1,45 +1,43 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { useSelector } from "react-redux";
-import { motion } from "framer-motion";
-import { FiArrowLeft, FiMessageCircle, FiUser } from "react-icons/fi";
+import { motion as Motion } from "framer-motion";
+import { FiArrowLeft } from "react-icons/fi";
+import toast from "react-hot-toast";
 
-const SKILL_COLORS = [
-  "bg-[#ccff00] text-[#0a0a0a]",
-  "bg-[#a855f7] text-white",
-  "bg-white text-[#0a0a0a]",
-];
+// Profile section components
+import ProfileHeader from "./profile/ProfileHeader";
+import AboutSection from "./profile/AboutSection";
+import PinnedSnippets from "./profile/PinnedSnippets";
+import ShippedTogether from "./profile/ShippedTogether";
+import SOSTrackRecord from "./profile/SOSTrackRecord";
 
-// ── Inline skeleton while loading ──────────────────────────────────
+// ── Skeleton loader ────────────────────────────────────────────────
 const ProfileSkeleton = () => (
-  <div className="w-full max-w-lg mx-auto px-4 animate-pulse">
-    {/* Banner skeleton */}
-    <div className="h-44 rounded-3xl bg-white/5 mb-0" />
-    {/* Avatar skeleton — overlapping */}
-    <div className="flex justify-center -mt-14 mb-4">
+  <div className="w-full max-w-4xl mx-auto px-4 animate-pulse">
+    {/* Cover skeleton */}
+    <div className="h-36 sm:h-48 rounded-3xl bg-white/5 mb-0" />
+    {/* Left-aligned Avatar skeleton */}
+    <div className="-mt-14 ml-6 mb-4">
       <div className="w-28 h-28 rounded-full bg-white/10 ring-4 ring-[#0a0a0a]" />
     </div>
-    {/* Name + tags */}
-    <div className="flex flex-col items-center gap-3 mb-6">
-      <div className="h-7 w-44 rounded-lg bg-white/10" />
-      <div className="flex gap-2">
-        <div className="h-6 w-16 rounded-full bg-white/10" />
-        <div className="h-6 w-16 rounded-full bg-white/10" />
+    {/* Left-aligned Name + headline */}
+    <div className="flex flex-col ml-6 gap-3 mb-6">
+      <div className="h-7 w-52 rounded-lg bg-white/10" />
+      <div className="h-5 w-72 rounded-lg bg-white/5" />
+      <div className="flex gap-3">
+        <div className="h-5 w-20 rounded-full bg-white/10" />
+        <div className="h-5 w-20 rounded-full bg-white/10" />
+        <div className="h-5 w-20 rounded-full bg-white/10" />
       </div>
     </div>
-    {/* Skills */}
-    <div className="flex gap-2 justify-center flex-wrap mb-6">
-      {[80, 64, 96, 72].map((w, i) => (
-        <div key={i} className="h-7 rounded-full bg-white/10" style={{ width: w }} />
-      ))}
-    </div>
-    {/* About */}
-    <div className="space-y-2 px-2">
-      <div className="h-4 w-full rounded bg-white/10" />
-      <div className="h-4 w-5/6 rounded bg-white/10" />
-      <div className="h-4 w-4/6 rounded bg-white/10" />
+    {/* Content sections */}
+    <div className="space-y-6 mt-8">
+      <div className="h-32 rounded-2xl bg-white/5" />
+      <div className="h-48 rounded-2xl bg-white/5" />
+      <div className="h-36 rounded-2xl bg-white/5" />
     </div>
   </div>
 );
@@ -48,64 +46,195 @@ const UserProfilePage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const loggedInUser = useSelector((store) => store.user);
+  const onlineUsers = useSelector((store) => store.onlineUsers);
 
   const [profile, setProfile] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState("none");
+  const [connectionRequestId, setConnectionRequestId] = useState(null);
+  const [isFollowingUser, setIsFollowingUser] = useState(false);
+  const [stats, setStats] = useState({ connectionCount: 0, totalReactions: 0, postCount: 0 });
+  const [pinnedPosts, setPinnedPosts] = useState([]);
+  const [shippedTogether, setShippedTogether] = useState([]);
+  const [sosTrackRecord, setSosTrackRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [imgLoaded, setImgLoaded] = useState(false);
+
+  const isOwnProfile = loggedInUser?._id?.toString() === userId?.toString();
+  const isOnline = onlineUsers.includes(userId);
+
+  // ── Reactive currentRoom ───────────────────────────────────────
+  const currentRoom = useMemo(/* onlineUsers */ () => {
+    if (!onlineUsers.includes(userId) || !shippedTogether?.length) return null;
+    const activeRoom = shippedTogether.find((r) => r.status === "active");
+    return activeRoom
+      ? {
+          title: activeRoom.title,
+          members: activeRoom.members?.map((m) => m.firstName) || [],
+        }
+      : null;
+  }, [onlineUsers, shippedTogether, userId]);
+
+  // Dynamic document title
+  useEffect(() => {
+    if (profile) {
+      const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
+      document.title = fullName ? `${fullName} | DevTinder` : 'DevTinder';
+    }
+    return () => {
+      document.title = 'DevTinder';
+    };
+  }, [profile]);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
+        setError(null);
         const res = await axios.get(`${BASE_URL}/user/${userId}`, {
           withCredentials: true,
         });
+
         setProfile(res.data.user);
-        setConnectionStatus(res.data.connectionStatus);
+        setConnectionStatus(res.data.connectionStatus || "none");
+        setConnectionRequestId(res.data.connectionRequestId || null);
+        setIsFollowingUser(res.data.isFollowing);
+        setStats(res.data.stats || { connectionCount: 0, totalReactions: 0, postCount: 0 });
+        setPinnedPosts(res.data.pinnedPosts || []);
+        setShippedTogether(res.data.shippedTogether || []);
+        setSosTrackRecord(res.data.sosTrackRecord || null);
       } catch (err) {
         setError(
           err?.response?.status === 404
-            ? "This user doesn't exist."
+            ? "This developer doesn't exist."
             : "Failed to load profile."
         );
       } finally {
         setLoading(false);
       }
     };
+
     if (userId) fetchProfile();
   }, [userId]);
 
-  const isOwnProfile =
-    loggedInUser?._id?.toString() === userId?.toString();
+  // ── Connection handlers ────────────────────────────────────────
+  const handleConnect = async () => {
+    try {
+      const res = await axios.post(
+        `${BASE_URL}/request/send/interested/${userId}`,
+        {},
+        { withCredentials: true }
+      );
+      setConnectionStatus("pending");
+      if (res.data?.data?._id) {
+        setConnectionRequestId(res.data.data._id);
+      }
+      toast.success("Connection request sent!");
+    } catch (err) {
+      console.error("Connect error:", err);
+      toast.error(err.response?.data?.message || "Failed to send connection request");
+    }
+  };
 
-  // ── Loading ─────────────────────────────────────────────────────
+  const handleAcceptConnection = async () => {
+    if (!connectionRequestId) return;
+    try {
+      await axios.post(
+        `${BASE_URL}/request/review/accepted/${connectionRequestId}`,
+        {},
+        { withCredentials: true }
+      );
+      setConnectionStatus("accepted");
+      setStats((prev) => ({
+        ...prev,
+        connectionCount: (prev.connectionCount || 0) + 1,
+      }));
+      toast.success("Connection request accepted!");
+    } catch (err) {
+      console.error("Accept connection error:", err);
+      toast.error(err.response?.data?.message || "Failed to accept connection");
+    }
+  };
+
+  const handleRejectConnection = async () => {
+    if (!connectionRequestId) return;
+    try {
+      await axios.post(
+        `${BASE_URL}/request/review/rejected/${connectionRequestId}`,
+        {},
+        { withCredentials: true }
+      );
+      setConnectionStatus("rejected");
+      toast.success("Connection request declined");
+    } catch (err) {
+      console.error("Reject connection error:", err);
+      toast.error(err.response?.data?.message || "Failed to reject connection");
+    }
+  };
+
+  // ── Follow / Unfollow handlers ─────────────────────────────────
+  const handleFollow = async () => {
+    try {
+      await axios.post(`${BASE_URL}/user/follow/${userId}`, {}, { withCredentials: true });
+      setIsFollowingUser(true);
+      setProfile((prev) => prev && { ...prev, followersCount: (prev.followersCount || 0) + 1 });
+      toast.success(`Followed ${profile?.firstName || 'user'}!`);
+    } catch (err) {
+      console.error("Follow error:", err);
+      toast.error(err.response?.data?.message || "Failed to update follow status");
+    }
+  };
+
+  const handleUnfollow = async () => {
+    try {
+      await axios.post(`${BASE_URL}/user/unfollow/${userId}`, {}, { withCredentials: true });
+      setIsFollowingUser(false);
+      setProfile((prev) => prev && { ...prev, followersCount: Math.max(0, (prev.followersCount || 0) - 1) });
+      toast.success(`Unfollowed ${profile?.firstName || 'user'}`);
+    } catch (err) {
+      console.error("Unfollow error:", err);
+      toast.error(err.response?.data?.message || "Failed to update follow status");
+    }
+  };
+
+  // ── Open to Pair toggle ────────────────────────────────────────
+  const handleTogglePair = async () => {
+    try {
+      const res = await axios.patch(`${BASE_URL}/profile/toggle-pair`, {}, { withCredentials: true });
+      setProfile((prev) => prev && { ...prev, openToPair: res.data.openToPair });
+    } catch (err) {
+      console.error("Toggle pair error:", err);
+      toast.error(err.response?.data?.message || "Failed to toggle pair status");
+    }
+  };
+
+  // ── Loading ────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-[80vh] flex flex-col pt-10">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-white/40 hover:text-white transition text-sm mb-6 px-4 w-fit"
-        >
-          <FiArrowLeft size={15} /> Back
-        </button>
+      <div className="min-h-[80vh] flex flex-col pt-6">
+        <div className="w-full max-w-4xl mx-auto px-4 mb-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-white/40 hover:text-white transition text-sm w-fit"
+          >
+            <FiArrowLeft size={15} /> Back
+          </button>
+        </div>
         <ProfileSkeleton />
       </div>
     );
   }
 
-  // ── Error ───────────────────────────────────────────────────────
+  // ── Error ──────────────────────────────────────────────────────
   if (error) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
-        <div className="text-center p-10 bg-white border-4 border-[#0a0a0a] shadow-[8px_8px_0px_#0a0a0a] rounded-3xl max-w-sm">
+        <div className="text-center p-10 bg-[#121212] border border-white/10 rounded-3xl max-w-sm">
           <p className="text-5xl mb-4">😕</p>
-          <h2 className="text-[#0a0a0a] font-black text-xl mb-2">Not found</h2>
-          <p className="text-gray-600 font-bold text-sm mb-6">{error}</p>
+          <h2 className="text-white font-bold text-xl mb-2">Not found</h2>
+          <p className="text-[#a3a3a3] text-sm mb-6">{error}</p>
           <button
             onClick={() => navigate(-1)}
-            className="neo-btn-primary"
+            className="px-6 py-3 bg-[#ccff00] text-[#0a0a0a] rounded-xl font-bold hover:bg-[#bbf000] transition-colors"
           >
             Go back
           </button>
@@ -114,14 +243,10 @@ const UserProfilePage = () => {
     );
   }
 
-  const photoUrl =
-    profile.photoUrl ||
-    "https://geographyandyou.com/images/user-profile.png";
-
   return (
-    <div className="min-h-[80vh] flex flex-col items-center px-4 pb-16 pt-6">
+    <div className="min-h-[80vh] pb-16 pt-6">
       {/* Back button */}
-      <div className="w-full max-w-lg mb-4">
+      <div className="w-full max-w-4xl mx-auto px-4 mb-4">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-white/40 hover:text-white transition text-sm w-fit"
@@ -130,143 +255,50 @@ const UserProfilePage = () => {
         </button>
       </div>
 
-      {/* ── Profile card ──────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-        className="w-full max-w-lg neo-card p-0"
-      >
-        {/* ── Hero banner with solid background ───────────── */}
-        <div className="relative h-44 overflow-hidden bg-gradient-to-tr from-[#ccff00] to-[#a855f7] border-b-4 border-[#0a0a0a]">
-          {/* Abstract background shape */}
-          <div className="absolute top-4 left-4 w-20 h-20 border-[6px] border-[#0a0a0a] rounded-full opacity-30" />
-          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white border-[6px] border-[#0a0a0a] rounded-xl transform rotate-12 opacity-30" />
+      {/* ── Profile content ─────────────────────────────────────── */}
+      <div className="w-full max-w-4xl mx-auto px-4">
+        {/* Hero Header */}
+        <Motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
+        >
+          <ProfileHeader
+            user={profile}
+            connectionStatus={connectionStatus}
+            isFollowing={isFollowingUser}
+            isOwnProfile={isOwnProfile}
+            isOnline={isOnline}
+            currentRoom={currentRoom}
+            stats={stats}
+            sosTrackRecord={sosTrackRecord}
+            onFollow={handleFollow}
+            onUnfollow={handleUnfollow}
+            onTogglePair={handleTogglePair}
+            onConnect={handleConnect}
+            onAcceptConnection={handleAcceptConnection}
+            onRejectConnection={handleRejectConnection}
+          />
+        </Motion.div>
+
+        {/* ── Content sections ────────────────────────────────────── */}
+        <div className="mt-8 space-y-8">
+          {/* About + Skills */}
+          <AboutSection about={profile?.about} skills={profile?.skills} isOwnProfile={isOwnProfile} />
+
+          {/* Pinned Snippets / Best Work */}
+          <PinnedSnippets
+            posts={pinnedPosts}
+            isOwnProfile={isOwnProfile}
+          />
+
+          {/* Shipped Together */}
+          <ShippedTogether rooms={shippedTogether} isOwnProfile={isOwnProfile} />
+
+          {/* Debug SOS Track Record */}
+          <SOSTrackRecord sosTrackRecord={sosTrackRecord} isOwnProfile={isOwnProfile} />
         </div>
-
-        {/* ── Card body ────────────────────────────────────────────── */}
-        <div className="bg-white pb-8">
-          {/* Avatar — overlaps the banner */}
-          <div className="flex justify-center -mt-14 mb-5">
-            <div className="relative">
-              <motion.img
-                initial={{ scale: 0.85, opacity: 0 }}
-                animate={{ scale: 1, opacity: imgLoaded ? 1 : 0 }}
-                transition={{ duration: 0.35 }}
-                src={photoUrl}
-                alt={profile.firstName}
-                onLoad={() => setImgLoaded(true)}
-                className="w-28 h-28 rounded-full object-cover border-4 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] bg-white"
-              />
-              {/* Loading placeholder until img loads */}
-              {!imgLoaded && (
-                <div className="absolute inset-0 w-28 h-28 rounded-full bg-gray-200 animate-pulse border-4 border-[#0a0a0a]" />
-              )}
-            </div>
-          </div>
-
-          {/* Name + meta tags */}
-          <div className="flex flex-col items-center gap-2 px-6 mb-5">
-            <h1 className="text-3xl font-black text-[#0a0a0a] tracking-tight text-center">
-              {profile.firstName} {profile.lastName}
-            </h1>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {profile.age && (
-                <span className="text-xs font-bold text-[#0a0a0a] bg-white border-2 border-[#0a0a0a] px-3 py-1 rounded-full shadow-[2px_2px_0px_#0a0a0a]">
-                  AGE {profile.age}
-                </span>
-              )}
-              {profile.gender && (
-                <span className="text-xs font-bold text-[#0a0a0a] bg-white border-2 border-[#0a0a0a] px-3 py-1 rounded-full capitalize shadow-[2px_2px_0px_#0a0a0a]">
-                  {profile.gender}
-                </span>
-              )}
-              {profile.helpfulAnswers > 0 && (
-                <span className="text-xs font-bold text-[#0a0a0a] bg-[#ccff00] border-2 border-[#0a0a0a] px-3 py-1 rounded-full capitalize shadow-[2px_2px_0px_#0a0a0a] flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                  {profile.helpfulAnswers} Helpful Answer{profile.helpfulAnswers > 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="mx-6 mb-5 h-[2px] bg-[#0a0a0a]" />
-
-          {/* Skills */}
-          {profile.skills && profile.skills.length > 0 && (
-            <div className="px-6 mb-6">
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 text-center">
-                Skills
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {profile.skills.map((skill, i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.05 * i, duration: 0.25 }}
-                    className={`text-xs px-4 py-1.5 rounded-full border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] font-bold tracking-wide ${
-                      SKILL_COLORS[i % SKILL_COLORS.length]
-                    }`}
-                  >
-                    {skill}
-                  </motion.span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* About */}
-          {profile.about && (
-            <div className="mx-6 mb-8 p-6 bg-[#f4f4f5] border-2 border-[#0a0a0a] rounded-xl shadow-[4px_4px_0px_#0a0a0a]">
-              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">
-                About
-              </p>
-              <p className="text-[#0a0a0a] font-medium text-sm leading-relaxed">
-                {profile.about}
-              </p>
-            </div>
-          )}
-
-          {/* Action button */}
-          <div className="px-6 flex justify-center">
-            {!isOwnProfile && connectionStatus === "accepted" && (
-              <Link
-                to={`/chat/${userId}`}
-                className="flex items-center gap-2.5 px-8 py-3 bg-[#ccff00] text-[#0a0a0a] border-2 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#0a0a0a] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all rounded-full font-black uppercase tracking-wider text-sm"
-              >
-                <FiMessageCircle size={18} strokeWidth={3} />
-                Message
-              </Link>
-            )}
-
-            {!isOwnProfile && connectionStatus === "pending" && (
-              <div className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#0a0a0a] text-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] rounded-full font-bold text-sm">
-                ⏳ Request Pending
-              </div>
-            )}
-
-            {!isOwnProfile &&
-              (connectionStatus === "none" ||
-                connectionStatus === "ignored") && (
-                <div className="px-6 py-3 bg-gray-200 border-2 border-[#0a0a0a] text-gray-500 rounded-full font-bold text-sm">
-                  Not connected
-                </div>
-              )}
-
-            {isOwnProfile && (
-              <Link
-                to="/profile"
-                className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#0a0a0a] shadow-[4px_4px_0px_#0a0a0a] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#0a0a0a] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all rounded-full text-[#0a0a0a] text-sm font-black uppercase tracking-wider"
-              >
-                <FiUser size={18} strokeWidth={3} />
-                Edit my profile
-              </Link>
-            )}
-          </div>
-        </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

@@ -1,60 +1,20 @@
 import axios from "axios";
-import React, { useRef, useState, useEffect } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { removeUser } from "../redux/userSlice";
-import { markAllRead, clearNotifications } from "../redux/notificationSlice";
-import { motion, AnimatePresence } from "framer-motion";
-import { FiUserPlus, FiCheckCircle } from "react-icons/fi";
+import { clearNotifications } from "../redux/notificationSlice";
 import NotificationsDropdown from "./NotificationsDropdown";
-
-// How long ago a date was (e.g. "2 min ago", "3 hr ago")
-const timeAgo = (dateString) => {
-  const seconds = Math.floor((Date.now() - new Date(dateString)) / 1000);
-  if (seconds < 60) return "just now";
-  const mins = Math.floor(seconds / 60);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-};
-
-const notificationMessage = (n) => {
-  const name = n.fromUserId?.firstName || "Someone";
-  if (n.type === "connection_request") return `${name} sent you a connection request`;
-  if (n.type === "request_accepted") return `${name} accepted your connection request`;
-  if (n.type === "request_rejected") return `${name} declined your request`;
-  return "You have a new notification";
-};
-
-const notificationLink = (n) => {
-  if (n.type === "connection_request") return "/requests";
-  if (n.type === "request_accepted") return "/connections";
-  return "/";
-};
+import { timeAgo } from "../utils/timeAgo";
 
 const Header = () => {
   const user = useSelector((store) => store.user);
-  const { items: notifications, unreadCount } = useSelector(
+  const { unreadCount } = useSelector(
     (store) => store.notifications
   );
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  const [notifOpen, setNotifOpen] = useState(false);
-  const notifRef = useRef(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
-        setNotifOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -64,23 +24,6 @@ const Header = () => {
       navigate("/login");
     } catch (err) {
       console.log(err);
-    }
-  };
-
-  const handleOpenNotifications = async () => {
-    setNotifOpen((prev) => !prev);
-    // Mark as read on open if there are unread
-    if (unreadCount > 0) {
-      try {
-        await axios.patch(
-          BASE_URL + "/notifications/mark-read",
-          {},
-          { withCredentials: true }
-        );
-        dispatch(markAllRead());
-      } catch (err) {
-        // silent
-      }
     }
   };
 
@@ -108,6 +51,7 @@ const Header = () => {
             <div
               tabIndex={0}
               role="button"
+              title={user.createdAt ? `Active ${timeAgo(user.createdAt)}` : undefined}
               className="btn btn-ghost btn-circle avatar border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#0a0a0a] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
             >
               <div className="w-10 rounded-full">

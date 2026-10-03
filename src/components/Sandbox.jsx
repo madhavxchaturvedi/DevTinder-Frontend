@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { addUser } from "../redux/userSlice";
@@ -6,7 +6,7 @@ import { FiArrowLeft, FiCode, FiZap, FiCheck, FiStar, FiPlay, FiTerminal, FiMess
 import Editor from "@monaco-editor/react";
 import { getSocket } from "../utils/socket";
 import { BASE_URL } from "../utils/constants";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 
 const BOILERPLATES = {
@@ -42,7 +42,8 @@ const Sandbox = () => {
   const [language, setLanguage] = useState(initialLanguage);
   const [code, setCode] = useState(initialCode || BOILERPLATES[initialLanguage] || BOILERPLATES["javascript"]);
   
-  const targetId = user ? roomId?.split("_").find(id => id !== String(user._id)) : null;
+  const isSnippetRoom = roomId?.startsWith("snippet_");
+  const targetId = user && !isSnippetRoom ? roomId?.split("_").find(id => id !== String(user._id)) : null;
   const [targetUser, setTargetUser] = useState(null);
   const [isTargetUserInRoom, setIsTargetUserInRoom] = useState(false);
   
@@ -390,7 +391,7 @@ const Sandbox = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#ccff00]/10 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#a855f7]/10 rounded-full blur-[80px] pointer-events-none" />
 
-        <motion.div 
+        <Motion.div 
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.5, type: "spring" }}
@@ -420,7 +421,7 @@ const Sandbox = () => {
           <button onClick={upgradeToPro} className="w-full max-w-sm mx-auto py-4 rounded-xl font-black text-[#0a0a0a] bg-[#ccff00] hover:bg-[#bbf000] hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(204,255,0,0.3)] flex items-center justify-center gap-2 text-lg">
             <FiZap className="text-xl" /> Unlock Pro Access
           </button>
-        </motion.div>
+        </Motion.div>
       </div>
     );
   }
@@ -548,7 +549,7 @@ const Sandbox = () => {
         {/* ── Meet-style Chat Overlay ────────────────────────────── */}
         <AnimatePresence>
           {isChatOpen && (
-            <motion.div 
+            <Motion.div 
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
@@ -626,7 +627,7 @@ const Sandbox = () => {
                   </button>
                 </div>
               </form>
-            </motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
 

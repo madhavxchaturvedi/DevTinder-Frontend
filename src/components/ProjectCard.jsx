@@ -5,23 +5,15 @@ import { useSelector } from "react-redux";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import toast from "react-hot-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-const timeAgo = (dateString) => {
-  const seconds = Math.floor((Date.now() - new Date(dateString)) / 1000);
-  if (seconds < 60) return "just now";
-  const mins = Math.floor(seconds / 60);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-};
+import { timeAgo } from "../utils/timeAgo";
 
 const ProjectCard = ({ post, userRequestStatus, requestCount }) => {
-  const { _id, authorId, content, project, stackTags, createdAt } = post;
+  const { _id, authorId, content, project, createdAt } = post;
   const loggedInUser = useSelector((store) => store.user);
+  const onlineUsers = useSelector((store) => store.onlineUsers) || [];
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
@@ -32,7 +24,6 @@ const ProjectCard = ({ post, userRequestStatus, requestCount }) => {
 
   const isMyPost = loggedInUser?._id === authorId._id;
   const isProjectOpen = project.isOpen !== false; 
-  const onlineUsers = useSelector((store) => store.onlineUsers) || [];
   const isAuthorOnline = onlineUsers.includes(authorId._id);
 
   const getStageColor = (stage) => {
@@ -191,7 +182,7 @@ const ProjectCard = ({ post, userRequestStatus, requestCount }) => {
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm">
-            <motion.div 
+            <Motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -224,7 +215,7 @@ const ProjectCard = ({ post, userRequestStatus, requestCount }) => {
                   {isSubmitting ? "Sending..." : "Send Request"} <FiSend size={14} />
                 </button>
               </div>
-            </motion.div>
+            </Motion.div>
           </div>
         )}
       </AnimatePresence>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FiMessageSquare, FiMoreHorizontal, FiTrash2, FiGitMerge, FiStar, FiZap, FiTerminal, FiCheckCircle, FiUsers, FiFileText, FiDownloadCloud, FiCopy } from "react-icons/fi";
+import { RiPushpinFill, RiPushpinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
@@ -15,37 +16,28 @@ import LiveSnippet from "./LiveSnippet";
 import CommentsSection from "./CommentsSection";
 
 
-// How long ago a date was
-const timeAgo = (dateString) => {
-  const seconds = Math.floor((Date.now() - new Date(dateString)) / 1000);
-  if (seconds < 60) return "just now";
-  const mins = Math.floor(seconds / 60);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-};
+import { timeAgo } from "../utils/timeAgo";
 
 const PostCard = ({ post, onFork, followedUsers = [] }) => {
   const { _id, authorId, type, content, codeSnippet, forkedFrom, stackTags, createdAt, reactions } = post;
   const loggedInUser = useSelector((store) => store.user);
   const dispatch = useDispatch();
   const [isReacting, setIsReacting] = useState(false);
+  const [isPinning, setIsPinning] = useState(false);
 
   // We need to fetch current user's reaction from the backend eventually, 
   // but for V1 we'll just handle optimistic UI counts.
   
-  if (!authorId) return null;
-
-  const isMyPost = loggedInUser?._id === authorId._id;
-
   const [localFollowState, setLocalFollowState] = useState(null);
-  const isAlreadyFollowing = localFollowState !== null ? localFollowState : followedUsers.includes(authorId._id);
-  
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  if (!authorId) return null;
+
+  const isMyPost = loggedInUser?._id === authorId._id;
+  const isAlreadyFollowing = localFollowState !== null ? localFollowState : followedUsers.includes(authorId._id);
 
   const handleCopy = () => {
     if (codeSnippet?.code) {
@@ -263,13 +255,39 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
           </div>
 
           {isMyPost && (
-            <button 
-              onClick={handleDelete}
-              className="text-[#a3a3a3] hover:text-red-500 transition-colors p-2 hover:bg-white/5 rounded-full"
-              title="Delete Post"
-            >
-              <FiTrash2 />
-            </button>
+            <div className="flex items-center gap-1">
+              {type === "snippet" && (
+                <button
+                  disabled={isPinning}
+                  onClick={async () => {
+                    if (isPinning) return;
+                    setIsPinning(true);
+                    try {
+                      const res = await axios.patch(`${BASE_URL}/post/${_id}/pin`, {}, { withCredentials: true });
+                      toast.success(res.data.message, { style: { background: '#121212', color: '#e5e5e5' } });
+                      dispatch(updatePost({ ...post, isPinnedToProfile: res.data.isPinnedToProfile }));
+                    } catch (err) {
+                      toast.error(err?.response?.data?.message || "Failed to pin");
+                    } finally {
+                      setIsPinning(false);
+                    }
+                  }}
+                  className={`transition-colors p-2 hover:bg-white/5 rounded-full disabled:opacity-50 ${
+                    post.isPinnedToProfile ? "text-[#ccff00]" : "text-[#a3a3a3] hover:text-[#ccff00]"
+                  }`}
+                  title={post.isPinnedToProfile ? "Unpin from Profile" : "Pin to Profile"}
+                >
+                  {post.isPinnedToProfile ? <RiPushpinFill size={16} /> : <RiPushpinLine size={16} />}
+                </button>
+              )}
+              <button 
+                onClick={handleDelete}
+                className="text-[#a3a3a3] hover:text-red-500 transition-colors p-2 hover:bg-white/5 rounded-full"
+                title="Delete Post"
+              >
+                <FiTrash2 />
+              </button>
+            </div>
           )}
           {!isMyPost && (
             <button 
