@@ -1,24 +1,26 @@
-import React from 'react';
-import { motion as Motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { 
-  FiMapPin, 
-  FiMessageSquare, 
-  FiUserPlus, 
-  FiUserCheck, 
-  FiEdit2, 
-  FiClock, 
-  FiCheck, 
-  FiX, 
-  FiShare2 
-} from 'react-icons/fi';
-import { FaTwitter, FaGlobe } from 'react-icons/fa';
-import toast from 'react-hot-toast';
-import { timeAgo } from '../../utils/timeAgo';
+import { motion as Motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import {
+  MapPin,
+  MessageSquare,
+  UserPlus,
+  UserCheck,
+  Edit2,
+  Clock,
+  Check,
+  X,
+  Share2,
+  Globe,
+  Zap,
+  Sparkles,
+  Users,
+} from "lucide-react";
+import { toast } from "sonner";
+import { timeAgo } from "../../utils/timeAgo";
 
 const ProfileHeader = ({
   user,
-  connectionStatus = 'none',
+  connectionStatus = "none",
   isFollowing,
   isOwnProfile,
   isOnline,
@@ -41,7 +43,6 @@ const ProfileHeader = ({
     photoUrl,
     headline,
     location,
-    coverPhoto,
     followersCount = 0,
     helpfulAnswers = 0,
     openToPair,
@@ -49,12 +50,13 @@ const ProfileHeader = ({
     twitterUrl,
     portfolioUrl,
     isPremium,
+    skills = [],
   } = user;
 
-  const fullName = `${firstName || ''} ${lastName || ''}`.trim();
+  const fullName = `${firstName || ""} ${lastName || ""}`.trim();
   const isUsuallyResponsive = Boolean(
     helpfulAnswers >= 10 ||
-    (sosTrackRecord?.isResponsive && sosTrackRecord?.totalSolved >= 10)
+      (sosTrackRecord?.isResponsive && sosTrackRecord?.totalSolved >= 10)
   );
 
   const handleCopyProfileUrl = async () => {
@@ -68,40 +70,45 @@ const ProfileHeader = ({
 
   const handleAvatarError = (e) => {
     e.target.onerror = null;
-    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || 'User')}&background=random`;
+    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      fullName || "User"
+    )}&background=111113&color=ccff00`;
   };
 
   return (
-    <Motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-[#121212] rounded-3xl border border-white/10 overflow-hidden"
-    >
-      {/* Cover Photo */}
-      <div 
-        className="h-36 sm:h-48 md:h-56 w-full bg-gradient-to-r from-[#ccff00]/20 to-[#a855f7]/20 relative"
-        style={coverPhoto ? { backgroundImage: `url(${coverPhoto})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
-      >
+    <div className="glass-card border border-white/[0.07] rounded-2xl overflow-hidden mb-8">
+      {/* Gradient Cover Banner (NOT a photograph) */}
+      <div className="h-40 sm:h-52 w-full rounded-t-2xl relative overflow-hidden bg-gradient-to-r from-[#ccff00]/10 via-transparent to-[#b266ff]/10 border-b border-white/[0.07]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent opacity-40 pointer-events-none" />
         {isPremium && (
-          <div className="absolute top-4 right-4 bg-[#ccff00] text-[#0a0a0a] text-xs font-bold px-3 py-1 rounded-full shadow-[2px_2px_0px_#0a0a0a]">
-            PREMIUM
+          <div className="absolute top-4 right-4 bg-[#b266ff]/15 text-[#b266ff] border border-[#b266ff]/30 text-[10px] font-mono font-bold px-2.5 py-1 rounded-md tracking-wider flex items-center gap-1.5 shadow-[0_0_15px_rgba(178,102,255,0.2)]">
+            <Sparkles className="w-3 h-3 text-[#b266ff]" />
+            PRO MEMBER
           </div>
         )}
       </div>
 
       <div className="px-6 pb-6 relative">
-        {/* Top bar: Avatar & Action Buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-16 sm:-mt-20 mb-4 gap-4">
-          {/* Avatar */}
-          <div className="relative w-fit">
-            <img 
-              src={photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || 'User')}&background=random`} 
-              alt={fullName} 
+        {/* Top Row: Avatar & Action Buttons */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-8 sm:-mt-10 mb-4 gap-4">
+          {/* 64px rounded-xl square avatar */}
+          <div className="relative w-fit z-10">
+            <img
+              src={
+                photoUrl ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  fullName || "User"
+                )}&background=111113&color=ccff00`
+              }
+              alt={fullName}
               onError={handleAvatarError}
-              className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-[#121212] object-cover bg-[#0a0a0a]"
+              className="w-16 h-16 rounded-xl border-2 border-[#ccff00] object-cover bg-[#111113] shadow-[0_0_15px_rgba(204,255,0,0.15)]"
             />
             {isOnline && (
-              <div className="absolute bottom-2 right-2 w-5 h-5 bg-[#ccff00] rounded-full border-4 border-[#121212]"></div>
+              <div
+                className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-[#ccff00] rounded-full border-2 border-[#111113] shadow-[0_0_8px_rgba(204,255,0,0.6)]"
+                title="Online now"
+              />
             )}
           </div>
 
@@ -110,189 +117,282 @@ const ProfileHeader = ({
             <button
               onClick={handleCopyProfileUrl}
               title="Share profile"
-              className="flex items-center space-x-1.5 bg-white/5 hover:bg-white/10 text-[#a3a3a3] hover:text-white px-3 py-2 rounded-xl transition-colors border border-white/10 text-sm"
+              className="flex items-center gap-1.5 bg-transparent border border-white/10 text-[#a0a0a0] hover:border-white/20 hover:text-white px-3 py-2 rounded-lg transition-colors text-xs font-semibold cursor-pointer"
             >
-              <FiShare2 size={16} />
+              <Share2 size={14} />
               <span className="hidden sm:inline">Share</span>
             </button>
 
             {isOwnProfile ? (
-              <Link to="/profile" className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-[#e5e5e5] px-4 py-2 rounded-xl transition-colors border border-white/10 text-sm font-semibold">
-                <FiEdit2 />
+              <Link
+                to="/profile"
+                className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-[#f0f0f0] px-4 py-2 rounded-lg transition-colors border border-white/10 text-xs font-semibold"
+              >
+                <Edit2 size={14} />
                 <span>Edit Profile</span>
               </Link>
             ) : (
               <>
                 {/* Connection button states */}
-                {connectionStatus === 'none' && (
-                  <button 
+                {connectionStatus === "none" && (
+                  <button
                     onClick={onConnect}
-                    className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-[#e5e5e5] px-4 py-2 rounded-xl transition-colors border border-white/10 text-sm font-semibold"
+                    className="flex items-center gap-1.5 bg-[#ccff00] text-black font-bold text-xs px-4 py-2 rounded-lg hover:bg-[#d9ff33] transition-all shadow-[0_0_15px_rgba(204,255,0,0.2)] cursor-pointer"
                   >
-                    <FiUserPlus />
+                    <UserPlus size={14} />
                     <span>Connect</span>
                   </button>
                 )}
 
-                {connectionStatus === 'pending' && (
-                  <button 
-                    disabled 
-                    className="flex items-center space-x-2 bg-white/5 text-white/50 px-4 py-2 rounded-xl border border-white/5 cursor-not-allowed text-sm font-semibold"
+                {connectionStatus === "pending" && (
+                  <button
+                    disabled
+                    className="flex items-center gap-1.5 bg-transparent border border-white/10 text-[#52525b] px-4 py-2 rounded-lg text-xs font-mono cursor-not-allowed"
                   >
-                    <FiClock />
+                    <Clock size={14} />
                     <span>Requested</span>
                   </button>
                 )}
 
-                {(connectionStatus === 'received' || connectionStatus === 'pending_incoming') && (
-                  <div className="flex items-center space-x-2">
+                {(connectionStatus === "received" ||
+                  connectionStatus === "pending_incoming") && (
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={onAcceptConnection}
-                      className="flex items-center space-x-1.5 bg-[#ccff00] text-[#0a0a0a] px-3.5 py-2 rounded-xl font-bold shadow-[2px_2px_0px_#0a0a0a] hover:translate-y-[1px] transition-all text-sm"
+                      className="flex items-center gap-1.5 bg-[#ccff00] text-black px-3.5 py-2 rounded-lg text-xs font-bold hover:bg-[#d9ff33] transition-all cursor-pointer"
                     >
-                      <FiCheck />
+                      <Check size={14} />
                       <span>Accept</span>
                     </button>
                     <button
                       onClick={onRejectConnection}
-                      className="flex items-center space-x-1.5 bg-white/10 hover:bg-white/20 text-[#e5e5e5] px-3.5 py-2 rounded-xl transition-colors border border-white/10 text-sm"
+                      className="flex items-center gap-1.5 bg-transparent border border-white/10 text-[#52525b] hover:text-red-400 hover:border-red-400/30 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
                     >
-                      <FiX />
-                      <span>Reject</span>
+                      <X size={14} />
+                      <span>Decline</span>
                     </button>
                   </div>
                 )}
 
-                {connectionStatus === 'accepted' && (
-                  <Link to={`/chat/${_id}`} className="flex items-center space-x-2 bg-[#ccff00] text-[#0a0a0a] px-4 py-2 rounded-xl font-bold shadow-[4px_4px_0px_#0a0a0a] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#0a0a0a] transition-all text-sm">
-                    <FiMessageSquare />
-                    <span>Message</span>
-                  </Link>
+                {connectionStatus === "accepted" && (
+                  <div className="flex items-center gap-1.5 text-xs font-mono text-[#ccff00] bg-[#ccff00]/10 border border-[#ccff00]/25 px-2.5 py-1.5 rounded-lg">
+                    <Check size={13} />
+                    <span>Connected</span>
+                  </div>
                 )}
 
-                {(connectionStatus === 'rejected' || connectionStatus === 'ignored') && (
-                  <button 
-                    disabled 
-                    className="flex items-center space-x-2 bg-white/5 text-white/40 px-4 py-2 rounded-xl border border-white/5 cursor-not-allowed text-sm"
+                {(connectionStatus === "rejected" ||
+                  connectionStatus === "ignored") && (
+                  <button
+                    disabled
+                    className="flex items-center gap-1.5 bg-transparent border border-white/10 text-[#52525b] px-3.5 py-2 rounded-lg text-xs font-mono cursor-not-allowed"
                   >
-                    <FiX />
+                    <X size={14} />
                     <span>Declined</span>
                   </button>
                 )}
 
-                <button 
+                {/* Message button (ghost secondary) */}
+                <Link
+                  to={`/chat/${_id}`}
+                  className="flex items-center gap-1.5 bg-transparent border border-white/10 text-[#a0a0a0] hover:border-white/20 hover:text-white px-4 py-2 rounded-lg transition-colors text-xs font-semibold cursor-pointer"
+                >
+                  <MessageSquare size={14} />
+                  <span>Message</span>
+                </Link>
+
+                {/* Follow toggle button */}
+                <button
                   onClick={isFollowing ? onUnfollow : onFollow}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-bold transition-all text-sm ${
-                    isFollowing 
-                      ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' 
-                      : 'bg-[#a855f7] text-white shadow-[4px_4px_0px_#0a0a0a] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#0a0a0a]'
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    isFollowing
+                      ? "bg-transparent border border-white/10 text-[#52525b] hover:text-red-400 hover:border-red-400/30"
+                      : "border border-[#ccff00]/40 text-[#ccff00] hover:bg-[#ccff00]/10"
                   }`}
                 >
-                  {isFollowing ? <FiUserCheck /> : <FiUserPlus />}
-                  <span>{isFollowing ? 'Following' : 'Follow'}</span>
+                  {isFollowing ? <UserCheck size={14} /> : <UserPlus size={14} />}
+                  <span>{isFollowing ? "Following" : "Follow"}</span>
                 </button>
               </>
             )}
           </div>
         </div>
 
-        {/* Profile Info */}
-        <div className="mt-2">
+        {/* Profile Info: Name (22px bold) & Badges */}
+        <div className="mt-3">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#e5e5e5]">{fullName}</h1>
+            <h1 className="text-[22px] font-bold text-[#f0f0f0] tracking-tight">
+              {fullName}
+            </h1>
             {isUsuallyResponsive && (
-              <span className="bg-[#ccff00]/10 text-[#ccff00] text-xs px-2.5 py-1 rounded-full border border-[#ccff00]/20 font-medium">
-                ⚡ Usually responsive
+              <span className="flex items-center gap-1.5 bg-[#ccff00]/10 text-[#ccff00] text-[11px] font-mono px-2.5 py-0.5 rounded-md border border-[#ccff00]/25 font-bold">
+                <Zap size={11} className="text-[#ccff00]" />
+                Usually responsive
               </span>
             )}
           </div>
-          {headline && <p className="text-base sm:text-lg text-[#a3a3a3] mt-1">{headline}</p>}
-          
-          <div className="flex flex-wrap items-center mt-3 text-sm text-[#a3a3a3] gap-4">
+          {headline && <p className="text-sm text-[#52525b] mt-0.5">{headline}</p>}
+
+          {/* Skills in header: mono badges */}
+          {skills && skills.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
+              {skills.slice(0, 5).map((skill, idx) => (
+                <span
+                  key={idx}
+                  className="rounded-md px-2 py-0.5 text-[11px] font-mono font-bold bg-[#ccff00]/10 text-[#ccff00] border border-[#ccff00]/20"
+                >
+                  {skill}
+                </span>
+              ))}
+              {skills.length > 5 && (
+                <span className="rounded-md px-2 py-0.5 text-[11px] font-mono text-[#52525b] bg-white/5 border border-white/10">
+                  +{skills.length - 5}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center mt-3 text-xs text-[#52525b] gap-4">
             {location && (
-              <div className="flex items-center space-x-1">
-                <FiMapPin className="text-[#a855f7]" />
+              <div className="flex items-center gap-1">
+                <MapPin size={13} className="text-[#b266ff]" />
                 <span>{location}</span>
               </div>
             )}
-            
+
             {/* Social Links */}
-            <div className="flex items-center space-x-3">
-              {twitterUrl && <a href={twitterUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors"><FaTwitter size={18} /></a>}
-              {portfolioUrl && <a href={portfolioUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors"><FaGlobe size={18} /></a>}
+            <div className="flex items-center gap-3">
+              {twitterUrl && (
+                <a
+                  href={twitterUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#f0f0f0] transition-colors flex items-center gap-1 text-xs"
+                >
+                  <Share2 size={13} />
+                  <span>Twitter / X</span>
+                </a>
+              )}
+              {portfolioUrl && (
+                <a
+                  href={portfolioUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#f0f0f0] transition-colors flex items-center gap-1 text-xs"
+                >
+                  <Globe size={13} />
+                  <span>Portfolio</span>
+                </a>
+              )}
             </div>
           </div>
 
           {/* Live Presence */}
-          <div className="mt-4 flex items-center space-x-2 text-sm">
+          <div className="mt-4 flex items-center gap-2 text-xs">
             {isOnline && currentRoom ? (
-              <div className="bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-full border border-blue-500/20 flex items-center space-x-2">
-                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                <span>In ProjectRoom "{currentRoom.title}" with @{currentRoom.members?.join(', ')}</span>
+              <div className="bg-[#b266ff]/10 text-[#b266ff] px-3 py-1.5 rounded-lg border border-[#b266ff]/20 flex items-center gap-2 font-mono">
+                <span className="w-2 h-2 bg-[#b266ff] rounded-full animate-pulse" />
+                <span>
+                  In ProjectRoom &quot;{currentRoom.title}&quot; with @
+                  {currentRoom.members?.join(", ")}
+                </span>
               </div>
             ) : isOnline && openToPair ? (
-              <div className="flex items-center space-x-3">
-                <div className="bg-[#ccff00]/10 text-[#ccff00] px-3 py-1.5 rounded-full border border-[#ccff00]/20 flex items-center space-x-2">
-                  <span className="w-2 h-2 bg-[#ccff00] rounded-full animate-pulse"></span>
-                  <span>💡 Open to pair</span>
+              <div className="flex items-center gap-3">
+                <div className="bg-[#ccff00]/10 text-[#ccff00] px-3 py-1.5 rounded-md border border-[#ccff00]/25 flex items-center gap-2 font-mono text-xs">
+                  <Sparkles size={13} className="text-[#ccff00]" />
+                  <span>Open to pair</span>
                 </div>
                 {!isOwnProfile && (
-                  <Link to={`/chat/${_id}`} className="text-xs bg-[#121212] border border-white/20 text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors">
-                    🤝 Request to Pair
+                  <Link
+                    to={`/chat/${_id}`}
+                    className="text-xs font-mono bg-white/5 border border-white/10 text-[#f0f0f0] hover:text-[#ccff00] hover:border-[#ccff00]/40 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5"
+                  >
+                    <Users size={12} />
+                    <span>Request to Pair</span>
                   </Link>
                 )}
               </div>
             ) : isOnline ? (
-              <div className="bg-green-500/10 text-green-400 px-3 py-1.5 rounded-full border border-green-500/20 flex items-center space-x-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <div className="bg-[#ccff00]/10 text-[#ccff00] px-3 py-1.5 rounded-md border border-[#ccff00]/20 flex items-center gap-2 font-mono text-xs">
+                <span className="w-2 h-2 bg-[#ccff00] rounded-full animate-pulse" />
                 <span>Online now</span>
               </div>
             ) : (
-              <div className="text-[#a3a3a3] flex items-center space-x-2">
-                <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
-                <span>{lastSeen ? `Last seen ${timeAgo(lastSeen)}` : 'Offline'}</span>
+              <div className="text-[#52525b] flex items-center gap-2 font-mono text-xs">
+                <span className="w-2 h-2 bg-zinc-600 rounded-full" />
+                <span>{lastSeen ? `Last seen ${timeAgo(lastSeen)}` : "Offline"}</span>
               </div>
             )}
           </div>
 
           {/* Stats Row */}
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/5 text-[#e5e5e5]">
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-[#111113] border border-white/[0.07] text-[#f0f0f0]">
             <div className="flex flex-col">
-              <span className="font-bold text-xl">{followersCount}</span>
-              <span className="text-xs text-[#a3a3a3] uppercase tracking-wider">Followers</span>
+              <span className="font-mono font-bold text-xl text-[#f0f0f0]">
+                {followersCount}
+              </span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#52525b] mt-0.5">
+                Followers
+              </span>
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-xl">{stats?.connectionCount || 0}</span>
-              <span className="text-xs text-[#a3a3a3] uppercase tracking-wider">Connections</span>
+              <span className="font-mono font-bold text-xl text-[#f0f0f0]">
+                {stats?.connectionCount || 0}
+              </span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#52525b] mt-0.5">
+                Connections
+              </span>
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-xl">{stats?.totalReactions || 0}</span>
-              <span className="text-xs text-[#a3a3a3] uppercase tracking-wider">Reactions</span>
+              <span className="font-mono font-bold text-xl text-[#f0f0f0]">
+                {stats?.totalReactions || 0}
+              </span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#52525b] mt-0.5">
+                Reactions
+              </span>
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-xl">{helpfulAnswers}</span>
-              <span className="text-xs text-[#a3a3a3] uppercase tracking-wider">Problems Solved</span>
+              <span className="font-mono font-bold text-xl text-[#f0f0f0]">
+                {helpfulAnswers}
+              </span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#52525b] mt-0.5">
+                Problems Solved
+              </span>
             </div>
           </div>
 
           {/* Open to pair toggle for own profile */}
           {isOwnProfile && (
-            <div className="mt-6 p-4 bg-[#0a0a0a] rounded-2xl border border-white/5 flex items-center justify-between max-w-sm">
+            <div className="mt-6 p-4 bg-[#111113] rounded-xl border border-white/[0.07] flex items-center justify-between max-w-sm">
               <div className="flex flex-col">
-                <span className="text-[#e5e5e5] font-semibold text-sm">Open to Pair</span>
-                <span className="text-[#a3a3a3] text-xs">Let others know you're ready to code</span>
+                <span className="text-[#f0f0f0] font-semibold text-xs">
+                  Open to Pair
+                </span>
+                <span className="text-[#52525b] text-[11px]">
+                  Let others know you&apos;re ready to code
+                </span>
               </div>
-              <button 
+              <button
+                type="button"
                 onClick={onTogglePair}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${openToPair ? 'bg-[#ccff00]' : 'bg-white/20'}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                  openToPair ? "bg-[#ccff00]" : "bg-white/10"
+                }`}
               >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${openToPair ? 'translate-x-6 bg-[#0a0a0a]' : 'translate-x-1'}`} />
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full transition-transform ${
+                    openToPair
+                      ? "translate-x-6 bg-black"
+                      : "translate-x-1 bg-white"
+                  }`}
+                />
               </button>
             </div>
           )}
         </div>
       </div>
-    </Motion.div>
+    </div>
   );
 };
 

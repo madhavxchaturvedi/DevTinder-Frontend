@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 import { BASE_URL } from "./constants";
 
-// Module-level singleton — one socket connection per browser session
+// Module-level singleton -- one socket connection per browser session
 let socket = null;
 
 export const getSocket = () => {

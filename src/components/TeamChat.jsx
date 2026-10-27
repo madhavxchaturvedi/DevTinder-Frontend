@@ -1,13 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FiSend, FiMessageCircle } from 'react-icons/fi';
-import { getSocket } from '../utils/socket';
-import { useSelector } from 'react-redux';
+import React, { useState, useEffect, useRef } from "react";
+import { Send, MessageSquare } from "lucide-react";
+import { getSocket } from "../utils/socket";
+import { useSelector } from "react-redux";
+import { DEFAULT_AVATAR } from "../utils/constants";
 
 const TeamChat = ({ roomId, initialChats = [] }) => {
   const [chats, setChats] = useState(initialChats);
   const [newMessage, setNewMessage] = useState("");
-  const user = useSelector(store => store.user);
+  const user = useSelector((store) => store.user);
   const messagesEndRef = useRef(null);
+
+  // Synchronize when initialChats prop loads asynchronously
+  useEffect(() => {
+    if (initialChats && Array.isArray(initialChats) && initialChats.length > 0) {
+      setChats(initialChats);
+    }
+  }, [initialChats]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -19,85 +27,102 @@ const TeamChat = ({ roomId, initialChats = [] }) => {
 
   useEffect(() => {
     const socket = getSocket();
+    if (!socket) return;
     const handleChatMessage = ({ message }) => {
-      setChats(prev => [...prev, message]);
+      setChats((prev) => [...prev, message]);
     };
-    socket.on('room:chat_message', handleChatMessage);
-    return () => socket.off('room:chat_message', handleChatMessage);
+    socket.on("room:chat_message", handleChatMessage);
+    return () => socket.off("room:chat_message", handleChatMessage);
   }, []);
 
   const sendMessage = (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
-    
+    const trimmed = newMessage.trim();
+    if (!trimmed) return;
+
     const message = {
       _id: Math.random().toString(36).substring(7),
       senderId: {
         _id: user?._id,
         firstName: user?.firstName,
         lastName: user?.lastName,
-        photoUrl: user?.photoUrl
+        photoUrl: user?.photoUrl,
       },
-      text: newMessage,
-      type: 'user',
-      createdAt: new Date()
+      text: trimmed,
+      type: "user",
+      createdAt: new Date(),
     };
-    
-    setChats(prev => [...prev, message]);
-    getSocket().emit('room:chat_message', { roomId, message });
+
+    setChats((prev) => [...prev, message]);
+    const socket = getSocket();
+    if (socket?.connected) {
+      socket.emit("room:chat_message", { roomId, message });
+    }
     setNewMessage("");
   };
 
   const formatTime = (dateString) => {
+    if (!dateString) return "";
     const d = new Date(dateString);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#121212] overflow-hidden">
-
-      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar flex flex-col gap-4">
+    <div className="flex flex-col h-full bg-[#111113] overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col gap-3">
         {chats.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
-            <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
-              <FiMessageCircle className="text-[#737373]" size={24} />
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 select-none">
+            <div className="w-10 h-10 rounded-xl bg-[#1a1a1f] border border-white/[0.07] flex items-center justify-center mb-3">
+              <MessageSquare className="w-5 h-5 text-[#52525b]" />
             </div>
-            <p className="text-[#737373] text-xs">No messages yet.<br/>Say hello to your partner!</p>
+            <p className="text-[#f0f0f0] text-xs font-semibold mb-1">No messages yet</p>
+            <p className="text-[#52525b] text-[11px] font-mono leading-relaxed max-w-[200px]">
+              Say hello and coordinate with your teammate in real-time.
+            </p>
           </div>
         ) : (
-          chats.map(chat => {
-            const isMe = chat.senderId?._id === user?._id;
-            const isSystem = chat.type === 'system';
-            
+          chats.map((chat) => {
+            const isMe = String(chat.senderId?._id) === String(user?._id);
+            const isSystem = chat.type === "system";
+
             if (isSystem) {
               return (
-                <div key={chat._id} className="flex justify-center my-2">
-                  <div className="bg-[#a855f7]/10 border border-[#a855f7]/20 text-[#a855f7] px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wide shadow-sm">
+                <div key={chat._id} className="flex justify-center my-1.5">
+                  <div className="bg-[#b266ff]/10 border border-[#b266ff]/20 text-[#b266ff] px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wide shadow-sm">
                     {chat.text}
                   </div>
                 </div>
               );
             }
-            
+
             return (
-              <div key={chat._id} className={`flex gap-3 max-w-[85%] ${isMe ? 'self-end flex-row-reverse' : 'self-start'}`}>
-                <img 
-                  src={chat.senderId?.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
-                  alt={chat.senderId?.firstName} 
-                  className="w-8 h-8 rounded-full object-cover shrink-0 mt-auto shadow-sm"
+              <div
+                key={chat._id}
+                className={`flex gap-2.5 max-w-[85%] ${
+                  isMe ? "self-end flex-row-reverse" : "self-start"
+                }`}
+              >
+                <img
+                  src={chat.senderId?.photoUrl || DEFAULT_AVATAR}
+                  alt={chat.senderId?.firstName || "User"}
+                  className="w-7 h-7 rounded-full object-cover shrink-0 mt-auto border border-white/[0.08]"
                 />
-                <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] text-[#737373] font-bold">
-                      {isMe ? 'You' : chat.senderId?.firstName}
+                <div className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] font-bold text-[#52525b]">
+                      {isMe ? "You" : chat.senderId?.firstName || "Dev"}
                     </span>
-                    <span className="text-[9px] text-[#525252]">{formatTime(chat.createdAt)}</span>
+                    <span className="text-[9px] font-mono text-[#52525b]/70">
+                      {formatTime(chat.createdAt)}
+                    </span>
                   </div>
-                  <div className={`px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed break-words shadow-sm transition-all duration-300 hover:shadow-md ${
-                    isMe 
-                      ? 'bg-[#a855f7] text-white rounded-br-sm' 
-                      : 'bg-[#1a1a1c] border border-white/5 text-[#e5e5e5] rounded-bl-sm'
-                  }`}>
+                  <div
+                    className={`px-3 py-2 rounded-2xl text-xs leading-relaxed break-words shadow-sm transition-all select-text ${
+                      isMe
+                        ? "bg-[#ccff00]/10 border border-[#ccff00]/20 text-[#f0f0f0] rounded-br-sm"
+                        : "bg-[#1a1a1f] border border-white/[0.07] text-[#f0f0f0] rounded-bl-sm"
+                    }`}
+                  >
                     {chat.text}
                   </div>
                 </div>
@@ -108,17 +133,22 @@ const TeamChat = ({ roomId, initialChats = [] }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-[#1a1a1c]/80 backdrop-blur-xl border-t border-white/5 flex-shrink-0">
+      <div className="p-3 bg-[#111113] border-t border-white/[0.07] flex-shrink-0">
         <form onSubmit={sendMessage} className="relative">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-white placeholder-[#737373] focus:outline-none focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] transition-all shadow-inner"
+            className="w-full bg-[#09090b] border border-white/10 rounded-lg py-2 pl-3 pr-10 text-xs text-[#f0f0f0] placeholder:text-[#52525b] focus:outline-none focus:border-[#ccff00]/60 focus:ring-1 focus:ring-[#ccff00]/40 transition-all font-sans"
           />
-          <button type="submit" disabled={!newMessage.trim()} className="absolute right-1.5 top-1/2 -translate-y-1/2 p-2 bg-[#a855f7] text-white hover:bg-[#9333ea] rounded-lg transition-all disabled:opacity-50 disabled:bg-white/10 disabled:text-[#737373]">
-            <FiSend size={16} />
+          <button
+            type="submit"
+            disabled={!newMessage.trim()}
+            className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 bg-[#ccff00] text-black hover:bg-[#d9ff33] rounded-md transition-all disabled:opacity-30 disabled:hover:bg-[#ccff00] disabled:cursor-not-allowed cursor-pointer"
+            title="Send message"
+          >
+            <Send className="w-3.5 h-3.5 text-black" />
           </button>
         </form>
       </div>

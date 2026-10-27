@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { addUser } from "../redux/userSlice";
+import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { getSocket } from "../utils/socket";
 import { BASE_URL } from "../utils/constants";
 import axios from "axios";
@@ -52,8 +51,6 @@ const SandpackSyncerReadOnly = ({ roomId }) => {
 const FullscreenPreview = () => {
   const { roomId } = useParams();
   const user = useSelector((store) => store.user);
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const [isInitializing, setIsInitializing] = useState(true);
   const [initialFiles, setInitialFiles] = useState({});
@@ -76,7 +73,7 @@ const FullscreenPreview = () => {
             } else {
                setInitialFiles({ "/App.js": { code: data.lastCode, active: true } });
             }
-          } catch (e) {
+          } catch {
             setInitialFiles({ "/App.js": { code: data.lastCode, active: true } });
           }
         }
@@ -130,7 +127,7 @@ const FullscreenPreview = () => {
   });
 
   return (
-    <div className="h-screen w-full bg-[#0d0d0e]">
+    <div className="h-screen w-full bg-[#09090b]">
       <SandpackProvider
         template={template}
         theme="dark"

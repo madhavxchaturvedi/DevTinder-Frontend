@@ -1,16 +1,42 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { addUser } from "../redux/userSlice";
 import { BASE_URL } from "../utils/constants";
-import { motion } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Lock, Mail, User, Sparkles } from "lucide-react";
+import { OctoPairLogo } from "./brand/OctoPairLogo";
+import { toast } from "sonner";
 
-const LoginForm = () => {
+const Login = () => {
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const [activeTab, setActiveTab] = useState(initialMode);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    // When arriving at login unauthenticated, purge any stale auth hints
+    try {
+      localStorage.removeItem("octopair_auth_hint");
+      localStorage.removeItem("octopair_auth");
+      localStorage.removeItem("devtinder_auth_hint");
+      localStorage.removeItem("devtinder_auth");
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const mode = searchParams.get("mode");
+    if (mode === "signup") {
+      setActiveTab("signup");
+    } else if (mode === "login") {
+      setActiveTab("login");
+    }
+  }, [searchParams]);
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -20,11 +46,15 @@ const LoginForm = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (error) setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
+
+    const isLogin = activeTab === "login";
 
     try {
       const endpoint = isLogin ? "/login" : "/signup";
@@ -35,166 +65,238 @@ const LoginForm = () => {
       const res = await axios.post(BASE_URL + endpoint, bodyData, {
         withCredentials: true,
       });
+
+      try {
+        localStorage.setItem("octopair_auth_hint", "true");
+        localStorage.setItem("octopair_auth", "1");
+      } catch {
+        // Ignore storage errors during login
+      }
+
       if (!isLogin) {
-        dispatch(addUser(res.data?.data));
-        navigate("/profile");
+        const newUser = res.data?.data;
+        dispatch(addUser(newUser));
+        toast.success("Account created successfully.");
+        if (newUser && newUser.profileComplete === false) {
+          navigate("/onboarding");
+        } else {
+          navigate("/feed");
+        }
       } else {
-        dispatch(addUser(res.data));
-        navigate("/feed");
+        const loggedUser = res.data?.data || res.data;
+        dispatch(addUser(loggedUser));
+        toast.success("Welcome back.");
+        if (loggedUser && loggedUser.profileComplete === false) {
+          navigate("/onboarding");
+        } else {
+          navigate("/feed");
+        }
       }
     } catch (err) {
-      setError(err?.response?.data || "Something went wrong!");
+      const errMsg =
+        err?.response?.data?.message ||
+        (typeof err?.response?.data === "string" ? err?.response?.data : null) ||
+        "Authentication failed. Please check your credentials.";
+      setError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-[85vh] w-full px-4 relative">
-      {/* Subtle Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#ccff00]/5 rounded-full blur-[150px] pointer-events-none" />
+    <div className="min-h-dvh w-full flex items-center justify-center p-4 relative overflow-hidden bg-[#09090b] text-[#f0f0f0] select-none">
+      {/* 40px Subtle Background Grid */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-40"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
 
-      {/* Container */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+      {/* Centered Auth Card */}
+      <Motion.div
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative w-full max-w-5xl h-[650px] rounded-[32px] overflow-hidden bg-[#121212] flex flex-col md:flex-row shadow-2xl border border-white/5 backdrop-blur-xl"
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="glass-card max-w-md w-full px-8 py-10 shadow-[0_0_60px_rgba(0,0,0,0.5)] z-10 my-8"
       >
-        
-        {/* Left Side: Branding & Visuals */}
-        <div className="hidden md:flex flex-col justify-center items-center w-1/2 relative p-12 bg-[#0a0a0a] border-r border-white/5 overflow-hidden">
-          
-          <div className="relative z-10 text-center mt-10">
-            <h1 className="text-5xl font-bold tracking-tight mb-6 text-white">
-              &lt;DevTinder /&gt;
-            </h1>
-            <p className="text-[#a3a3a3] font-medium text-lg leading-relaxed max-w-xs mx-auto">
-              Connect with elite builders. Start building the future together.
-            </p>
-          </div>
-          
-          {/* Floating abstract code blocks */}
-          <motion.div 
-            animate={{ y: [-10, 10, -10], rotate: [0, 5, 0] }} 
-            transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-            className="absolute top-[20%] right-[10%] px-5 py-3 bg-[#121212] border border-white/10 shadow-xl rounded-2xl flex items-center justify-center text-xs text-[#ccff00] font-bold font-mono backdrop-blur-sm"
+        {/* Brand Header */}
+        <div className="text-center mb-6">
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center gap-2.5 mb-3 group hover:opacity-90 transition-opacity"
           >
-            git commit -m "Match"
-          </motion.div>
-          <motion.div 
-            animate={{ y: [10, -10, 10], rotate: [0, -5, 0] }} 
-            transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 }}
-            className="absolute bottom-[25%] left-[5%] px-5 py-4 bg-[#121212] border border-white/10 shadow-xl rounded-2xl flex flex-col justify-center text-[10px] text-white font-bold font-mono backdrop-blur-sm"
-          >
-            <span><span className="text-[#a855f7]">if</span> (mutual) {`{`}</span>
-            <span className="pl-4 text-blue-400">startBuild<span className="text-white">();</span></span>
-            <span>{`}`}</span>
-          </motion.div>
-          
-          {/* Decorative glow inside the left panel */}
-          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-[#a855f7]/10 to-transparent pointer-events-none" />
+            <OctoPairLogo className="h-12 w-auto text-[#f0f0f0] group-hover:text-[#ccff00] transition-colors" />
+            <span className="text-2xl font-black tracking-tighter text-[#f0f0f0]">
+              OctoPair
+            </span>
+          </Link>
+
+          <h2 className="text-xl font-bold tracking-tight text-[#f0f0f0]">
+            {activeTab === "login" ? "Welcome Back" : "Join the Dev Network"}
+          </h2>
+          <p className="text-xs text-[#52525b] mt-1">
+            {activeTab === "login"
+              ? "Sign in to connect, match, and build with peers."
+              : "Create your developer identity to find collaborators."}
+          </p>
         </div>
 
-        {/* Right Side: Form */}
-        <div className="w-full md:w-1/2 flex flex-col justify-center px-8 sm:px-14 relative z-10 bg-[#121212]">
-          <div className="w-full max-w-sm mx-auto">
-            
-            <div className="mb-10 text-center md:text-left">
-              <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
-                {isLogin ? "Welcome back" : "Create account"}
-              </h2>
-              <p className="text-[#a3a3a3] font-medium text-sm">
-                {isLogin
-                  ? "Enter your credentials to access your matches."
-                  : "Start your journey to finding the perfect dev."}
-              </p>
-            </div>
+        {/* Tab Switcher */}
+        <div className="grid grid-cols-2 p-1 bg-[#1a1a1f] border border-white/[0.07] rounded-lg mb-6">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("login");
+              setError("");
+            }}
+            className={`py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
+              activeTab === "login"
+                ? "bg-[#ccff00] text-black shadow-sm"
+                : "text-[#52525b] hover:text-[#f0f0f0]"
+            }`}
+          >
+            Log In
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("signup");
+              setError("");
+            }}
+            className={`py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
+              activeTab === "signup"
+                ? "bg-[#ccff00] text-black shadow-sm"
+                : "text-[#52525b] hover:text-[#f0f0f0]"
+            }`}
+          >
+            Sign Up
+          </button>
+        </div>
 
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              {!isLogin && (
-                <div className="flex gap-4">
-                  <div className="relative w-1/2">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <AnimatePresence mode="wait">
+            {activeTab === "signup" && (
+              <Motion.div
+                key="name-fields"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="grid grid-cols-2 gap-3 overflow-hidden"
+              >
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#52525b]">First Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-2.5 h-4 w-4 text-[#52525b]" />
                     <input
-                      type="text"
+                      id="firstName"
                       name="firstName"
-                      placeholder="First Name"
+                      placeholder="Ada"
+                      value={formData.firstName}
                       onChange={handleChange}
-                      required
-                      className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3.5 text-[#e5e5e5] font-semibold placeholder-gray-500 focus:outline-none focus:border-[#ccff00]/50 focus:ring-1 focus:ring-[#ccff00]/50 transition-all"
-                    />
-                  </div>
-                  <div className="relative w-1/2">
-                    <input
-                      type="text"
-                      name="lastName"
-                      placeholder="Last Name"
-                      onChange={handleChange}
-                      className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3.5 text-[#e5e5e5] font-semibold placeholder-gray-500 focus:outline-none focus:border-[#ccff00]/50 focus:ring-1 focus:ring-[#ccff00]/50 transition-all"
+                      required={activeTab === "signup"}
+                      className="w-full bg-[#111113] border border-white/10 rounded-lg text-sm pl-9 pr-3 py-2 text-[#f0f0f0] placeholder:text-[#52525b] focus:outline-none focus:border-[#ccff00]/60 focus:ring-1 focus:ring-[#ccff00]/50"
                     />
                   </div>
                 </div>
-              )}
-              
-              <div className="relative">
-                <input
-                  type="email"
-                  name="emailId"
-                  placeholder="Email address"
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3.5 text-[#e5e5e5] font-semibold placeholder-gray-500 focus:outline-none focus:border-[#a855f7]/50 focus:ring-1 focus:ring-[#a855f7]/50 transition-all"
-                />
-              </div>
-              
-              <div className="relative">
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Password"
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3.5 text-[#e5e5e5] font-semibold placeholder-gray-500 focus:outline-none focus:border-[#a855f7]/50 focus:ring-1 focus:ring-[#a855f7]/50 transition-all"
-                />
-              </div>
 
-              {error && (
-                <motion.p 
-                  initial={{ opacity: 0, y: -5 }} 
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-red-400 text-sm font-medium text-center bg-red-400/10 py-2.5 rounded-xl border border-red-400/20"
-                >
-                  {error}
-                </motion.p>
-              )}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#52525b]">Last Name</label>
+                  <input
+                    id="lastName"
+                    name="lastName"
+                    placeholder="Lovelace"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className="w-full bg-[#111113] border border-white/10 rounded-lg text-sm px-3 py-2 text-[#f0f0f0] placeholder:text-[#52525b] focus:outline-none focus:border-[#ccff00]/60 focus:ring-1 focus:ring-[#ccff00]/50"
+                  />
+                </div>
+              </Motion.div>
+            )}
+          </AnimatePresence>
 
-              <button
-                type="submit"
-                className="w-full bg-[#ccff00] text-[#0a0a0a] font-bold text-lg py-3.5 rounded-none mt-6 hover:bg-[#bbf000] transition-all transform active:scale-[0.98]"
-              >
-                {isLogin ? "Log In" : "Sign Up"}
-              </button>
-            </form>
-
-            <div className="mt-8 text-center">
-              <p className="text-[#a3a3a3] font-medium text-sm">
-                {isLogin ? "Don't have an account?" : "Already have an account?"}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setError("");
-                  }}
-                  className="ml-2 text-[#ccff00] hover:text-[#bbf000] font-bold transition-colors focus:outline-none"
-                >
-                  {isLogin ? "Sign Up" : "Log In"}
-                </button>
-              </p>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#52525b]">Email Address</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-2.5 h-4 w-4 text-[#52525b]" />
+              <input
+                id="emailId"
+                type="email"
+                name="emailId"
+                placeholder="developer@example.com"
+                value={formData.emailId}
+                onChange={handleChange}
+                required
+                className="w-full bg-[#111113] border border-white/10 rounded-lg text-sm pl-9 pr-3 py-2 text-[#f0f0f0] placeholder:text-[#52525b] focus:outline-none focus:border-[#ccff00]/60 focus:ring-1 focus:ring-[#ccff00]/50"
+              />
             </div>
-            
           </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#52525b]">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-[#52525b]" />
+              <input
+                id="password"
+                type="password"
+                name="password"
+                placeholder="********"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full bg-[#111113] border border-white/10 rounded-lg text-sm pl-9 pr-3 py-2 text-[#f0f0f0] placeholder:text-[#52525b] focus:outline-none focus:border-[#ccff00]/60 focus:ring-1 focus:ring-[#ccff00]/50"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-3 text-xs font-medium text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg text-center">
+              {error}
+            </div>
+          )}
+
+          {/* Full-width Lime Primary Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full mt-2 inline-flex items-center justify-center gap-2 bg-[#ccff00] text-black font-bold text-sm py-2.5 rounded-lg hover:bg-[#d9ff33] transition-all cursor-pointer shadow-[0_0_20px_rgba(204,255,0,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              "Processing..."
+            ) : activeTab === "login" ? (
+              <>
+                Log In <ArrowRight className="h-4 w-4" />
+              </>
+            ) : (
+              <>
+                Create Account <Sparkles className="h-4 w-4" />
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Switch toggle link */}
+        <div className="mt-6 text-center text-xs text-[#52525b]">
+          {activeTab === "login" ? "New to OctoPair? " : "Already have an account? "}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab(activeTab === "login" ? "signup" : "login");
+              setError("");
+            }}
+            className="font-bold text-[#ccff00] hover:underline ml-1 cursor-pointer"
+          >
+            {activeTab === "login" ? "Create an account" : "Sign in here"}
+          </button>
         </div>
-      </motion.div>
+      </Motion.div>
     </div>
   );
 };
 
-export default LoginForm;
+export default Login;

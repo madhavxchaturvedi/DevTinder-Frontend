@@ -64,7 +64,7 @@ const LiveSnippet = ({ code, language }) => {
       <html>
         <head>
           <style>
-            body { font-family: monospace; color: #fff; background: #0a0a0a; padding: 8px; margin: 0; }
+            body { font-family: monospace; color: #fff; background: #09090b; padding: 8px; margin: 0; }
             .log-line { border-bottom: 1px solid #333; padding: 4px 0; }
             .log-error { color: #ff5555; }
           </style>
@@ -110,21 +110,21 @@ const LiveSnippet = ({ code, language }) => {
           {!isRunning ? (
             <button
               onClick={handleRun}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#0a0a0a] bg-[#ccff00] px-3 py-1.5 rounded hover:bg-[#b3e600] transition-colors"
+              className="flex items-center gap-1.5 text-xs font-bold text-black bg-primary px-3 py-1.5 rounded hover:bg-[#b3e600] transition-colors"
             >
               <FiPlay /> Run Snippet
             </button>
           ) : (
             <button
               onClick={handleStop}
-              className="flex items-center gap-1.5 text-xs font-bold text-white bg-red-500/20 border border-red-500/50 px-3 py-1.5 rounded hover:bg-red-500/30 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-bold text-foreground bg-red-500/20 border border-red-500/50 px-3 py-1.5 rounded hover:bg-red-500/30 transition-colors"
             >
               <FiSquare className="text-red-500" /> Stop
             </button>
           )}
           <button
             onClick={handleOpenNewTab}
-            className="flex items-center gap-1.5 text-[11px] font-bold text-[#a3a3a3] bg-white/5 border border-white/10 px-3 py-1.5 rounded hover:bg-white/10 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground bg-muted border border-border px-3 py-1.5 rounded hover:bg-muted hover:text-foreground transition-colors"
           >
             <FiExternalLink /> Open in New Tab
           </button>
@@ -135,23 +135,23 @@ const LiveSnippet = ({ code, language }) => {
         <div className="flex items-center gap-3 mt-1">
           <button
             onClick={handleOpenSandbox}
-            className="group relative flex items-center gap-2 text-xs font-medium text-white bg-[#151515] border border-white/10 px-4 py-2 rounded-lg hover:border-[#a855f7]/50 hover:bg-[#1a1a1a] transition-all duration-300 overflow-hidden shadow-sm"
+            className="group relative flex items-center gap-2 text-xs font-medium text-foreground bg-card border border-border px-4 py-2 rounded-lg hover:border-[#a855f7]/50 hover:bg-muted transition-all duration-300 overflow-hidden shadow-sm"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#a855f7]/10 to-transparent opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-full transition-all duration-1000 ease-in-out" />
-            <FiZap className="text-[#a855f7] relative z-10" /> 
+            <FiZap className="text-accent relative z-10" /> 
             <span className="relative z-10 tracking-wide">Run in Sandbox</span>
           </button>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#a855f7]/10 border border-[#a855f7]/20">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#a855f7] animate-pulse" />
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-accent/10 border border-accent/20">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
             <span className="text-[9px] font-bold text-[#d8b4fe] uppercase tracking-widest">Pro Only</span>
           </div>
         </div>
       )}
 
       {isRunning && (
-        <div className="w-full border border-white/20 rounded-xl overflow-hidden bg-white mt-2 flex flex-col transition-all h-[280px]">
+        <div className="w-full border border-border rounded-xl overflow-hidden bg-white mt-2 flex flex-col transition-all h-[280px]">
           {/* Mini-Browser Header */}
-          <div className="bg-[#1e1e1e] border-b border-white/10 px-3 py-2 flex items-center justify-between">
+          <div className="bg-[#1e1e1e] border-b border-border px-3 py-2 flex items-center justify-between">
             {/* Traffic Lights */}
             <div className="flex items-center gap-1.5 w-12">
               <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
@@ -161,9 +161,9 @@ const LiveSnippet = ({ code, language }) => {
             
             {/* Address Bar / Title */}
             <div className="flex-1 flex justify-center">
-              <div className="bg-black/50 rounded px-3 py-0.5 flex items-center justify-center max-w-[150px] w-full border border-white/5">
-                <span className="text-[9px] text-white/50 font-mono flex items-center gap-1.5 tracking-wider">
-                  <FiPlay size={8} className="text-[#ccff00]" /> localhost
+              <div className="bg-black/50 rounded px-3 py-0.5 flex items-center justify-center max-w-[150px] w-full border border-border">
+                <span className="text-[9px] text-foreground/50 font-mono flex items-center gap-1.5 tracking-wider">
+                  <FiPlay size={8} className="text-primary" /> localhost
                 </span>
               </div>
             </div>

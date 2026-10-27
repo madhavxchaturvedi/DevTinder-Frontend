@@ -1,6 +1,6 @@
-# DevTinder – Frontend  
+# OctoPair – Frontend  
 
-DevTinder is a Tinder-like platform built for developers to **connect, collaborate, and grow together**. The frontend is developed using **React, Redux, TailwindCSS, and DaisyUI**, providing a smooth and responsive user experience.  
+OctoPair is a collaborative platform built for developers to **connect, collaborate, and grow together**. The frontend is developed using **React, Redux, TailwindCSS, and shadcn/ui**, providing a smooth and responsive user experience.  
 
 ---
 
@@ -28,7 +28,7 @@ DevTinder is a Tinder-like platform built for developers to **connect, collabora
 
 ## 📂 Folder Structure  
 ```bash
-devtinder-frontend/
+octopair-frontend/
 │── src/
 │   ├── components/   # Reusable UI components  
 │   ├── pages/        # Page-level components  
@@ -44,5 +44,5 @@ Follow these steps to run the project locally:
 
 ### 1. Clone the repo  
 ```bash
-git clone https://github.com/your-username/devtinder-frontend.git
-cd devtinder-frontend
+git clone https://github.com/your-username/octopair-frontend.git
+cd octopair-frontend

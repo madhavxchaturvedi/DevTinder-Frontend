@@ -1,6 +1,20 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { FiMessageSquare, FiMoreHorizontal, FiTrash2, FiGitMerge, FiStar, FiZap, FiTerminal, FiCheckCircle, FiUsers, FiFileText, FiDownloadCloud, FiCopy } from "react-icons/fi";
+import { 
+  Flame, 
+  Terminal, 
+  ThumbsUp, 
+  MessageSquare, 
+  Trash2, 
+  Copy, 
+  Check, 
+  GitFork, 
+  FileText, 
+  Download, 
+  MoreHorizontal,
+  CheckCircle2,
+  Users
+} from "lucide-react";
 import { RiPushpinFill, RiPushpinLine } from "react-icons/ri";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
@@ -14,8 +28,6 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import LiveSnippet from "./LiveSnippet";
 import CommentsSection from "./CommentsSection";
-
-
 import { timeAgo } from "../utils/timeAgo";
 
 const PostCard = ({ post, onFork, followedUsers = [] }) => {
@@ -24,9 +36,6 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
   const dispatch = useDispatch();
   const [isReacting, setIsReacting] = useState(false);
   const [isPinning, setIsPinning] = useState(false);
-
-  // We need to fetch current user's reaction from the backend eventually, 
-  // but for V1 we'll just handle optimistic UI counts.
   
   const [localFollowState, setLocalFollowState] = useState(null);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -57,7 +66,7 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
       } else {
         await axios.post(`${BASE_URL}/user/follow/${authorId._id}`, {}, { withCredentials: true });
         setLocalFollowState(true);
-        toast.success(`Followed ${authorId.firstName}!`);
+        toast.success(`Followed ${authorId.firstName}`);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update follow status");
@@ -139,17 +148,28 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     
     if (count === 1) {
       return (
-        <div className="rounded-xl overflow-hidden bg-[#111] max-h-[500px]">
-          <img src={post.images[0]} alt="Attachment 1" className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[0], '_blank')} />
+        <div className="rounded-lg overflow-hidden bg-black/60 border border-white/[0.06] max-h-[480px]">
+          <img 
+            src={post.images[0]} 
+            alt="Attachment 1" 
+            className="w-full h-full object-contain cursor-pointer hover:opacity-90 transition" 
+            onClick={() => window.open(post.images[0], '_blank')} 
+          />
         </div>
       );
     }
     
     if (count === 2) {
       return (
-        <div className="grid grid-cols-2 gap-1 rounded-xl overflow-hidden bg-[#111] h-[300px]">
+        <div className="grid grid-cols-2 gap-1.5 rounded-lg overflow-hidden bg-black/60 border border-white/[0.06] h-[280px]">
           {post.images.map((img, i) => (
-            <img key={i} src={img} alt={`Attachment ${i+1}`} className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(img, '_blank')} />
+            <img 
+              key={i} 
+              src={img} 
+              alt={`Attachment ${i+1}`} 
+              className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" 
+              onClick={() => window.open(img, '_blank')} 
+            />
           ))}
         </div>
       );
@@ -157,13 +177,28 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     
     if (count === 3) {
       return (
-        <div className="grid grid-cols-2 gap-1 rounded-xl overflow-hidden bg-[#111] h-[350px]">
+        <div className="grid grid-cols-2 gap-1.5 rounded-lg overflow-hidden bg-black/60 border border-white/[0.06] h-[320px]">
           <div className="h-full">
-             <img src={post.images[0]} alt="Attachment 1" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[0], '_blank')} />
+             <img 
+               src={post.images[0]} 
+               alt="Attachment 1" 
+               className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" 
+               onClick={() => window.open(post.images[0], '_blank')} 
+             />
           </div>
-          <div className="grid grid-rows-2 gap-1 h-full">
-             <img src={post.images[1]} alt="Attachment 2" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[1], '_blank')} />
-             <img src={post.images[2]} alt="Attachment 3" className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(post.images[2], '_blank')} />
+          <div className="grid grid-rows-2 gap-1.5 h-full">
+             <img 
+               src={post.images[1]} 
+               alt="Attachment 2" 
+               className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" 
+               onClick={() => window.open(post.images[1], '_blank')} 
+             />
+             <img 
+               src={post.images[2]} 
+               alt="Attachment 3" 
+               className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" 
+               onClick={() => window.open(post.images[2], '_blank')} 
+             />
           </div>
         </div>
       );
@@ -171,9 +206,15 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
     
     if (count === 4) {
       return (
-        <div className="grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden bg-[#111] h-[350px]">
+        <div className="grid grid-cols-2 grid-rows-2 gap-1.5 rounded-lg overflow-hidden bg-black/60 border border-white/[0.06] h-[320px]">
           {post.images.map((img, i) => (
-            <img key={i} src={img} alt={`Attachment ${i+1}`} className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onClick={() => window.open(img, '_blank')} />
+            <img 
+              key={i} 
+              src={img} 
+              alt={`Attachment ${i+1}`} 
+              className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" 
+              onClick={() => window.open(img, '_blank')} 
+            />
           ))}
         </div>
       );
@@ -183,282 +224,310 @@ const PostCard = ({ post, onFork, followedUsers = [] }) => {
   };
 
   return (
-    <div className={`neo-card mb-6 w-full min-w-0 transition-all duration-300 group/card relative ${
+    <article className={`glass-card glass-card-hover mb-3 transition-all duration-200 relative w-full min-w-0 ${
       type === 'debug_sos' && post.isResolved
         ? 'border-[#ccff00]/30 shadow-[0_0_20px_rgba(204,255,0,0.05)]' 
         : type === 'debug_sos'
-        ? 'border-[#ffb86c]/30 shadow-[0_0_20px_rgba(255,184,108,0.05)]'
+        ? 'border-[#b266ff]/30 shadow-[0_0_20px_rgba(178,102,255,0.05)]'
         : ''
     }`}>
-      <div className="flex flex-col h-full p-5 md:p-6 w-full min-w-0">
-      
-      {/* Fork Indicator */}
-      {forkedFrom && (
-        <div className="flex items-center gap-1.5 text-[11px] text-[#a3a3a3] font-medium mb-3 pl-1">
-          <FiGitMerge /> 
-          Forked from 
-          <Link to={`/user/${forkedFrom.authorId?._id}`} className="text-white hover:text-[#ccff00] transition-colors">
-            {forkedFrom.authorId?.firstName} {forkedFrom.authorId?.lastName}
-          </Link>
-        </div>
-      )}
+      <div className="p-4 md:p-5 flex flex-col w-full min-w-0">
+        
+        {/* Fork Indicator */}
+        {forkedFrom && (
+          <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#52525b] mb-2.5">
+            <GitFork size={12} className="text-[#b266ff]" />
+            <span>Forked from</span>
+            <Link to={`/user/${forkedFrom.authorId?._id}`} className="text-[#f0f0f0] hover:text-[#ccff00] transition-colors font-medium">
+              {forkedFrom.authorId?.firstName} {forkedFrom.authorId?.lastName}
+            </Link>
+          </div>
+        )}
 
-      {/* Debug SOS Badge */}
-      {type === 'debug_sos' && (
-        <div className={`flex items-center gap-2 mb-4 rounded px-3 py-1.5 w-fit border ${
-          post.isResolved 
-            ? 'bg-[#ccff00]/10 border-[#ccff00]/50'
-            : 'bg-[#ffb86c]/10 border-[#ffb86c]/30'
-        }`}>
-          {post.isResolved ? (
-            <FiCheckCircle className="text-[#ccff00] text-sm" />
-          ) : (
-            <FiTerminal className="text-[#ffb86c] text-sm animate-pulse" />
-          )}
-          <span className={`text-[10px] font-bold tracking-widest uppercase font-mono ${
-            post.isResolved ? 'text-[#ccff00]' : 'text-[#ffb86c]'
+        {/* Debug SOS Badge */}
+        {type === 'debug_sos' && (
+          <div className={`flex items-center gap-2 mb-3 rounded-md px-2.5 py-1 w-fit border ${
+            post.isResolved 
+              ? 'bg-[#ccff00]/10 border-[#ccff00]/30 text-[#ccff00]'
+              : 'bg-[#b266ff]/10 border-[#b266ff]/30 text-[#b266ff]'
           }`}>
-            {post.isResolved ? 'RESOLVED_SOS' : 'SYS_DEBUG_SOS'}
-          </span>
-          <div className={`w-[1px] h-3 mx-1 ${post.isResolved ? 'bg-[#ccff00]/30' : 'bg-[#ffb86c]/30'}`} />
-          <span className={`text-[10px] font-mono ${post.isResolved ? 'text-[#ccff00]/70' : 'text-[#ffb86c]/70'}`}>
-            {post.isResolved ? 'Answer Found' : 'Bounty Request'}
-          </span>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <Link to={`/user/${authorId._id}`} className="flex items-center gap-3 group">
-          <img 
-            src={authorId.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
-            alt={authorId.firstName} 
-            className="w-10 h-10 rounded-full object-cover border border-white/10 group-hover:border-[#ccff00] transition-colors"
-          />
-          <div className="flex flex-col">
-            <span className="font-bold text-white group-hover:text-[#ccff00] transition-colors">
-              {authorId.firstName} {authorId.lastName}
+            {post.isResolved ? (
+              <CheckCircle2 size={13} className="text-[#ccff00]" />
+            ) : (
+              <Terminal size={13} className="text-[#b266ff] animate-pulse" />
+            )}
+            <span className="text-[10px] font-bold tracking-widest uppercase font-mono">
+              {post.isResolved ? 'RESOLVED_SOS' : 'SYS_DEBUG_SOS'}
             </span>
-            <span className="text-xs text-[#a3a3a3] flex items-center gap-1">
-              {authorId.skills?.[0] || "Developer"} <span className="text-[10px]">•</span> {timeAgo(createdAt)}
+            <span className="text-[10px] font-mono opacity-60">
+              {post.isResolved ? 'Solved' : 'Bounty'}
             </span>
           </div>
-        </Link>
-        <div className="flex items-center gap-2">
-          {/* Stack Tags */}
-          <div className="hidden sm:flex items-center gap-1.5 mr-2">
-            {stackTags?.map((tag, i) => (
-              <span key={i} className="text-[10px] bg-[#a855f7]/10 text-[#d8b4fe] px-2 py-0.5 rounded-md border border-[#a855f7]/20 font-medium tracking-wide">
-                #{tag}
+        )}
+
+        {/* Author Row */}
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <Link to={`/user/${authorId._id}`} className="flex items-center gap-2.5 group min-w-0">
+            {/* Small avatar: 28px, rounded-lg not circle */}
+            <img 
+              src={authorId.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
+              alt={authorId.firstName} 
+              className="w-7 h-7 rounded-lg object-cover border border-white/[0.07] shrink-0 group-hover:border-[#ccff00]/60 transition-colors"
+            />
+            
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <span className="text-[14px] font-bold text-[#f0f0f0] group-hover:text-[#ccff00] transition-colors truncate">
+                {authorId.firstName} {authorId.lastName}
               </span>
-            ))}
-          </div>
+              
+              {/* Monospace skill tag badge */}
+              <span className="rounded-md px-1.5 py-0.5 text-[10px] font-mono font-bold bg-[#ccff00]/10 text-[#ccff00] border border-[#ccff00]/20 truncate">
+                {authorId.skills?.[0] || "Developer"}
+              </span>
 
-          {isMyPost && (
-            <div className="flex items-center gap-1">
-              {type === "snippet" && (
-                <button
-                  disabled={isPinning}
-                  onClick={async () => {
-                    if (isPinning) return;
-                    setIsPinning(true);
-                    try {
-                      const res = await axios.patch(`${BASE_URL}/post/${_id}/pin`, {}, { withCredentials: true });
-                      toast.success(res.data.message, { style: { background: '#121212', color: '#e5e5e5' } });
-                      dispatch(updatePost({ ...post, isPinnedToProfile: res.data.isPinnedToProfile }));
-                    } catch (err) {
-                      toast.error(err?.response?.data?.message || "Failed to pin");
-                    } finally {
-                      setIsPinning(false);
-                    }
-                  }}
-                  className={`transition-colors p-2 hover:bg-white/5 rounded-full disabled:opacity-50 ${
-                    post.isPinnedToProfile ? "text-[#ccff00]" : "text-[#a3a3a3] hover:text-[#ccff00]"
-                  }`}
-                  title={post.isPinnedToProfile ? "Unpin from Profile" : "Pin to Profile"}
-                >
-                  {post.isPinnedToProfile ? <RiPushpinFill size={16} /> : <RiPushpinLine size={16} />}
-                </button>
-              )}
-              <button 
-                onClick={handleDelete}
-                className="text-[#a3a3a3] hover:text-red-500 transition-colors p-2 hover:bg-white/5 rounded-full"
-                title="Delete Post"
-              >
-                <FiTrash2 />
-              </button>
+              {/* Timestamp: muted, 11px mono */}
+              <span className="text-[11px] font-mono text-[#52525b] shrink-0">
+                {timeAgo(createdAt)}
+              </span>
             </div>
-          )}
-          {!isMyPost && (
-            <button 
-              onClick={handleFollowToggle}
-              disabled={isFollowing}
-              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded transition-colors disabled:opacity-50 ${
-                isAlreadyFollowing 
-                  ? "bg-white/10 text-white hover:bg-red-500/20 hover:text-red-500" 
-                  : "bg-[#ccff00] text-[#0a0a0a] hover:bg-[#b3e600]"
-              }`}
-            >
-              {isFollowing ? "..." : (isAlreadyFollowing ? "Following" : "Follow")}
-            </button>
-          )}
-          <button className="text-[#a3a3a3] hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full">
-            <FiMoreHorizontal />
-          </button>
-        </div>
-      </div>
+          </Link>
 
-      {/* Content (Markdown) */}
-      {content && (
-        <div className="mb-4">
-          <div className={`text-[#e5e5e5] text-sm leading-relaxed prose prose-invert prose-pre:bg-[#0a0a0a] prose-pre:border-white/10 max-w-none break-words ${!isExpanded && content.length > 300 ? 'line-clamp-4' : ''}`}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {content}
-            </ReactMarkdown>
-          </div>
-          {content.length > 300 && (
-            <button 
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-[#ccff00] text-xs font-semibold hover:underline mt-2 inline-flex items-center gap-1"
-            >
-              {isExpanded ? 'Show less' : 'Read more'}
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Media and Snippets Container */}
-      <div className="flex flex-col gap-4 mb-4">
-        {/* Media Rendering */}
-        {renderImages()}
-
-        {/* Code Snippet & Live Runner */}
-        {type === "snippet" && codeSnippet && (
-          <div className="rounded-xl overflow-hidden border border-white/10 bg-[#0a0a0a] flex flex-col max-w-full">
-            <div className="bg-white/5 px-4 py-2 border-b border-white/10 flex items-center justify-between overflow-x-auto">
-              <span className="text-[11px] font-mono text-[#a3a3a3] uppercase tracking-wider whitespace-nowrap mr-4">{codeSnippet.language}</span>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={handleCopy}
-                  className="text-[11px] flex items-center gap-1.5 text-[#a3a3a3] hover:text-white transition-all duration-300 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 whitespace-nowrap"
-                >
-                  {copied ? <FiCheckCircle className="text-[#ccff00]" /> : <FiCopy />} {copied ? 'Copied' : 'Copy'}
-                </button>
-                <button 
-                  onClick={() => onFork && onFork(post)}
-                  className="text-[11px] flex items-center gap-1.5 text-[#a855f7] hover:text-white hover:bg-[#a855f7] font-mono transition-all duration-300 bg-[#a855f7]/10 px-3 py-1.5 rounded-lg border border-[#a855f7]/20 whitespace-nowrap"
-                >
-                  <FiGitMerge /> Fork Snippet
-                </button>
-              </div>
-            </div>
-            <div className="max-h-[400px] overflow-auto custom-scrollbar w-full">
-              <SyntaxHighlighter 
-                language={codeSnippet.language} 
-                style={vscDarkPlus}
-                customStyle={{ margin: 0, padding: '1rem', background: 'transparent' }}
-                wrapLines={false}
-                wrapLongLines={false}
-              >
-                {codeSnippet.code}
-              </SyntaxHighlighter>
-            </div>
-            {/* Live Executable Sandbox */}
-            <div className="px-4 pb-4">
-              <LiveSnippet code={codeSnippet.code} language={codeSnippet.language} />
-            </div>
-          </div>
-        )}
-
-        {post.documentUrl && (
-          <div>
-            <a 
-              href={post.documentUrl} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="inline-flex items-center group bg-[#151515] border border-white/20 rounded-xl overflow-hidden hover:bg-white/10 hover:border-[#ccff00]/70 transition-all duration-300 w-full sm:w-auto"
-            >
-              <div className="bg-white/5 px-3 py-2.5 flex items-center justify-center border-r border-white/10 group-hover:bg-[#ccff00] transition-colors duration-300 h-full">
-                <FiFileText size={18} className="text-[#ccff00] group-hover:text-black transition-colors duration-300" />
-              </div>
-              <div className="px-4 py-2 flex items-center justify-between gap-4 flex-1">
-                <span className="text-sm font-semibold text-white group-hover:text-[#ccff00] transition-colors tracking-wide truncate">
-                  Attached Document
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Stack Tags */}
+            <div className="hidden sm:flex items-center gap-1 mr-1">
+              {stackTags?.slice(0, 3).map((tag, i) => (
+                <span key={i} className="text-[10px] font-mono bg-white/5 text-white/60 px-1.5 py-0.5 rounded border border-white/[0.06]">
+                  #{tag}
                 </span>
-                <FiDownloadCloud size={16} className="text-white/30 group-hover:text-[#ccff00] transition-colors duration-300 flex-shrink-0" />
+              ))}
+            </div>
+
+            {isMyPost && (
+              <div className="flex items-center gap-0.5">
+                {type === "snippet" && (
+                  <button
+                    disabled={isPinning}
+                    onClick={async () => {
+                      if (isPinning) return;
+                      setIsPinning(true);
+                      try {
+                        const res = await axios.patch(`${BASE_URL}/post/${_id}/pin`, {}, { withCredentials: true });
+                        toast.success(res.data.message);
+                        dispatch(updatePost({ ...post, isPinnedToProfile: res.data.isPinnedToProfile }));
+                      } catch (err) {
+                        toast.error(err?.response?.data?.message || "Failed to pin");
+                      } finally {
+                        setIsPinning(false);
+                      }
+                    }}
+                    className={`p-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                      post.isPinnedToProfile ? "text-[#ccff00]" : "text-[#52525b] hover:text-[#ccff00]"
+                    }`}
+                    title={post.isPinnedToProfile ? "Unpin from Profile" : "Pin to Profile"}
+                  >
+                    {post.isPinnedToProfile ? <RiPushpinFill size={15} /> : <RiPushpinLine size={15} />}
+                  </button>
+                )}
+                <button 
+                  onClick={handleDelete}
+                  className="text-[#52525b] hover:text-red-400 transition-colors p-1.5 rounded-lg"
+                  title="Delete Post"
+                >
+                  <Trash2 size={15} />
+                </button>
               </div>
-            </a>
+            )}
+
+            {!isMyPost && (
+              <button 
+                onClick={handleFollowToggle}
+                disabled={isFollowing}
+                className={`text-[11px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50 ${
+                  isAlreadyFollowing 
+                    ? "bg-transparent border border-white/10 text-[#52525b] hover:text-red-400 hover:border-red-400/30" 
+                    : "bg-[#ccff00] text-black hover:bg-[#d9ff33]"
+                }`}
+              >
+                {isFollowing ? "..." : (isAlreadyFollowing ? "Following" : "Follow")}
+              </button>
+            )}
+
+            <button className="text-[#52525b] hover:text-[#f0f0f0] transition-colors p-1.5 rounded-lg">
+              <MoreHorizontal size={15} />
+            </button>
+          </div>
+        </div>
+
+        {/* Post Content */}
+        {content && (
+          <div className="mb-3">
+            <div className={`text-[13.5px] leading-relaxed text-[#d4d4d8] prose prose-invert max-w-none break-words prose-p:text-[#d4d4d8] prose-p:leading-relaxed prose-headings:text-[#f0f0f0] prose-a:text-[#ccff00] prose-pre:bg-black/60 prose-pre:border-white/[0.06] ${
+              !isExpanded && content.length > 300 ? 'line-clamp-4' : ''
+            }`}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {content}
+              </ReactMarkdown>
+            </div>
+            {content.length > 300 && (
+              <button 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-[#ccff00] text-xs font-mono font-medium hover:underline mt-1.5 inline-block"
+              >
+                {isExpanded ? 'Show less' : 'Read more'}
+              </button>
+            )}
           </div>
         )}
-      </div>
-      {/* Reactions & Actions */}
-      <div className="flex items-center gap-3 pt-6 mt-auto flex-wrap border-t border-white/5">
-        
-        {/* Custom Reactions */}
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => handleReact('fire')} 
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 group ${
-              userReaction === 'fire' ? 'bg-[#ff5555]/10 text-[#ff5555]' : 'bg-white/5 text-[#737373] hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <FiZap className={`text-[15px] group-active:scale-75 transition-transform ${userReaction === 'fire' ? 'fill-current' : ''}`} />
-            <span className="text-[12px] font-bold">{reactions?.fire || 0}</span>
-          </button>
+
+        {/* Media Attachments */}
+        <div className="flex flex-col gap-3 mb-3">
+          {renderImages()}
+
+          {/* Code Snippet Block */}
+          {type === "snippet" && codeSnippet && (
+            <div className="bg-black/60 rounded-lg border border-white/[0.06] p-4 font-mono text-[12px] flex flex-col gap-3 max-w-full overflow-hidden">
+              <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
+                <span className="bg-[#ccff00]/10 text-[#ccff00] border border-[#ccff00]/30 rounded-md px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider">
+                  {codeSnippet.language}
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={handleCopy}
+                    className="text-[11px] font-mono flex items-center gap-1.5 text-[#52525b] hover:text-[#f0f0f0] transition-colors bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] px-2.5 py-1 rounded-md"
+                  >
+                    {copied ? <Check size={12} className="text-[#ccff00]" /> : <Copy size={12} />}
+                    <span>{copied ? 'Copied' : 'Copy'}</span>
+                  </button>
+                  <button 
+                    onClick={() => onFork && onFork(post)}
+                    className="text-[11px] font-mono flex items-center gap-1.5 text-[#b266ff] hover:text-[#f0f0f0] bg-[#b266ff]/10 hover:bg-[#b266ff]/20 px-2.5 py-1 rounded-md border border-[#b266ff]/20 transition-colors"
+                  >
+                    <GitFork size={12} />
+                    <span>Fork</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="max-h-[360px] overflow-auto custom-scrollbar w-full text-[12px]">
+                <SyntaxHighlighter 
+                  language={codeSnippet.language} 
+                  style={vscDarkPlus}
+                  customStyle={{ margin: 0, padding: '0.25rem 0', background: 'transparent' }}
+                  wrapLines={false}
+                  wrapLongLines={false}
+                >
+                  {codeSnippet.code}
+                </SyntaxHighlighter>
+              </div>
+
+              {/* Live Executable Sandbox */}
+              <div className="pt-2 border-t border-white/[0.06]">
+                <LiveSnippet code={codeSnippet.code} language={codeSnippet.language} />
+              </div>
+            </div>
+          )}
+
+          {post.documentUrl && (
+            <div>
+              <a 
+                href={post.documentUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="inline-flex items-center gap-3 bg-[#111113] border border-white/[0.07] hover:border-white/[0.15] rounded-lg px-3.5 py-2 transition-colors max-w-full sm:max-w-sm"
+              >
+                <div className="w-7 h-7 rounded-md bg-[#ccff00]/10 flex items-center justify-center text-[#ccff00] shrink-0">
+                  <FileText size={15} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-[#f0f0f0] truncate">Attached Document</p>
+                  <p className="text-[10px] font-mono text-[#52525b]">Click to view or download</p>
+                </div>
+                <Download size={14} className="text-[#52525b] shrink-0" />
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Action Row (Bottom) */}
+        <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/[0.06] gap-2 flex-wrap">
+          {/* Reaction Icons (Flame, Terminal, ThumbsUp, Collab) */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button 
+              onClick={() => handleReact('fire')} 
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors group ${
+                userReaction === 'fire' 
+                  ? 'bg-[#ccff00]/10 text-[#ccff00]' 
+                  : 'text-[#52525b] hover:text-[#ccff00] hover:bg-white/[0.03]'
+              }`}
+              title="Flame"
+            >
+              <Flame size={14} className={userReaction === 'fire' ? 'fill-current' : ''} />
+              <span className="font-mono text-[12px]">{reactions?.fire || 0}</span>
+            </button>
+            
+            <button 
+              onClick={() => handleReact('bug')} 
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors group ${
+                userReaction === 'bug' 
+                  ? 'bg-[#ccff00]/10 text-[#ccff00]' 
+                  : 'text-[#52525b] hover:text-[#ccff00] hover:bg-white/[0.03]'
+              }`}
+              title="Terminal / Bug"
+            >
+              <Terminal size={14} />
+              <span className="font-mono text-[12px]">{reactions?.bug || 0}</span>
+            </button>
+            
+            <button 
+              onClick={() => handleReact('clever')} 
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors group ${
+                userReaction === 'clever' 
+                  ? 'bg-[#ccff00]/10 text-[#ccff00]' 
+                  : 'text-[#52525b] hover:text-[#ccff00] hover:bg-white/[0.03]'
+              }`}
+              title="Thumbs Up / Clever"
+            >
+              <ThumbsUp size={14} className={userReaction === 'clever' ? 'fill-current' : ''} />
+              <span className="font-mono text-[12px]">{reactions?.clever || 0}</span>
+            </button>
+            
+            {reactions?.collab !== undefined && (
+              <button 
+                onClick={() => handleReact('collab')} 
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors group ${
+                  userReaction === 'collab' 
+                    ? 'bg-[#ccff00]/10 text-[#ccff00]' 
+                    : 'text-[#52525b] hover:text-[#ccff00] hover:bg-white/[0.03]'
+                }`}
+                title="Collab"
+              >
+                <Users size={14} />
+                <span className="font-mono text-[12px]">{reactions?.collab || 0}</span>
+              </button>
+            )}
+          </div>
           
+          {/* Comments Toggle */}
           <button 
-            onClick={() => handleReact('bug')} 
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 group ${
-              userReaction === 'bug' ? 'bg-[#ffb86c]/10 text-[#ffb86c]' : 'bg-white/5 text-[#737373] hover:bg-white/10 hover:text-white'
+            onClick={() => setIsCommentsOpen(!isCommentsOpen)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-colors ${
+              isCommentsOpen
+                ? 'bg-[#ccff00]/10 text-[#ccff00]'
+                : 'text-[#52525b] hover:text-[#ccff00] hover:bg-white/[0.03]'
             }`}
+            title="Comments"
           >
-            <FiTerminal className="text-[15px] group-active:scale-75 transition-transform" />
-            <span className="text-[12px] font-bold">{reactions?.bug || 0}</span>
-          </button>
-          
-          <button 
-            onClick={() => handleReact('clever')} 
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 group ${
-              userReaction === 'clever' ? 'bg-[#8be9fd]/10 text-[#8be9fd]' : 'bg-white/5 text-[#737373] hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <FiStar className={`text-[15px] group-active:scale-75 transition-transform ${userReaction === 'clever' ? 'fill-current' : ''}`} />
-            <span className="text-[12px] font-bold">{reactions?.clever || 0}</span>
-          </button>
-          
-          <button 
-            onClick={() => handleReact('collab')} 
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 group ${
-              userReaction === 'collab' ? 'bg-[#50fa7b]/10 text-[#50fa7b]' : 'bg-white/5 text-[#737373] hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <FiUsers className={`text-[15px] group-active:scale-75 transition-transform ${userReaction === 'collab' ? 'fill-current' : ''}`} />
-            <span className="text-[12px] font-bold">{reactions?.collab || 0}</span>
+            <MessageSquare size={14} />
+            <span className="font-mono text-[12px]">{post.comments?.length || 0}</span>
           </button>
         </div>
         
-        {/* Comments / Help */}
-        <button 
-          onClick={() => setIsCommentsOpen(!isCommentsOpen)}
-          className={`flex items-center gap-2 transition-all duration-300 group px-4 py-2 rounded-full ml-auto text-[13px] font-bold ${
-            type === 'debug_sos'
-              ? 'bg-[#ccff00]/10 text-[#ccff00] hover:bg-[#ccff00]/20'
-              : 'bg-white/5 text-[#e5e5e5] hover:bg-white/10'
-          }`}
-        >
-          {type === 'debug_sos' ? (
-            <><FiMessageSquare /> Provide Fix</>
-          ) : (
-            <><FiMessageSquare /> {post.comments?.length || 0} Comments</>
-          )}
-        </button>
+        {/* Inline Comments Section */}
+        <CommentsSection post={post} isOpen={isCommentsOpen} />
+        
       </div>
-      
-      {/* Inline Comments Section */}
-      <CommentsSection post={post} isOpen={isCommentsOpen} />
-      
-      </div>
-    </div>
+    </article>
   );
 };
 

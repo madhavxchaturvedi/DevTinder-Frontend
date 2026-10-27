@@ -1,6 +1,17 @@
 import { useState, lazy, Suspense } from "react";
 import { motion as Motion } from "framer-motion";
-import { FiPlay, FiExternalLink, FiMaximize2, FiCopy, FiCheck } from "react-icons/fi";
+import {
+  Play,
+  ExternalLink,
+  Maximize2,
+  Copy,
+  Check,
+  ArrowLeft,
+  Flame,
+  Bug,
+  Cpu,
+  Users,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -22,13 +33,6 @@ const SandpackConsole = lazy(() =>
   import("@codesandbox/sandpack-react").then((m) => ({ default: m.SandpackConsole }))
 );
 
-const REACTION_ICONS = {
-  fire: "🔥",
-  bug: "🐛",
-  clever: "🧠",
-  collab: "🤝",
-};
-
 const NON_RUNNABLE_LANGS = [
   "python", "py",
   "java",
@@ -37,6 +41,21 @@ const NON_RUNNABLE_LANGS = [
   "go", "golang",
   "sql",
 ];
+
+const renderReactionIcon = (type) => {
+  switch (type) {
+    case "fire":
+      return <Flame size={13} className="text-[#ccff00]" />;
+    case "bug":
+      return <Bug size={13} className="text-red-400" />;
+    case "clever":
+      return <Cpu size={13} className="text-[#b266ff]" />;
+    case "collab":
+      return <Users size={13} className="text-[#38bdf8]" />;
+    default:
+      return null;
+  }
+};
 
 const SnippetEmbed = ({ post }) => {
   const navigate = useNavigate();
@@ -72,7 +91,7 @@ const SnippetEmbed = ({ post }) => {
 
   // Find the dominant reaction type
   const dominantReaction = Object.entries(post.reactions || {})
-    .filter(([key]) => REACTION_ICONS[key])
+    .filter(([key]) => ["fire", "bug", "clever", "collab"].includes(key))
     .sort(([, a], [, b]) => b - a)[0];
 
   // Lines to show in collapsed view
@@ -157,12 +176,12 @@ const SnippetEmbed = ({ post }) => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="bg-[#121212] border border-white/10 rounded-2xl overflow-hidden"
+      className="glass-card border border-white/[0.07] rounded-xl overflow-hidden bg-[#111113]"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07]">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#e5e5e5] truncate">
+          <p className="text-sm font-semibold text-[#f0f0f0] truncate">
             {title}
           </p>
           {tags.length > 0 && (
@@ -170,7 +189,7 @@ const SnippetEmbed = ({ post }) => {
               {tags.slice(0, 4).map((tag) => (
                 <span
                   key={tag}
-                  className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-[#a3a3a3] font-medium"
+                  className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 border border-white/[0.06] text-[#52525b] font-mono font-medium"
                 >
                   {tag}
                 </span>
@@ -181,11 +200,9 @@ const SnippetEmbed = ({ post }) => {
 
         {/* Reactions summary */}
         {totalReactions > 0 && (
-          <div className="flex items-center gap-1 ml-3 text-xs text-[#a3a3a3]">
-            {dominantReaction && (
-              <span>{REACTION_ICONS[dominantReaction[0]]}</span>
-            )}
-            <span className="font-medium">{totalReactions}</span>
+          <div className="flex items-center gap-1.5 ml-3 text-xs text-[#52525b]">
+            {dominantReaction && renderReactionIcon(dominantReaction[0])}
+            <span className="font-mono font-bold text-[#f0f0f0]">{totalReactions}</span>
           </div>
         )}
       </div>
@@ -204,7 +221,7 @@ const SnippetEmbed = ({ post }) => {
               customStyle={{
                 margin: 0,
                 padding: "16px",
-                background: "#0a0a0a",
+                background: "#09090b",
                 fontSize: "12px",
                 lineHeight: "1.6",
                 maxHeight: expanded ? "none" : "280px",
@@ -218,29 +235,29 @@ const SnippetEmbed = ({ post }) => {
 
             {/* Fade gradient at bottom when collapsed */}
             {!expanded && codeLines.length > 12 && (
-              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0a0a0a] to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#09090b] to-transparent pointer-events-none" />
             )}
           </div>
 
           {/* Action bar */}
-          <div className="flex items-center gap-2 px-4 py-3 border-t border-white/5">
+          <div className="flex items-center gap-2 px-4 py-3 border-t border-white/[0.07] bg-[#111113]">
             {isRunnable ? (
               <button
                 type="button"
                 onClick={handleRun}
-                className="flex items-center gap-1.5 px-4 py-2 bg-[#ccff00] text-[#0a0a0a] rounded-lg text-xs font-bold hover:bg-[#bbf000] transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#ccff00] text-black rounded-lg text-xs font-bold hover:bg-[#d9ff33] transition-all cursor-pointer font-mono uppercase tracking-wider"
               >
-                <FiPlay size={12} />
-                Run
+                <Play size={12} className="fill-black" />
+                <span>Run</span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={handleCopyCode}
-                className="flex items-center gap-1.5 px-3 py-2 bg-[#ccff00]/10 border border-[#ccff00]/30 text-[#ccff00] hover:bg-[#ccff00]/20 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#ccff00]/10 border border-[#ccff00]/30 text-[#ccff00] hover:bg-[#ccff00]/20 rounded-lg text-xs font-mono font-semibold transition-colors cursor-pointer"
               >
-                {copied ? <FiCheck size={12} className="text-[#ccff00]" /> : <FiCopy size={12} />}
-                {copied ? "Copied!" : "Copy Code"}
+                {copied ? <Check size={12} className="text-[#ccff00]" /> : <Copy size={12} />}
+                <span>{copied ? "Copied!" : "Copy Code"}</span>
               </button>
             )}
 
@@ -248,10 +265,10 @@ const SnippetEmbed = ({ post }) => {
               <button
                 type="button"
                 onClick={handleCopyCode}
-                className="flex items-center gap-1.5 px-3 py-2 text-[#a3a3a3] hover:text-white text-xs font-medium transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[#52525b] hover:text-[#f0f0f0] text-xs font-medium transition-colors cursor-pointer"
               >
-                {copied ? <FiCheck size={12} className="text-[#ccff00]" /> : <FiCopy size={12} />}
-                {copied ? "Copied!" : "Copy Code"}
+                {copied ? <Check size={12} className="text-[#ccff00]" /> : <Copy size={12} />}
+                <span>{copied ? "Copied!" : "Copy Code"}</span>
               </button>
             )}
 
@@ -259,10 +276,10 @@ const SnippetEmbed = ({ post }) => {
               <button
                 type="button"
                 onClick={() => setExpanded(!expanded)}
-                className="flex items-center gap-1 px-3 py-2 text-[#a3a3a3] hover:text-white text-xs font-medium transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 text-[#52525b] hover:text-[#f0f0f0] text-xs font-medium transition-colors cursor-pointer"
               >
-                <FiMaximize2 size={12} />
-                {expanded ? "Collapse" : "Expand"}
+                <Maximize2 size={12} />
+                <span>{expanded ? "Collapse" : "Expand"}</span>
               </button>
             )}
 
@@ -271,30 +288,30 @@ const SnippetEmbed = ({ post }) => {
             <button
               type="button"
               onClick={handleForkToSandbox}
-              className="flex items-center gap-1 text-xs text-[#ccff00] hover:text-[#bbf000] font-semibold transition-colors cursor-pointer mr-2"
+              className="flex items-center gap-1 text-xs text-[#ccff00] hover:text-[#d9ff33] font-semibold transition-colors cursor-pointer mr-2 font-mono"
             >
-              <FiExternalLink size={12} />
-              Fork to Sandbox
+              <ExternalLink size={12} />
+              <span>Fork to Sandbox</span>
             </button>
 
-            <span className="text-[10px] text-[#a3a3a3]/60 font-mono">
+            <span className="text-[10px] text-[#52525b] font-mono uppercase">
               {rawLanguage}
             </span>
           </div>
         </>
       ) : (
-        /* Live Sandpack environment — lazy loaded */
+        /* Live Sandpack environment - lazy loaded */
         <Suspense
           fallback={
-            <div className="flex items-center justify-center py-20 bg-[#0a0a0a]">
+            <div className="flex items-center justify-center py-20 bg-[#09090b]">
               <div className="w-5 h-5 border-2 border-[#ccff00] border-t-transparent rounded-full animate-spin" />
-              <span className="ml-3 text-sm text-[#a3a3a3]">
+              <span className="ml-3 text-xs font-mono text-[#52525b] uppercase tracking-wider">
                 Loading sandbox...
               </span>
             </div>
           }
         >
-          <div className="bg-[#0a0a0a]">
+          <div className="bg-[#09090b]">
             <SandpackProvider
               template={template}
               files={sandpackFiles}
@@ -305,7 +322,7 @@ const SnippetEmbed = ({ post }) => {
               }}
             >
               <SandpackLayout>
-                <div className="w-full md:w-1/2 border-r border-white/5">
+                <div className="w-full md:w-1/2 border-r border-white/[0.07]">
                   <SandpackCodeEditor
                     showLineNumbers
                     showInlineErrors
@@ -313,14 +330,14 @@ const SnippetEmbed = ({ post }) => {
                   />
                 </div>
                 <div className="w-full md:w-1/2 flex flex-col min-w-0" style={{ height: "300px" }}>
-                  <div className="flex items-center gap-1 px-3 py-1.5 bg-[#141414] border-b border-white/5 text-xs">
+                  <div className="flex items-center gap-1 px-3 py-1.5 bg-[#111113] border-b border-white/[0.07] text-xs">
                     <button
                       type="button"
                       onClick={() => setActiveTab("preview")}
-                      className={`px-2.5 py-1 rounded font-medium transition-colors cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-md font-mono text-xs transition-colors cursor-pointer ${
                         activeTab === "preview"
-                          ? "bg-[#ccff00]/15 text-[#ccff00] font-semibold"
-                          : "text-[#a3a3a3] hover:text-white"
+                          ? "bg-[#ccff00]/15 text-[#ccff00] font-bold"
+                          : "text-[#52525b] hover:text-[#f0f0f0]"
                       }`}
                     >
                       Preview
@@ -328,10 +345,10 @@ const SnippetEmbed = ({ post }) => {
                     <button
                       type="button"
                       onClick={() => setActiveTab("console")}
-                      className={`px-2.5 py-1 rounded font-medium transition-colors cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-md font-mono text-xs transition-colors cursor-pointer ${
                         activeTab === "console"
-                          ? "bg-[#ccff00]/15 text-[#ccff00] font-semibold"
-                          : "text-[#a3a3a3] hover:text-white"
+                          ? "bg-[#ccff00]/15 text-[#ccff00] font-bold"
+                          : "text-[#52525b] hover:text-[#f0f0f0]"
                       }`}
                     >
                       Console
@@ -350,22 +367,23 @@ const SnippetEmbed = ({ post }) => {
             </SandpackProvider>
 
             {/* Exit live mode */}
-            <div className="flex items-center gap-2 px-4 py-2 border-t border-white/5 bg-[#121212]">
+            <div className="flex items-center gap-2 px-4 py-2 border-t border-white/[0.07] bg-[#111113]">
               <button
                 type="button"
                 onClick={() => setIsLive(false)}
-                className="text-xs text-[#a3a3a3] hover:text-white font-medium transition-colors cursor-pointer"
+                className="flex items-center gap-1 text-xs text-[#52525b] hover:text-[#f0f0f0] font-mono transition-colors cursor-pointer"
               >
-                ← Back to preview
+                <ArrowLeft size={12} />
+                <span>Back to preview</span>
               </button>
               <div className="flex-1" />
               <button
                 type="button"
                 onClick={handleForkToSandbox}
-                className="flex items-center gap-1 text-xs text-[#ccff00] hover:text-[#bbf000] font-semibold transition-colors cursor-pointer"
+                className="flex items-center gap-1 text-xs text-[#ccff00] hover:text-[#d9ff33] font-mono font-semibold transition-colors cursor-pointer"
               >
-                <FiExternalLink size={12} />
-                Fork to Sandbox
+                <ExternalLink size={12} />
+                <span>Fork to Sandbox</span>
               </button>
             </div>
           </div>

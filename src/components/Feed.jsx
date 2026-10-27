@@ -1,18 +1,29 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { setPosts, addPost, appendPosts } from "../redux/postSlice";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { HiCode } from "react-icons/hi";
-import { FiImage, FiArrowUp, FiCode, FiX, FiLock, FiGlobe, FiUsers, FiGitMerge, FiSend, FiInbox, FiStar, FiPaperclip, FiFileText } from "react-icons/fi";
-import { FaRocket } from "react-icons/fa";
+import { 
+  Image as ImageIcon, 
+  Code2, 
+  FolderGit2, 
+  Send, 
+  X, 
+  Globe, 
+  Sparkles, 
+  Paperclip, 
+  FileText, 
+  Inbox, 
+  GitFork,
+  ArrowUpRight
+} from "lucide-react";
 import PostCard from "./PostCard";
 import ProjectCard from "./ProjectCard";
 
 const COMMON_TAGS = ["react", "node", "javascript", "python", "rustlang", "machinelearning", "webdev"];
-const LANGUAGES = ["javascript", "html", "css", "python", "java", "rust", "cpp", "go"];
+const LANGUAGES = ["javascript", "typescript", "python", "html", "css", "rust", "go", "cpp", "java"];
 
 const Feed = () => {
   const posts = useSelector((store) => store.posts);
@@ -23,7 +34,7 @@ const Feed = () => {
   const [loading, setLoading] = useState(false);
   const [activeTag, setActiveTag] = useState("");
 
-  // Feed Mode
+  // Feed Mode: "all" or "projects"
   const [feedMode, setFeedMode] = useState("all");
 
   // Project Post State
@@ -31,13 +42,12 @@ const Feed = () => {
   const [projectTechStack, setProjectTechStack] = useState([]);
   const [techInput, setTechInput] = useState("");
   const [projectRoleNeeded, setProjectRoleNeeded] = useState("");
-  const [projectCommitment, setProjectCommitment] = useState("Ongoing");
-  const [projectStage, setProjectStage] = useState("Idea");
+  const [projectCommitment, setProjectCommitment] = useState("ongoing");
+  const [projectStage, setProjectStage] = useState("idea");
   
   // Projects fetch data
   const [userRequestsMap, setUserRequestsMap] = useState({});
   const [requestCountsMap, setRequestCountsMap] = useState({});
-
   
   // Pagination State
   const [page, setPage] = useState(1);
@@ -47,7 +57,7 @@ const Feed = () => {
   // Create Post State
   const [isPosting, setIsPosting] = useState(false);
   const [content, setContent] = useState("");
-  const [type, setType] = useState("standard"); // standard, snippet, debug_sos
+  const [type, setType] = useState("standard"); // standard, snippet, project
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [visibility, setVisibility] = useState("public"); // public, followers, matches
@@ -61,10 +71,7 @@ const Feed = () => {
   const [selectedDocument, setSelectedDocument] = useState(null);
 
   const createPostRef = useRef(null);
-  const imageInputRef = useRef(null);
-  const docInputRef = useRef(null);
 
-  
   const fetchPosts = async (tag = "", pageNum = 1, currentFeedMode = feedMode) => {
     try {
       setLoading(true);
@@ -102,7 +109,6 @@ const Feed = () => {
     }
   };
 
-
   const handleFollowToggle = async (userId) => {
     const isFollowing = followedUsers.includes(userId);
     try {
@@ -113,14 +119,13 @@ const Feed = () => {
       } else {
         await axios.post(BASE_URL + "/user/follow/" + userId, {}, { withCredentials: true });
         setFollowedUsers([...followedUsers, userId]);
-        toast.success("Followed builder!");
+        toast.success("Followed builder");
       }
     } catch (err) {
       toast.error(err?.response?.data?.message || "Action failed");
     }
   };
 
-  
   // Fetch when mode changes
   useEffect(() => {
     setPage(1);
@@ -129,7 +134,7 @@ const Feed = () => {
     fetchPosts("", 1, feedMode);
   }, [feedMode]);
 
-  // Fetch when tag changes (reset to page 1)
+  // Fetch when tag changes
   useEffect(() => {
     setPage(1);
     setHasMore(true);
@@ -168,10 +173,8 @@ const Feed = () => {
       setCode(parentPost.codeSnippet.code);
       setLanguage(parentPost.codeSnippet.language);
     }
-    // CRITICAL: Inherit visibility from parent to prevent accidental leak of restricted posts
     setVisibility(parentPost.visibility || "public");
     
-    // Scroll to top
     if (createPostRef.current) {
       createPostRef.current.scrollIntoView({ behavior: "smooth" });
     }
@@ -187,7 +190,7 @@ const Feed = () => {
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
     if (selectedImages.length + files.length > 4) {
-      toast.error("You can only upload up to 4 images");
+      toast.error("You can upload up to 4 images");
       return;
     }
     const validFiles = files.filter(f => f.size <= 10 * 1024 * 1024);
@@ -232,7 +235,6 @@ const Feed = () => {
       
       const extractedTags = content.match(/#[a-z0-9_]+/gi)?.map(t => t.slice(1).toLowerCase()) || [];
 
-      
       let finalTechStack = [...projectTechStack];
       if (type === "project" && techInput.trim()) {
         const newTag = techInput.trim().toLowerCase();
@@ -269,9 +271,7 @@ const Feed = () => {
 
       const res = await axios.post(`${BASE_URL}/post`, payload, { withCredentials: true });
       
-      // Prepend to Redux state
       dispatch(addPost(res?.data?.data));
-      
       
       // Reset form
       setContent("");
@@ -300,9 +300,7 @@ const Feed = () => {
   useEffect(() => {
     if (!posts || posts.length === 0) return;
     
-    // Only recalculate when NOT filtering by a tag, so the sidebar doesn't jump around
     if (!activeTag) {
-      // Tags
       const tagCounts = {};
       posts.forEach(post => {
         if (post.stackTags && Array.isArray(post.stackTags)) {
@@ -320,7 +318,6 @@ const Feed = () => {
         setGlobalTrendingTags(sortedTags);
       }
 
-      // Builders
       const uniqueBuilders = {};
       posts.forEach(post => {
         if (post.authorId && post.authorId._id !== user?._id && !uniqueBuilders[post.authorId._id]) {
@@ -334,62 +331,72 @@ const Feed = () => {
     }
   }, [posts, activeTag, user]);
 
+  const lineCount = Math.max(5, code.split("\n").length);
+
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col lg:flex-row items-start gap-8 px-4 pt-10">
+    <div className="w-full flex flex-row gap-8 justify-center px-4 pt-6 pb-12">
       
-      {/* ── Center Column (Timeline) ───────────────────────────── */}
-      <div className="flex-1 flex flex-col w-full min-w-0 min-h-[800px]">
+      {/* -- Center Column (Timeline): max-w-2xl mx-auto ------------ */}
+      <main className="w-full max-w-2xl min-w-0 flex flex-col">
         
         {/* Create Post Box */}
-        <div ref={createPostRef} className="bg-[#151515] border border-[#262626] rounded-2xl p-5 mb-8 shadow-xl relative transition-all duration-300 focus-within:border-[#444] focus-within:shadow-[0_8px_30px_rgba(0,0,0,0.5)]">
-          
+        <div 
+          ref={createPostRef} 
+          className="bg-[#111113] border border-white/[0.07] rounded-xl p-4 mb-4 transition-all duration-200 focus-within:border-white/[0.14]"
+        >
           {forkedFrom && (
-            <div className="flex items-center justify-between bg-[#ccff00]/10 border border-[#ccff00]/20 rounded-lg px-3 py-2 mb-4">
-              <span className="text-[12px] font-mono text-[#ccff00] flex items-center gap-1.5">
-                <FiGitMerge /> Forking snippet from {forkedFrom.authorId?.firstName}
+            <div className="flex items-center justify-between bg-[#b266ff]/10 border border-[#b266ff]/20 rounded-lg px-3 py-1.5 mb-3">
+              <span className="text-[11px] font-mono text-[#b266ff] flex items-center gap-1.5">
+                <GitFork size={12} /> Forking snippet from {forkedFrom.authorId?.firstName}
               </span>
-              <button onClick={handleCancelFork} className="text-[#ccff00] hover:text-[#e6ff33] transition-colors">
-                <FiX />
+              <button onClick={handleCancelFork} className="text-[#52525b] hover:text-[#f0f0f0] transition-colors">
+                <X size={14} />
               </button>
             </div>
           )}
 
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             {/* User Avatar */}
-            <div className="shrink-0">
+            <div className="shrink-0 pt-0.5">
               <img 
                 src={user?.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
                 alt="Your avatar" 
-                className="w-10 h-10 rounded-full object-cover border border-white/10"
+                className="w-7 h-7 rounded-lg object-cover border border-white/[0.07]"
               />
             </div>
 
             {/* Input Area */}
-            <div className="flex-1 min-w-0 pt-1">
+            <div className="flex-1 min-w-0">
               <textarea 
-                placeholder={type === "project" ? "Describe your project and what you're looking to build..." : "What are you building today? Markdown is supported..."}
-                className="w-full bg-transparent text-[#e5e5e5] placeholder:text-[#555] outline-none resize-none text-[15px] min-h-[60px] p-0 transition-all duration-300 leading-relaxed"
+                placeholder={type === "project" ? "Describe your project and what you are building..." : "What are you building today? Markdown supported..."}
+                className="w-full bg-transparent text-[#f0f0f0] placeholder:text-white/20 text-[13px] leading-relaxed outline-none resize-none min-h-[50px] p-0"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
               />
 
               {/* Media Previews */}
               {(selectedImages.length > 0 || selectedDocument) && (
-                <div className="mt-2 mb-4 flex flex-wrap gap-3">
+                <div className="mt-2 mb-3 flex flex-wrap gap-2">
                   {selectedImages.map((img, idx) => (
-                    <div key={idx} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-white/10 shadow-md">
+                    <div key={idx} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-white/[0.08] bg-black/40">
                       <img src={URL.createObjectURL(img)} alt="preview" className="w-full h-full object-cover" />
-                      <button onClick={() => setSelectedImages(selectedImages.filter((_, i) => i !== idx))} className="absolute top-1 right-1 bg-black/70 p-1 rounded-full opacity-0 group-hover:opacity-100 transition text-white hover:text-red-400">
-                        <FiX size={12} />
+                      <button 
+                        onClick={() => setSelectedImages(selectedImages.filter((_, i) => i !== idx))} 
+                        className="absolute top-1 right-1 bg-black/80 p-0.5 rounded text-white/70 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <X size={12} />
                       </button>
                     </div>
                   ))}
                   {selectedDocument && (
-                    <div className="relative group flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/10 shadow-md">
-                      <FiFileText className="text-[#ccff00]" />
-                      <span className="text-xs text-white max-w-[120px] truncate">{selectedDocument.name}</span>
-                      <button onClick={() => setSelectedDocument(null)} className="ml-1 opacity-0 group-hover:opacity-100 transition text-white hover:text-red-400">
-                        <FiX size={14} />
+                    <div className="relative group flex items-center gap-2 px-2.5 py-1.5 bg-black/40 rounded-lg border border-white/[0.08]">
+                      <FileText size={14} className="text-[#ccff00]" />
+                      <span className="text-[11px] font-mono text-[#f0f0f0] max-w-[120px] truncate">{selectedDocument.name}</span>
+                      <button 
+                        onClick={() => setSelectedDocument(null)} 
+                        className="text-[#52525b] hover:text-red-400 transition ml-1"
+                      >
+                        <X size={12} />
                       </button>
                     </div>
                   )}
@@ -398,40 +405,43 @@ const Feed = () => {
             </div>
           </div>
 
-          
+          {/* Project Mode Structured Fields */}
           {type === "project" && (
-            <div className="mb-4 mt-2 bg-[#121212] border border-[#262626] rounded-xl p-4 flex flex-col gap-4">
+            <div className="mt-3 mb-2 bg-black/40 border border-white/[0.06] rounded-lg p-3 flex flex-col gap-2.5">
               <input 
                 type="text" 
                 placeholder="Project title..." 
                 value={projectTitle}
                 onChange={(e) => setProjectTitle(e.target.value)}
-                className="w-full bg-transparent text-[#e5e5e5] text-[15px] font-bold outline-none border-b border-[#262626] pb-2 focus:border-[#ccff00]/50 transition-colors"
+                className="w-full bg-[#09090b] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-[#f0f0f0] placeholder:text-white/20 outline-none focus:border-[#ccff00] transition-colors"
               />
               
-              <div>
+              <div className="flex flex-col gap-1.5">
                 <input 
                   type="text" 
-                  placeholder="Add tech (e.g. react, node) and press Enter..." 
+                  placeholder="Add tech stack (e.g. react, node) and press Enter..." 
                   value={techInput}
                   onChange={(e) => setTechInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && techInput.trim()) {
                       e.preventDefault();
-                      if (!projectTechStack.includes(techInput.trim().toLowerCase())) {
-                        setProjectTechStack([...projectTechStack, techInput.trim().toLowerCase()]);
+                      const val = techInput.trim().toLowerCase();
+                      if (!projectTechStack.includes(val)) {
+                        setProjectTechStack([...projectTechStack, val]);
                       }
                       setTechInput("");
                     }
                   }}
-                  className="w-full bg-transparent text-[#a3a3a3] text-[13px] outline-none border-b border-[#262626] pb-2 focus:border-[#a855f7]/50 transition-colors"
+                  className="w-full bg-[#09090b] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-[#f0f0f0] placeholder:text-white/20 outline-none focus:border-[#ccff00] transition-colors"
                 />
                 {projectTechStack.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap gap-1 mt-1">
                     {projectTechStack.map(t => (
-                      <span key={t} className="flex items-center gap-1 text-[11px] font-mono bg-[#1a1a1a] text-[#e5e5e5] px-2 py-1 rounded-md border border-white/5">
+                      <span key={t} className="flex items-center gap-1 text-[10px] font-mono font-bold bg-[#ccff00]/10 text-[#ccff00] px-2 py-0.5 rounded border border-[#ccff00]/20">
                         {t}
-                        <button onClick={() => setProjectTechStack(projectTechStack.filter(x => x !== t))} className="text-[#a3a3a3] hover:text-red-400"><FiX size={12}/></button>
+                        <button onClick={() => setProjectTechStack(projectTechStack.filter(x => x !== t))} className="hover:text-red-400">
+                          <X size={10} />
+                        </button>
                       </span>
                     ))}
                   </div>
@@ -440,28 +450,40 @@ const Feed = () => {
 
               <input 
                 type="text" 
-                placeholder="What kind of collaborator do you need? (e.g. Frontend dev for UI)" 
+                placeholder="Role needed (e.g. Fullstack Engineer, Rust Developer)..." 
                 value={projectRoleNeeded}
                 onChange={(e) => setProjectRoleNeeded(e.target.value)}
-                className="w-full bg-transparent text-[#a3a3a3] text-[13px] outline-none border-b border-[#262626] pb-2 focus:border-white/50 transition-colors"
+                className="w-full bg-[#09090b] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-[#f0f0f0] placeholder:text-white/20 outline-none focus:border-[#ccff00] transition-colors"
               />
 
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" checked={projectCommitment === "one-time"} onChange={() => setProjectCommitment("one-time")} className="accent-[#ccff00]" />
-                    <span className="text-[12px] text-[#a3a3a3]">One-time</span>
+              <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-mono text-[#52525b] hover:text-[#f0f0f0]">
+                    <input 
+                      type="radio" 
+                      name="commitment" 
+                      checked={projectCommitment === "one-time"} 
+                      onChange={() => setProjectCommitment("one-time")} 
+                      className="accent-[#ccff00]" 
+                    />
+                    <span>One-time</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" checked={projectCommitment === "ongoing"} onChange={() => setProjectCommitment("ongoing")} className="accent-[#ccff00]" />
-                    <span className="text-[12px] text-[#a3a3a3]">Ongoing</span>
+                  <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-mono text-[#52525b] hover:text-[#f0f0f0]">
+                    <input 
+                      type="radio" 
+                      name="commitment" 
+                      checked={projectCommitment === "ongoing"} 
+                      onChange={() => setProjectCommitment("ongoing")} 
+                      className="accent-[#ccff00]" 
+                    />
+                    <span>Ongoing</span>
                   </label>
                 </div>
                 
                 <select 
                   value={projectStage}
                   onChange={(e) => setProjectStage(e.target.value)}
-                  className="bg-[#1a1a1a] border border-[#262626] text-[#e5e5e5] text-[12px] rounded-lg px-3 py-1.5 outline-none cursor-pointer hover:border-white/20 transition-colors"
+                  className="bg-[#09090b] border border-white/10 text-[#f0f0f0] text-[11px] font-mono uppercase rounded-md px-2 py-1 outline-none cursor-pointer"
                 >
                   <option value="idea">Idea</option>
                   <option value="early-build">Early Build</option>
@@ -472,235 +494,273 @@ const Feed = () => {
             </div>
           )}
 
-
-          {/* Full-width Code Snippet Editor */}
+          {/* Code Snippet Mode with Language Selector & Line Numbers */}
           {type === "snippet" && (
-            <div className="mt-3 mb-2 bg-[#09090b] border border-[#262626] rounded-xl overflow-hidden group">
-              <div className="bg-[#121212] px-4 py-2.5 flex items-center justify-between border-b border-[#262626]">
-                <div className="flex items-center gap-2 text-[#737373]">
-                  <FiCode size={14} />
-                  <span className="text-[11px] font-mono font-bold tracking-widest uppercase">Snippet</span>
+            <div className="mt-3 mb-2 bg-[#09090b] border border-white/[0.08] rounded-lg overflow-hidden">
+              <div className="bg-black/60 px-3 py-1.5 flex items-center justify-between border-b border-white/[0.06]">
+                <div className="flex items-center gap-1.5 text-[#52525b]">
+                  <Code2 size={13} className="text-[#ccff00]" />
+                  <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-[#f0f0f0]">Code Snippet</span>
                 </div>
                 <select 
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  className="bg-transparent text-[11px] font-mono font-bold text-[#a3a3a3] outline-none uppercase cursor-pointer hover:text-white transition-colors"
+                  className="bg-transparent text-[11px] font-mono font-bold text-[#ccff00] outline-none uppercase cursor-pointer"
                 >
-                  {LANGUAGES.map(lang => <option key={lang} value={lang} className="bg-[#121212]">{lang}</option>)}
+                  {LANGUAGES.map(lang => (
+                    <option key={lang} value={lang} className="bg-[#111113] text-[#f0f0f0] font-mono">
+                      {lang}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <textarea
-                placeholder="// Write or paste your code here..."
-                className="w-full bg-transparent text-[#e5e5e5] font-mono text-[13px] p-4 outline-none resize-none min-h-[140px] leading-relaxed custom-scrollbar placeholder:text-[#444]"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                spellCheck="false"
-              />
+
+              {/* Editor body with line numbers */}
+              <div className="flex min-h-[140px] text-[12px] font-mono">
+                {/* Line numbers gutter */}
+                <div className="select-none text-[#52525b] text-right py-3 pr-2.5 pl-3 bg-black/40 border-r border-white/[0.06] flex flex-col leading-5 shrink-0">
+                  {Array.from({ length: lineCount }, (_, i) => (
+                    <span key={i + 1}>{i + 1}</span>
+                  ))}
+                </div>
+                {/* Code textarea */}
+                <textarea
+                  placeholder="// Write or paste your code snippet here..."
+                  className="w-full bg-transparent text-[#f0f0f0] font-mono text-[12px] p-3 outline-none resize-none min-h-[140px] leading-5 custom-scrollbar placeholder:text-white/20 whitespace-pre overflow-x-auto"
+                  wrap="off"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  spellCheck="false"
+                />
+              </div>
             </div>
           )}
 
-          {/* Bottom Action Bar */}
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#262626]">
+          {/* Toolbar below textarea */}
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.06]">
             
-            {/* Left Actions (Tools) */}
+            {/* Toolbar Ghost Icon Buttons */}
             <div className="flex items-center gap-1">
-              <label className="p-2 text-[#737373] hover:text-[#e5e5e5] hover:bg-white/5 rounded-full cursor-pointer transition-all tooltip-trigger">
-                <FiImage size={18} />
+              <label 
+                className="p-1.5 text-[#52525b] hover:text-[#f0f0f0] hover:bg-white/5 rounded-lg cursor-pointer transition-colors"
+                title="Add Images"
+              >
+                <ImageIcon size={16} />
                 <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageSelect} />
               </label>
               
-              <label className="p-2 text-[#737373] hover:text-[#e5e5e5] hover:bg-white/5 rounded-full cursor-pointer transition-all">
-                <FiPaperclip size={18} />
-                <input type="file" className="hidden" onChange={(e) => setSelectedDocument(e.target.files[0])} />
+              <label 
+                className="p-1.5 text-[#52525b] hover:text-[#f0f0f0] hover:bg-white/5 rounded-lg cursor-pointer transition-colors"
+                title="Attach Document"
+              >
+                <Paperclip size={16} />
+                <input type="file" className="hidden" onChange={handleDocSelect} />
               </label>
 
               <button 
+                type="button"
                 onClick={() => setType(type === "snippet" ? "standard" : "snippet")}
-                className={`p-2 rounded-full transition-all flex items-center gap-1.5 ml-1 ${
+                className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs ${
                   type === "snippet" 
-                    ? "bg-[#ccff00]/10 text-[#ccff00]" 
-                    : "text-[#737373] hover:text-[#e5e5e5] hover:bg-white/5"
+                    ? "bg-[#ccff00]/10 text-[#ccff00] border border-[#ccff00]/30" 
+                    : "text-[#52525b] hover:text-[#f0f0f0] hover:bg-white/5"
                 }`}
+                title="Toggle Code Snippet"
               >
-                <FiCode size={18} />
-                {type === "snippet" && <span className="text-[11px] font-bold">Snippet</span>}
-              </button>
-              <button 
-                onClick={() => setType(type === "project" ? "standard" : "project")}
-                className={`p-2 rounded-full transition-all flex items-center gap-1.5 ml-1 ${
-                  type === "project" 
-                    ? "bg-[#ccff00]/10 text-[#ccff00]" 
-                    : "text-[#737373] hover:text-[#e5e5e5] hover:bg-white/5"
-                }`}
-              >
-                <FaRocket size={18} />
-                {type === "project" && <span className="text-[11px] font-bold">Project</span>}
+                <Code2 size={16} />
+                {type === "snippet" && <span className="text-[11px] font-mono font-bold">Code</span>}
               </button>
 
+              <button 
+                type="button"
+                onClick={() => setType(type === "project" ? "standard" : "project")}
+                className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs ${
+                  type === "project" 
+                    ? "bg-[#ccff00]/10 text-[#ccff00] border border-[#ccff00]/30" 
+                    : "text-[#52525b] hover:text-[#f0f0f0] hover:bg-white/5"
+                }`}
+                title="Toggle Project Post"
+              >
+                <FolderGit2 size={16} />
+                {type === "project" && <span className="text-[11px] font-mono font-bold">Project</span>}
+              </button>
             </div>
 
-            {/* Right Actions (Visibility, Ship) */}
-            <div className="flex items-center gap-3">
-              {/* Visibility Dropdown (Subtle) */}
-              <div className="relative group flex items-center">
-                <FiGlobe className="absolute left-2.5 text-[#737373] group-hover:text-white transition-colors" size={12} />
+            {/* Visibility & Submit Button */}
+            <div className="flex items-center gap-2.5">
+              <div className="relative flex items-center">
+                <Globe size={13} className="text-[#52525b] absolute left-2 pointer-events-none" />
                 <select 
                   value={visibility}
                   onChange={(e) => setVisibility(e.target.value)}
-                  className="appearance-none bg-transparent border border-transparent hover:border-[#333] hover:bg-[#1a1a1a] rounded-lg pl-7 pr-4 py-1.5 text-[12px] font-semibold text-[#a3a3a3] outline-none transition-all cursor-pointer"
+                  className="bg-transparent border border-white/[0.08] hover:border-white/20 rounded-lg pl-6 pr-2.5 py-1 text-[11px] font-mono text-[#52525b] hover:text-[#f0f0f0] outline-none cursor-pointer transition-colors"
                 >
-                  <option value="public" className="bg-[#121212]">Public</option>
-                  <option value="followers" className="bg-[#121212]">Followers</option>
-                  <option value="matches" className="bg-[#121212]">Matches</option>
+                  <option value="public" className="bg-[#111113] text-[#f0f0f0]">Public</option>
+                  <option value="followers" className="bg-[#111113] text-[#f0f0f0]">Followers</option>
+                  <option value="matches" className="bg-[#111113] text-[#f0f0f0]">Matches</option>
                 </select>
               </div>
 
-              {/* Ship Button */}
+              {/* Submit button: Lime bg-[#ccff00] text-black text-xs font-bold px-4 py-1.5 rounded-lg */}
               <button 
                 onClick={handlePost}
-                disabled={isPosting || (!content.trim() && !code.trim() && selectedImages.length === 0 && !selectedDocument)}
-                className="bg-[#e5e5e5] text-[#09090b] hover:bg-white px-5 py-1.5 rounded-full font-bold text-[13px] flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_10px_rgba(255,255,255,0.1)] hover:shadow-[0_2px_15px_rgba(255,255,255,0.2)]"
+                disabled={
+                  isPosting ||
+                  !content.trim() ||
+                  (type === "snippet" && !code.trim()) ||
+                  (type === "project" && (!projectTitle.trim() || !projectRoleNeeded.trim()))
+                }
+                className="bg-[#ccff00] hover:bg-[#d9ff33] text-black text-xs font-bold px-4 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {isPosting ? "Shipping..." : type === "project" ? "Post Project" : "Ship It"} <FiSend size={12} />
+                <span>{isPosting ? "Shipping..." : type === "project" ? "Post Project" : "Ship It"}</span>
+                <Send size={12} />
               </button>
             </div>
           </div>
         </div>
 
-        
-        {/* Feed Mode Toggle */}
-        <div className="flex gap-3 mb-6">
+        {/* Feed/Projects mode toggle */}
+        <div className="flex items-center gap-2 mb-3">
           <button 
             onClick={() => setFeedMode("all")}
-            className={`px-5 py-2 rounded-full text-[14px] font-bold transition-all duration-300 flex items-center gap-2 ${
-              feedMode === "all" ? "bg-[#e5e5e5] text-[#09090b] shadow-[0_0_15px_rgba(255,255,255,0.2)]" : "bg-[#151515] text-[#737373] border border-[#262626] hover:text-white"
+            className={`rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${
+              feedMode === "all" 
+                ? "bg-[#ccff00] text-black" 
+                : "bg-transparent border border-white/10 text-[#52525b] hover:text-[#f0f0f0]"
             }`}
           >
             All Feed
           </button>
           <button 
             onClick={() => setFeedMode("projects")}
-            className={`px-5 py-2 rounded-full text-[14px] font-bold transition-all duration-300 flex items-center gap-2 ${
-              feedMode === "projects" ? "bg-[#ccff00] text-black shadow-[0_0_15px_rgba(204,255,0,0.2)]" : "bg-[#151515] text-[#737373] border border-[#262626] hover:text-white"
+            className={`rounded-full px-4 py-1.5 text-sm font-bold transition-colors flex items-center gap-1.5 ${
+              feedMode === "projects" 
+                ? "bg-[#ccff00] text-black" 
+                : "bg-transparent border border-white/10 text-[#52525b] hover:text-[#f0f0f0]"
             }`}
           >
-            <FaRocket size={12} /> Projects
+            <FolderGit2 size={13} />
+            <span>Projects</span>
           </button>
         </div>
 
-
-        {/* Stack Tag Filter Bar */}
+        {/* Tag filter row: Horizontal scrolling pill list */}
         {feedMode !== "projects" && (
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-4 custom-scrollbar items-center">
-          <button 
-            onClick={() => setActiveTag("")}
-            className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-bold transition-all duration-300 border ${
-              activeTag === "" ? "bg-[#ccff00]/10 border-[#ccff00]/30 text-[#ccff00]" : "bg-[#121212] border-white/5 text-[#737373] hover:text-white"
-            }`}
-          >
-            All Feed
-          </button>
-          {COMMON_TAGS.map(tag => (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-2 custom-scrollbar">
             <button 
-              key={tag}
-              onClick={() => setActiveTag(tag)}
-              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-bold font-mono transition-all duration-300 border ${
-                activeTag === tag 
-                  ? "bg-[#a855f7]/10 border-[#a855f7]/30 text-[#a855f7]" 
-                  : "bg-[#121212] border-white/5 text-[#737373] hover:text-white"
+              onClick={() => setActiveTag("")}
+              className={`whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-mono font-bold transition-colors border ${
+                activeTag === "" 
+                  ? "bg-[#ccff00]/10 border-[#ccff00]/30 text-[#ccff00]" 
+                  : "bg-white/[0.03] border-white/[0.07] text-[#52525b] hover:text-[#f0f0f0]"
               }`}
             >
-              #{tag}
+              All Topics
             </button>
-          ))}
-        </div>
+            {COMMON_TAGS.map(tag => (
+              <button 
+                key={tag}
+                onClick={() => setActiveTag(tag)}
+                className={`whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-mono font-bold transition-colors border ${
+                  activeTag === tag 
+                    ? "bg-[#ccff00]/10 border-[#ccff00]/30 text-[#ccff00]" 
+                    : "bg-white/[0.03] border-white/[0.07] text-[#52525b] hover:text-[#f0f0f0]"
+                }`}
+              >
+                #{tag}
+              </button>
+            ))}
+          </div>
         )}
 
-        {/* Post Feed */}
+        {/* Timeline Posts */}
         <div className="w-full flex flex-col">
           {loading && posts.length === 0 ? (
-            <div className="flex flex-col gap-4 mt-4">
-               {/* Skeleton Posts */}
-               {[1,2,3].map((i) => (
-                 <div key={i} className="animate-pulse h-32 border-b border-white/5 mb-6"></div>
-               ))}
+            <div className="flex flex-col gap-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="glass-card p-5 animate-pulse h-36" />
+              ))}
             </div>
           ) : posts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center mt-8 gap-4 text-center px-4 w-full py-16 border-t border-dashed border-white/10">
-              <FiInbox className="text-4xl text-[#a3a3a3]/50" />
-              <h1 className="text-xl font-bold text-white mt-2">No posts found</h1>
-              <p className="text-[#a3a3a3] font-medium text-sm max-w-xs">
-                {activeTag ? `No one is talking about #${activeTag} right now.` : "Your feed is quiet. Follow more builders or write the first post!"}
+            <div className="glass-card p-12 text-center flex flex-col items-center justify-center my-4">
+              <Inbox size={32} className="text-[#52525b] mb-3" />
+              <h3 className="text-base font-bold text-[#f0f0f0] mb-1">No posts found</h3>
+              <p className="text-xs text-[#52525b] max-w-sm">
+                {activeTag ? `No posts tagged with #${activeTag} yet.` : "Your feed is quiet. Share what you are building or follow more builders!"}
               </p>
             </div>
           ) : (
             <>
-              
               {posts.map((post) => post.type === "project" ? (
-                <ProjectCard key={post._id} post={post} userRequestStatus={userRequestsMap[post._id]} requestCount={requestCountsMap[post._id]} />
+                <ProjectCard 
+                  key={post._id} 
+                  post={post} 
+                  userRequestStatus={userRequestsMap[post._id]} 
+                  requestCount={requestCountsMap[post._id]} 
+                />
               ) : (
-                <PostCard key={post._id} post={post} onFork={handleFork} followedUsers={followedUsers} />
+                <PostCard 
+                  key={post._id} 
+                  post={post} 
+                  onFork={handleFork} 
+                  followedUsers={followedUsers} 
+                />
               ))}
 
-              
               {/* Infinite Scroll Loader */}
               {hasMore && (
-                <div ref={loaderRef} className="py-8 flex justify-center">
-                  <div className="w-8 h-8 border-4 border-[#a855f7] border-t-transparent rounded-full animate-spin shadow-[0_0_15px_#a855f7]"></div>
+                <div ref={loaderRef} className="py-6 flex justify-center">
+                  <div className="w-6 h-6 border-2 border-[#ccff00] border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
               
               {!hasMore && posts.length > 0 && (
-                <div className="py-8 text-center text-[#a3a3a3] font-mono text-sm">
-                  You've reached the end of the feed.
+                <div className="py-6 text-center text-[#52525b] font-mono text-xs">
+                  End of timeline
                 </div>
               )}
             </>
           )}
         </div>
-      </div>
+      </main>
 
-      {/* ── Right Sidebar (Widgets) ─────────────────────────────── */}
-      <div className="hidden xl:flex w-[320px] flex-col gap-6 sticky top-10 pb-10">
+      {/* -- Feed right panel: sticky w-72 visible on xl+ screens ---- */}
+      <aside className="hidden xl:flex w-72 flex-col gap-4 sticky top-6 shrink-0 self-start">
         
-        {/* Upgrade Banner */}
+        {/* Pro Member Card */}
         {!user?.isPremium ? (
           <div 
             onClick={() => navigate("/premium")}
-            className="bg-[#a855f7]/10 border border-[#a855f7]/20 rounded-xl p-5 relative overflow-hidden group cursor-pointer hover:bg-[#a855f7]/20 transition-colors shrink-0"
+            className="rounded-xl p-4 bg-gradient-to-br from-[#b266ff]/20 via-[#111113] to-[#111113] border border-[#b266ff]/30 cursor-pointer hover:border-[#b266ff]/50 transition-all group relative overflow-hidden"
           >
-            <div className="absolute -right-4 -top-4 w-16 h-16 bg-[#a855f7]/30 rounded-full blur-xl group-hover:bg-[#a855f7]/50 transition-colors" />
-            <h3 className="text-[#a855f7] font-bold text-[16px] mb-2 flex items-center gap-2">
-              <FiArrowUp /> Introducing Pro
-            </h3>
-            <p className="text-[13px] text-[#a3a3a3] font-medium mb-5 leading-relaxed pr-2">
-              Boost your visibility and access live collaborative sandboxes with premium features.
-            </p>
-            <div className="flex gap-2">
-              <button className="flex-1 bg-[#a855f7] text-white font-medium text-xs py-2 rounded-lg hover:bg-[#9240de] transition-colors shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-                Upgrade
-              </button>
-              <button className="flex-1 bg-white/5 text-[#e5e5e5] font-medium text-xs py-2 rounded-lg hover:bg-white/10 transition-colors">
-                Explore
-              </button>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#b266ff] flex items-center gap-1.5">
+                <Sparkles size={12} /> OctoPair Pro
+              </span>
+              <ArrowUpRight size={14} className="text-[#b266ff] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </div>
+            <p className="text-xs text-[#a0a0a0] mb-3 leading-relaxed">
+              Unlock collaborative sandboxes, priority feed placement, and builder badges.
+            </p>
+            <button className="w-full bg-[#b266ff] hover:bg-[#c280ff] text-black font-bold text-xs py-1.5 rounded-lg transition-colors">
+              Upgrade to Pro
+            </button>
           </div>
         ) : (
-          <div className="bg-[#a855f7]/10 border border-[#a855f7]/20 rounded-xl p-5 relative overflow-hidden shrink-0">
-            <div className="absolute -right-4 -top-4 w-16 h-16 bg-[#a855f7]/30 rounded-full blur-xl transition-colors" />
-            <div className="flex items-center justify-between relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#a855f7]/20 rounded-xl flex items-center justify-center text-[#a855f7]">
-                  <FiStar className="text-xl" />
+          <div className="rounded-xl p-4 bg-gradient-to-br from-[#b266ff]/20 via-[#111113] to-[#111113] border border-[#b266ff]/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#b266ff]/20 flex items-center justify-center text-[#b266ff]">
+                  <Sparkles size={16} />
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-sm">Pro Member</h3>
-                  <p className="text-[11px] text-[#a3a3a3] font-mono mt-0.5">Active Subscription</p>
+                  <h4 className="text-xs font-bold text-[#f0f0f0]">Pro Member</h4>
+                  <p className="text-[10px] font-mono text-[#52525b]">Active Tier</p>
                 </div>
               </div>
               <button 
                 onClick={() => navigate("/premium")}
-                className="text-[12px] font-bold text-[#a855f7] hover:text-[#b873f8] transition-colors"
+                className="text-[11px] font-mono text-[#b266ff] hover:underline"
               >
                 Manage
               </button>
@@ -708,15 +768,17 @@ const Feed = () => {
           </div>
         )}
 
-        {/* Dynamic Trending Topics */}
-        <div className="dev-card p-5 shrink-0">
-          <h3 className="text-sm font-bold text-[#e5e5e5] mb-4">Trending Topics</h3>
-          <div className="flex flex-wrap gap-2">
-            {(globalTrendingTags.length > 0 ? globalTrendingTags : COMMON_TAGS.slice(0,6)).map(tag => (
+        {/* Trending Topics Section */}
+        <div className="glass-card p-4">
+          <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#52525b] mb-3 font-mono">
+            Trending Topics
+          </h4>
+          <div className="flex flex-wrap gap-1.5">
+            {(globalTrendingTags.length > 0 ? globalTrendingTags : COMMON_TAGS.slice(0, 6)).map(tag => (
               <button 
                 key={tag}
                 onClick={() => setActiveTag(tag)}
-                className="text-xs font-mono text-[#a3a3a3] bg-white/5 border border-white/5 px-2.5 py-1 rounded-md hover:bg-white/10 hover:text-white cursor-pointer transition-colors"
+                className="rounded-md px-2 py-1 text-[11px] font-mono font-bold bg-white/5 text-white/70 border border-white/[0.07] hover:border-[#ccff00]/40 hover:text-[#ccff00] transition-colors"
               >
                 #{tag.replace(/^#/, '')}
               </button>
@@ -724,48 +786,48 @@ const Feed = () => {
           </div>
         </div>
 
-        {/* Top Builders (Dynamic) */}
-        <div className="dev-card p-5 shrink-0">
-          <h3 className="text-sm font-bold text-[#e5e5e5] mb-4 flex items-center gap-2">
+        {/* Top Builders Section */}
+        <div className="glass-card p-4">
+          <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#52525b] mb-3 font-mono">
             Top Builders
-          </h3>
-          <div className="flex flex-col gap-4">
+          </h4>
+          <div className="flex flex-col gap-3">
             {globalTopBuilders.length > 0 ? globalTopBuilders.map((builder) => (
-              <div key={builder._id} className="flex items-center justify-between group">
-                <div className="flex items-center gap-3 min-w-0">
+              <div key={builder._id} className="flex items-center justify-between gap-2 group">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <img 
                     src={builder.photoUrl || "https://geographyandyou.com/images/user-profile.png"} 
                     alt={builder.firstName}
-                    className="w-8 h-8 rounded-lg object-cover border border-white/10"
+                    className="w-7 h-7 rounded-lg object-cover border border-white/[0.07] shrink-0"
                   />
                   <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-medium text-[#e5e5e5] truncate group-hover:text-white transition-colors">
+                    <span className="text-xs font-bold text-[#f0f0f0] truncate group-hover:text-[#ccff00] transition-colors">
                       {builder.firstName} {builder.lastName}
                     </span>
-                    <span className="text-[11px] text-[#737373] truncate">
+                    <span className="text-[10px] font-mono text-[#52525b] truncate">
                       {builder.skills && builder.skills[0] ? builder.skills[0] : "Developer"}
                     </span>
                   </div>
                 </div>
                 <button 
                   onClick={() => handleFollowToggle(builder._id)}
-                  className={`px-3 py-1 rounded text-xs font-semibold transition-colors ml-2 ${
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-colors shrink-0 ${
                     followedUsers.includes(builder._id)
-                      ? "text-[#ccff00] bg-[#ccff00]/10"
-                      : "text-white/50 bg-white/5 hover:bg-white/10 hover:text-white"
+                      ? "bg-transparent border border-white/10 text-[#52525b] hover:text-red-400"
+                      : "bg-[#ccff00] text-black hover:bg-[#d9ff33]"
                   }`}
                 >
                   {followedUsers.includes(builder._id) ? "Following" : "Follow"}
                 </button>
               </div>
             )) : (
-              <div className="text-xs text-[#737373]">No active builders yet.</div>
+              <p className="text-[11px] font-mono text-[#52525b]">No active builders yet.</p>
             )}
           </div>
         </div>
 
+      </aside>
 
-      </div>
     </div>
   );
 };

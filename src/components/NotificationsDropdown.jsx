@@ -1,101 +1,119 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { BASE_URL } from "../utils/constants";
-import { FiBell, FiHeart, FiMessageSquare, FiUserPlus, FiGitMerge, FiUsers, FiCode, FiCheckCircle, FiXCircle, FiPlay } from "react-icons/fi";
+import { BASE_URL, DEFAULT_AVATAR } from "../utils/constants";
 import { getSocket } from "../utils/socket";
 import { useNavigate } from "react-router-dom";
-
-const formatTimeAgo = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now - date) / 1000);
-  
-  if (diffInSeconds < 60) return "Just now";
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  return `${Math.floor(diffInSeconds / 86400)}d ago`;
-};
+import { timeAgo } from "../utils/timeAgo";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Bell,
+  Heart,
+  MessageSquare,
+  UserPlus,
+  GitFork,
+  Users,
+  Code2,
+  CheckCircle2,
+  XCircle,
+  Play,
+  CheckCheck,
+} from "lucide-react";
 
 const getNotificationDetails = (notification) => {
-  // Legacy vs New structure support
-  const actors = notification.actorIds?.length > 0 ? notification.actorIds : (notification.fromUserId ? [notification.fromUserId] : []);
-  if (actors.length === 0) return { text: "Someone interacted with you", icon: <FiBell className="text-gray-400" /> };
+  const actors =
+    notification.actorIds?.length > 0
+      ? notification.actorIds
+      : notification.fromUserId
+      ? [notification.fromUserId]
+      : [];
+
+  if (actors.length === 0) {
+    return {
+      text: "Someone interacted with your profile",
+      icon: <Bell className="w-3.5 h-3.5 text-muted-foreground" />,
+    };
+  }
 
   const firstActor = actors[0];
-  const nameStr = actors.length === 1 
-    ? `${firstActor.firstName} ${firstActor.lastName}`
-    : `${firstActor.firstName} and ${actors.length - 1} other${actors.length > 2 ? 's' : ''}`;
+  const nameStr =
+    actors.length === 1
+      ? `${firstActor.firstName || "A developer"} ${firstActor.lastName || ""}`.trim()
+      : `${firstActor.firstName} and ${actors.length - 1} others`;
 
   switch (notification.type) {
     case "reaction":
       return {
         text: `${nameStr} reacted to your post`,
-        icon: <FiHeart className="text-pink-500" />,
-        avatar: firstActor.photoUrl
+        icon: <Heart className="w-3.5 h-3.5 text-pink-500 fill-pink-500/20" />,
+        avatar: firstActor.photoUrl,
       };
     case "comment":
       return {
         text: `${nameStr} commented on your post`,
-        icon: <FiMessageSquare className="text-blue-500" />,
-        avatar: firstActor.photoUrl
+        icon: <MessageSquare className="w-3.5 h-3.5 text-blue-400" />,
+        avatar: firstActor.photoUrl,
       };
     case "fork":
       return {
         text: `${nameStr} forked your code snippet`,
-        icon: <FiGitMerge className="text-[#a855f7]" />,
-        avatar: firstActor.photoUrl
+        icon: <GitFork className="w-3.5 h-3.5 text-accent" />,
+        avatar: firstActor.photoUrl,
       };
     case "follow":
       return {
-        text: `${nameStr} followed you`,
-        icon: <FiUserPlus className="text-green-500" />,
-        avatar: firstActor.photoUrl
+        text: `${nameStr} started following you`,
+        icon: <UserPlus className="w-3.5 h-3.5 text-primary" />,
+        avatar: firstActor.photoUrl,
       };
     case "match":
     case "request_accepted":
       return {
-        text: `You and ${nameStr} are now a match!`,
-        icon: <FiUsers className="text-[#ccff00]" />,
-        avatar: firstActor.photoUrl
+        text: `You and ${nameStr} are now connected!`,
+        icon: <Users className="w-3.5 h-3.5 text-primary" />,
+        avatar: firstActor.photoUrl,
+        link: `/chat/${firstActor._id}`,
       };
     case "connection_request":
       return {
-        text: `${nameStr} wants to connect`,
-        icon: <FiUserPlus className="text-yellow-500" />,
-        avatar: firstActor.photoUrl
+        text: `${nameStr} sent you a connection request`,
+        icon: <UserPlus className="w-3.5 h-3.5 text-accent" />,
+        avatar: firstActor.photoUrl,
+        link: "/network?tab=requests",
       };
     case "project_join_request":
       return {
-        text: `${nameStr} wants to join your project ${notification.post?.title || ''}`,
-        icon: <FiCode className="text-[#a855f7]" />,
+        text: `${nameStr} requested to join ${notification.post?.title || "your project"}`,
+        icon: <Code2 className="w-3.5 h-3.5 text-accent" />,
         avatar: firstActor.photoUrl,
-        link: `/project/${notification.post?._id || notification.postId}/requests`
+        link: `/project/${notification.post?._id || notification.postId}/requests`,
       };
     case "project_accepted":
       return {
-        text: `Your request to join ${notification.post?.title || ''} was accepted! Message them to start →`,
-        icon: <FiCheckCircle className="text-green-500" />,
+        text: `Your request to join ${notification.post?.title || "project"} was accepted!`,
+        icon: <CheckCircle2 className="w-3.5 h-3.5 text-primary" />,
         avatar: firstActor.photoUrl,
-        link: `/chat/${firstActor._id}`
+        link: `/chat/${firstActor._id}`,
       };
     case "project_rejected":
       return {
-        text: `Your request to join ${notification.post?.title || ''} was declined.`,
-        icon: <FiXCircle className="text-red-500" />,
-        avatar: firstActor.photoUrl
+        text: `Your request to join ${notification.post?.title || "project"} was declined.`,
+        icon: <XCircle className="w-3.5 h-3.5 text-destructive" />,
+        avatar: firstActor.photoUrl,
       };
     case "partner_in_room":
       return {
-        text: `${nameStr} is in the ${notification.post?.title || 'project'} room — join now!`,
-        icon: <FiPlay className="text-[#ccff00]" />,
+        text: `${nameStr} joined the project workspace!`,
+        icon: <Play className="w-3.5 h-3.5 text-primary" />,
         avatar: firstActor.photoUrl,
-        link: `/project/room/${notification.roomId || notification.metadata?.roomId}`
+        link: `/project/room/${notification.roomId || notification.metadata?.roomId}`,
       };
     default:
       return {
-        text: `${nameStr} interacted with you`,
-        icon: <FiBell className="text-gray-400" />,
-        avatar: firstActor.photoUrl
+        text: `${nameStr} sent an update`,
+        icon: <Bell className="w-3.5 h-3.5 text-muted-foreground" />,
+        avatar: firstActor.photoUrl,
       };
   }
 };
@@ -111,8 +129,8 @@ const NotificationsDropdown = () => {
     const fetchNotifications = async () => {
       try {
         const res = await axios.get(`${BASE_URL}/notifications`, { withCredentials: true });
-        setNotifications(res.data.notifications);
-        setUnreadCount(res.data.unreadCount);
+        setNotifications(res.data?.notifications || []);
+        setUnreadCount(res.data?.unreadCount || 0);
       } catch (err) {
         console.error("Failed to fetch notifications", err);
       }
@@ -123,12 +141,11 @@ const NotificationsDropdown = () => {
     if (sock) {
       const handleNewNotification = (notification) => {
         setNotifications((prev) => {
-          // If batched update, replace the existing one
-          const exists = prev.findIndex(n => n._id === notification._id);
+          const exists = prev.findIndex((n) => n._id === notification._id);
           if (exists >= 0) {
-            const newArray = [...prev];
-            newArray[exists] = notification;
-            return newArray;
+            const next = [...prev];
+            next[exists] = notification;
+            return next;
           }
           return [notification, ...prev];
         });
@@ -140,7 +157,7 @@ const NotificationsDropdown = () => {
     }
   }, []);
 
-  // Close dropdown when clicking outside
+  // Close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -152,84 +169,108 @@ const NotificationsDropdown = () => {
   }, []);
 
   const handleMarkAsRead = async () => {
-    if (unreadCount === 0) return;
     try {
       await axios.patch(`${BASE_URL}/notifications/mark-read`, {}, { withCredentials: true });
       setUnreadCount(0);
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     } catch (err) {
       console.error("Failed to mark notifications read", err);
     }
   };
 
   const toggleDropdown = () => {
-    if (!isOpen) handleMarkAsRead();
+    if (!isOpen && unreadCount > 0) {
+      handleMarkAsRead();
+    }
     setIsOpen(!isOpen);
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={toggleDropdown}
-        className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors relative"
+        className="relative rounded-full text-foreground/80 hover:text-foreground hover:bg-muted/60"
+        aria-label="Notifications"
       >
-        <FiBell className="text-xl" />
+        <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#ccff00] text-[#121212] text-[10px] font-bold rounded-full flex items-center justify-center">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </div>
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground shadow-sm">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
         )}
-      </button>
+      </Button>
 
       {isOpen && (
-        <div className="absolute left-0 mt-3 w-80 sm:w-96 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[9999] animate-in slide-in-from-top-2 duration-200">
-          <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#121212]">
-            <h3 className="font-bold text-white">Notifications</h3>
+        <div className="absolute right-0 sm:right-auto sm:left-0 mt-3 w-80 sm:w-96 bg-card border border-border/80 rounded-2xl shadow-2xl overflow-hidden z-[9999] animate-in fade-in-0 zoom-in-95 duration-150">
+          {/* Header */}
+          <div className="p-4 border-b border-border/50 flex justify-between items-center bg-muted/40">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-sm text-foreground">Notifications</h3>
+              {unreadCount > 0 && (
+                <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-primary/20 text-primary">
+                  {unreadCount} new
+                </Badge>
+              )}
+            </div>
+
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleMarkAsRead}
+                className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1 px-2"
+              >
+                <CheckCheck className="w-3.5 h-3.5" /> Mark all read
+              </Button>
+            )}
           </div>
-          
-          <div className="max-h-[400px] overflow-y-auto">
+
+          {/* List */}
+          <div className="max-h-[380px] overflow-y-auto divide-y divide-border/30">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center text-white/40">
-                <p className="text-sm">You're all caught up!</p>
+              <div className="py-12 px-4 text-center text-muted-foreground flex flex-col items-center gap-2">
+                <Bell className="w-8 h-8 opacity-30" />
+                <p className="text-xs font-medium">You're all caught up!</p>
               </div>
             ) : (
               notifications.map((notif) => {
                 const details = getNotificationDetails(notif);
                 return (
-                  <div 
-                    key={notif._id} 
+                  <div
+                    key={notif._id}
                     onClick={() => {
                       if (details.link) {
                         setIsOpen(false);
                         navigate(details.link);
                       }
                     }}
-                    className={`flex items-start gap-3 p-4 border-b border-white/5 hover:bg-white/5 transition-colors ${details.link ? 'cursor-pointer' : ''} ${notif.read ? 'opacity-70' : 'bg-[#ccff00]/5'}`}
+                    className={`flex items-start gap-3 p-3.5 hover:bg-muted/40 transition-colors ${
+                      details.link ? "cursor-pointer" : ""
+                    } ${notif.read ? "opacity-75" : "bg-primary/5"}`}
                   >
-                    <div className="relative flex-shrink-0 mt-1">
-                      {details.avatar ? (
-                        <img src={details.avatar} alt="avatar" className="w-10 h-10 rounded-full object-cover border border-white/10" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                          <FiBell />
-                        </div>
-                      )}
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#1a1a1a] rounded-full flex items-center justify-center border border-white/10">
+                    <div className="relative shrink-0 mt-0.5">
+                      <Avatar className="w-9 h-9 border border-border/60">
+                        <AvatarImage src={details.avatar || DEFAULT_AVATAR} alt="Avatar" />
+                        <AvatarFallback className="text-xs bg-muted">DEV</AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-background rounded-full flex items-center justify-center border border-border/60 shadow-xs">
                         {details.icon}
                       </div>
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white/90 leading-snug">
+                      <p className="text-xs text-foreground/90 leading-snug">
                         {details.text}
                       </p>
-                      <span className="text-[10px] text-white/40 mt-1 block">
-                        {formatTimeAgo(notif.createdAt)}
+                      <span className="text-[10px] text-muted-foreground mt-1 block">
+                        {timeAgo(notif.createdAt)}
                       </span>
                     </div>
-                    
+
                     {!notif.read && (
-                      <div className="w-2 h-2 rounded-full bg-[#ccff00] mt-2 flex-shrink-0"></div>
+                      <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
                     )}
                   </div>
                 );

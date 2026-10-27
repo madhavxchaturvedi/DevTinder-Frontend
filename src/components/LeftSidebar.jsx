@@ -1,20 +1,38 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { FiHome, FiUsers, FiMessageSquare, FiCompass, FiSettings, FiLogOut, FiMoreHorizontal, FiUserPlus, FiCode } from "react-icons/fi";
-import { HiCode } from "react-icons/hi";
+import {
+  Home,
+  Compass,
+  MessageSquare,
+  FolderGit2,
+  Users,
+  Settings,
+  LogOut,
+  MoreHorizontal,
+  Search,
+  User,
+  Sparkles,
+  UserCheck,
+} from "lucide-react";
+import { OctoPairLogo } from "./brand/OctoPairLogo";
 import axios from "axios";
-import { BASE_URL } from "../utils/constants";
+import { BASE_URL, DEFAULT_AVATAR } from "../utils/constants";
 import { removeUser } from "../redux/userSlice";
 import NotificationsDropdown from "./NotificationsDropdown";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { cn } from "@/lib/utils";
 
 const LeftSidebar = () => {
   const user = useSelector((store) => store.user);
+  const requests = useSelector((store) => store.requests);
   const location = useLocation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const menuRef = useRef(null);
+
+  const pendingRequestsCount = Array.isArray(requests) ? requests.length : 0;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -22,54 +40,106 @@ const LeftSidebar = () => {
         setShowProfileMenu(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
     try {
       await axios.post(BASE_URL + "/logout", {}, { withCredentials: true });
-      dispatch(removeUser());
-      navigate("/");
     } catch (err) {
-      console.log(err);
+      console.error("Logout failed:", err);
+    } finally {
+      try {
+        localStorage.removeItem("octopair_auth_hint");
+        localStorage.removeItem("octopair_auth");
+        localStorage.removeItem("devtinder_auth_hint");
+        localStorage.removeItem("devtinder_auth");
+      } catch {
+        // Ignore storage errors on logout
+      }
+      dispatch(removeUser());
+      navigate("/login");
     }
+  };
+
+  const handleOpenCommandPalette = () => {
+    window.dispatchEvent(new Event("open-command-palette"));
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })
+    );
   };
 
   if (!user) return null;
 
-  const coreNav = [
-    { name: "My Feed", path: "/feed", icon: <FiHome size={18} /> },
-    { name: "Explore", path: "/discover", icon: <FiCompass size={18} /> },
-    { name: "Messages", path: "/chat", icon: <FiMessageSquare size={18} /> },
-    { name: "My Projects", path: "/projects", icon: <FiCode size={18} /> },
+  const mainNav = [
+    { name: "My Feed", path: "/feed", icon: Home },
+    { name: "Explore", path: "/discover", icon: Compass },
+  ];
+
+  const collaborateNav = [
+    { name: "Messages", path: "/chat", icon: MessageSquare },
+    { name: "My Projects", path: "/projects", icon: FolderGit2 },
   ];
 
   const networkNav = [
-    { name: "Connections", path: "/connections", icon: <FiUsers size={18} /> },
-    { name: "Requests", path: "/requests", icon: <FiUserPlus size={18} /> },
+    {
+      name: "Connections",
+      path: "/connections",
+      icon: Users,
+    },
+    {
+      name: "Requests",
+      path: "/requests",
+      icon: UserCheck,
+      badge: pendingRequestsCount > 0 ? pendingRequestsCount : null,
+    },
+  ];
+
+  const upgradeNav = [
+    { name: "Premium", path: "/premium", icon: Sparkles },
   ];
 
   const renderNavGroup = (items, title) => (
-    <div className="mb-6">
-      <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#555] mb-2 px-4">{title}</h4>
-      <div className="flex flex-col gap-1">
+    <div className="mb-5">
+      <h4 className="text-[10px] uppercase font-bold tracking-wider text-[#52525b] mb-1.5 px-3">
+        {title}
+      </h4>
+      <div className="flex flex-col gap-0.5">
         {items.map((item) => {
-          const isActive = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
+          const Icon = item.icon;
+          const isActive =
+            location.pathname === item.path ||
+            (item.path !== "/" && location.pathname.startsWith(item.path));
+
           return (
             <Link
               key={item.name}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold tracking-wide transition-all duration-300 ${
+              className={cn(
+                "flex items-center justify-between px-3 py-2 text-xs font-medium transition-all group relative",
                 isActive
-                  ? "bg-white/5 text-[#ccff00]"
-                  : "text-[#737373] hover:bg-white/5 hover:text-white"
-              }`}
+                  ? "bg-[#ccff00]/8 text-[#ccff00] border-l-2 border-[#ccff00] font-bold rounded-r-lg [text-shadow:0_0_12px_rgba(204,255,0,0.5)]"
+                  : "text-[#52525b] hover:text-[#a0a0a0] hover:bg-white/[0.04] rounded-lg"
+              )}
             >
-              <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
-                {item.icon}
-              </span>
-              <span className="text-[14px]">{item.name}</span>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Icon
+                  className={cn(
+                    "h-4 w-4 shrink-0 transition-transform group-hover:scale-105",
+                    isActive
+                      ? "text-[#ccff00] drop-shadow-[0_0_8px_rgba(204,255,0,0.6)]"
+                      : "text-[#52525b] group-hover:text-[#a0a0a0]"
+                  )}
+                />
+                <span className="truncate">{item.name}</span>
+              </div>
+
+              {item.badge && (
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-[#b266ff]/15 text-[#b266ff] border border-[#b266ff]/30 shrink-0">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -77,72 +147,127 @@ const LeftSidebar = () => {
     </div>
   );
 
+  const initials = (
+    (user?.firstName?.[0] || "") + (user?.lastName?.[0] || "")
+  ).toUpperCase() || "U";
+
   return (
-    <div className="hidden lg:flex w-[260px] flex-col h-screen sticky top-0 bg-transparent py-8 px-6 z-50">
-      {/* Logo and Notifications */}
-      <div className="flex items-center justify-between px-3 mb-8">
-        <Link to="/feed" className="flex items-center gap-2 text-white hover:text-[#ccff00] transition-colors">
-          <HiCode size={26} />
-          <span className="text-lg font-black tracking-tight font-mono mt-0.5">DevTinder</span>
+    <aside className="hidden lg:flex w-[260px] flex-col h-dvh sticky top-0 bg-[#09090b] border-r border-white/[0.07] py-6 px-4 z-50 select-none flex-shrink-0">
+      {/* Brand Header */}
+      <div className="flex items-center justify-between px-2 mb-6">
+        <Link
+          to="/feed"
+          className="flex items-center gap-2.5 text-[#f0f0f0] hover:text-[#ccff00] transition-colors group"
+        >
+          <OctoPairLogo className="h-8 w-auto text-[#f0f0f0] group-hover:text-[#ccff00] transition-colors" />
+          <span className="text-lg font-black tracking-tighter">OctoPair</span>
         </Link>
         <NotificationsDropdown />
       </div>
 
-      {/* Nav Links */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 -mr-2">
-        {renderNavGroup(coreNav, "Platform")}
-        {renderNavGroup(networkNav, "Network")}
+      {/* Quick Search Trigger (Cmd+K) */}
+      <div className="px-1 mb-6">
+        <button
+          onClick={handleOpenCommandPalette}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-[#111113] border border-white/10 text-xs text-[#52525b] hover:text-[#f0f0f0] hover:border-white/20 transition-all cursor-pointer shadow-sm"
+        >
+          <span className="flex items-center gap-2">
+            <Search className="h-3.5 w-3.5" />
+            <span>Search</span>
+          </span>
+          <kbd className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-white/5 border border-white/10 text-[#a0a0a0]">
+            Cmd+K
+          </kbd>
+        </button>
       </div>
 
-      {/* Bottom Profile Action */}
-      <div className="relative mt-4" ref={menuRef}>
-        
+      {/* 4 Navigation Groups */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 -mr-1">
+        {renderNavGroup(mainNav, "MAIN")}
+        {renderNavGroup(collaborateNav, "COLLABORATE")}
+        {renderNavGroup(networkNav, "NETWORK")}
+        {renderNavGroup(upgradeNav, "UPGRADE")}
+      </div>
+
+      {/* User Card & Profile Menu */}
+      <div className="relative mt-auto pt-4 border-t border-white/[0.07]" ref={menuRef}>
         {/* Popover Menu */}
         {showProfileMenu && (
-          <div className="absolute bottom-[calc(100%+12px)] left-0 w-full bg-[#151515] border border-[#262626] rounded-2xl p-2 shadow-2xl origin-bottom animate-in fade-in zoom-in-95 duration-200">
-            <Link 
-              to="/profile" 
+          <div className="absolute bottom-[calc(100%+8px)] left-0 w-full bg-[#1a1a1f] border border-white/[0.07] rounded-xl p-1.5 shadow-2xl origin-bottom animate-in fade-in zoom-in-95 duration-150 z-50">
+            <Link
+              to={`/user/${user?._id}`}
               onClick={() => setShowProfileMenu(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#a3a3a3] hover:text-white hover:bg-white/5 transition-all text-sm font-semibold"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#f0f0f0] hover:bg-white/5 transition-colors"
             >
-              <FiSettings size={16} /> Settings
+              <User className="h-3.5 w-3.5 text-[#ccff00]" /> View Public Profile
             </Link>
-            <div className="h-px bg-white/5 my-1 mx-2" />
-            <button 
-              onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#ff5555]/80 hover:text-[#ff5555] hover:bg-[#ff5555]/10 transition-all text-sm font-semibold w-full text-left"
+
+            <Link
+              to="/profile"
+              onClick={() => setShowProfileMenu(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#f0f0f0] hover:bg-white/5 transition-colors"
             >
-              <FiLogOut size={16} /> Logout
+              <Settings className="h-3.5 w-3.5 text-[#52525b]" /> Edit Profile
+            </Link>
+
+            <Link
+              to="/premium"
+              onClick={() => setShowProfileMenu(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[#f0f0f0] hover:bg-white/5 transition-colors"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-[#b266ff]" /> Premium Tier
+            </Link>
+
+            <div className="h-px bg-white/[0.07] my-1 mx-1" />
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors w-full text-left cursor-pointer"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Logout
             </button>
           </div>
         )}
 
-        {/* User Profile Mini Trigger */}
-        <button 
-          onClick={() => setShowProfileMenu(!showProfileMenu)}
-          className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-2xl transition-all duration-300 border ${
-            showProfileMenu ? 'bg-white/5 border-white/10' : 'bg-transparent border-transparent hover:bg-white/5 hover:border-white/5'
-          }`}
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <img
-              src={user.photoUrl || "https://geographyandyou.com/images/user-profile.png"}
-              alt={user.firstName}
-              className="w-9 h-9 rounded-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
-            />
+        {/* User Mini Card */}
+        <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-white/[0.04] transition-colors group">
+          <Link
+            to={`/user/${user?._id}`}
+            className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-90 transition-opacity"
+            title="View public profile"
+          >
+            <Avatar className="h-8 w-8 rounded-lg border border-white/10 group-hover:border-[#ccff00] transition-colors">
+              <AvatarImage src={user.photoUrl || DEFAULT_AVATAR} alt={user.firstName} />
+              <AvatarFallback className="bg-[#111113] text-xs font-mono font-bold text-[#f0f0f0]">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+
             <div className="flex flex-col min-w-0 text-left">
-              <span className="text-[13px] font-bold text-white truncate group-hover:text-[#ccff00] transition-colors leading-tight">
+              <span className="text-xs font-bold text-[#f0f0f0] truncate group-hover:text-[#ccff00] transition-colors">
                 {user.firstName} {user.lastName}
               </span>
-              <span className="text-[10px] text-[#737373] font-mono tracking-widest uppercase mt-0.5">
-                Pro Member
+              <span className="text-[10px] font-mono text-[#52525b] truncate">
+                {user.headline || "Developer"}
               </span>
             </div>
-          </div>
-          <FiMoreHorizontal className={`text-[#737373] transition-transform duration-300 ${showProfileMenu ? 'rotate-90 text-white' : ''}`} />
-        </button>
+          </Link>
+
+          <button
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="p-1.5 rounded-lg text-[#52525b] hover:text-[#f0f0f0] hover:bg-white/5 transition-colors cursor-pointer"
+            aria-label="Profile actions"
+          >
+            <MoreHorizontal
+              className={cn(
+                "h-4 w-4 transition-transform",
+                showProfileMenu && "rotate-90 text-[#f0f0f0]"
+              )}
+            />
+          </button>
+        </div>
       </div>
-    </div>
+    </aside>
   );
 };
 

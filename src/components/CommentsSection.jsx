@@ -101,7 +101,7 @@ const CommentsSection = ({ post, isOpen }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="mt-4 border-t border-white/5 pt-4 animate-in slide-in-from-top-2 duration-300">
+    <div className="mt-4 border-t border-border pt-4 animate-in slide-in-from-top-2 duration-300">
       {/* Comments List */}
       <div className="max-h-[300px] overflow-y-auto space-y-3 pr-2 custom-scrollbar mb-4">
         {loading ? (
@@ -109,30 +109,30 @@ const CommentsSection = ({ post, isOpen }) => {
             <div className="w-5 h-5 border-2 border-[#a855f7] border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : comments.length === 0 ? (
-          <div className="text-center text-white/40 py-4">
+          <div className="text-center text-foreground/40 py-4">
             <p className="text-sm">No comments yet. Be the first!</p>
           </div>
         ) : (
           comments.map((comment) => (
-            <div key={comment._id} className={`flex gap-3 p-3 rounded-xl transition-colors ${comment.isResolvedAnswer ? 'bg-[#ccff00]/5 border border-[#ccff00]/20' : 'bg-white/5'}`}>
+            <div key={comment._id} className={`flex gap-3 p-3 rounded-xl transition-colors ${comment.isResolvedAnswer ? 'bg-primary/5 border border-primary/20' : 'bg-muted'}`}>
               <img 
                 src={comment.authorId?.photoUrl} 
                 alt="avatar" 
-                className="w-8 h-8 rounded-full object-cover border border-white/10"
+                className="w-8 h-8 rounded-full object-cover border border-border"
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-0.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-sm text-white">{comment.authorId?.firstName} {comment.authorId?.lastName}</span>
-                    <span className="text-[10px] font-bold text-white/40">{formatTimeAgo(comment.createdAt)}</span>
+                    <span className="font-bold text-sm text-foreground">{comment.authorId?.firstName} {comment.authorId?.lastName}</span>
+                    <span className="text-[10px] font-bold text-foreground/40">{formatTimeAgo(comment.createdAt)}</span>
                     {comment.isResolvedAnswer && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-[#0a0a0a] bg-[#ccff00] px-2 py-0.5 rounded-sm uppercase tracking-wider shadow-[2px_2px_0px_#0a0a0a] border border-[#0a0a0a]">
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-black bg-primary px-2 py-0.5 rounded-sm uppercase tracking-wider border border-[#ccff00]">
                         <FiCheckCircle /> Resolved
                       </span>
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-white/80 whitespace-pre-wrap break-words">{comment.text}</p>
+                <p className="text-sm text-foreground/80 whitespace-pre-wrap break-words">{comment.text}</p>
                 
                 {/* Resolve Button for SOS Posts */}
                 {post.type === 'debug_sos' && 
@@ -142,7 +142,7 @@ const CommentsSection = ({ post, isOpen }) => {
                  !comment.isResolvedAnswer && (
                   <button 
                     onClick={() => handleResolve(comment._id)}
-                    className="mt-2 text-xs font-bold text-[#0a0a0a] bg-white border border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] px-3 py-1 rounded-full hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#0a0a0a] active:shadow-none transition-all flex items-center gap-1"
+                    className="mt-2 text-xs font-bold text-black bg-white border border-white/20 px-3 py-1 rounded-full hover:bg-white/90 active:scale-95 transition-all flex items-center gap-1"
                   >
                     <FiCheckCircle /> Mark as Helpful Answer
                   </button>
@@ -161,16 +161,16 @@ const CommentsSection = ({ post, isOpen }) => {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Write a comment..."
-          className="flex-1 bg-white/5 border border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] rounded-lg px-4 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#ccff00] transition-colors"
+          className="flex-1 bg-[#111113] border border-white/10 rounded-lg px-4 py-2 text-sm text-[#f0f0f0] placeholder-white/40 focus:outline-none focus:border-[#ccff00] transition-colors"
           disabled={isSubmitting}
         />
         <button
           type="submit"
           disabled={!inputText.trim() || isSubmitting}
-          className={`px-4 py-2 rounded-lg font-bold border-2 border-[#0a0a0a] shadow-[2px_2px_0px_#0a0a0a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#0a0a0a] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center ${
+          className={`px-4 py-2 rounded-lg font-bold border border-transparent transition-all flex items-center justify-center ${
             inputText.trim() && !isSubmitting
-              ? 'bg-[#ccff00] text-[#0a0a0a]'
-              : 'bg-[#121212] text-white/20'
+              ? 'bg-primary text-black hover:bg-[#d9ff33]'
+              : 'bg-[#111113] text-white/20 border-white/10'
           }`}
         >
           <FiSend className="text-lg" />

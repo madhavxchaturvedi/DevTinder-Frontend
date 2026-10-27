@@ -1,16 +1,25 @@
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import UserCard from "./UserCard";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion as Motion, AnimatePresence } from "framer-motion";
-import { FaUserEdit, FaCamera } from "react-icons/fa";
-import { FiUploadCloud, FiX, FiCheck, FiChevronDown } from "react-icons/fi";
+import {
+  UserCheck,
+  Camera,
+  UploadCloud,
+  X,
+  Check,
+  ChevronDown,
+  ArrowRight,
+  Sparkles,
+  Edit3,
+} from "lucide-react";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { useDispatch } from "react-redux";
 import { addUser } from "../redux/userSlice";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
-// ── Cover Photo Upload Section ─────────────────────────────────────
+// Cover Photo Upload Section
 const CoverUpload = ({ currentCover, onUploadSuccess }) => {
   const coverInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
@@ -44,7 +53,7 @@ const CoverUpload = ({ currentCover, onUploadSuccess }) => {
       setUploadState("success");
       const coverUrl = res.data.coverPhoto;
       onUploadSuccess(coverUrl);
-      toast.success("Cover photo uploaded!", { style: { background: '#121212', color: '#e5e5e5' } });
+      toast.success("Cover photo uploaded!");
       setTimeout(() => setUploadState("idle"), 2500);
     } catch (err) {
       setUploadState("error");
@@ -64,12 +73,12 @@ const CoverUpload = ({ currentCover, onUploadSuccess }) => {
 
   return (
     <div className="w-full mb-6">
-      <label className="block text-xs font-bold text-[#a3a3a3] mb-2 uppercase tracking-wider text-left">
+      <label className="block text-xs font-mono font-bold text-[#52525b] mb-2 uppercase tracking-wider text-left">
         Cover Photo
       </label>
       <div
-        className={`relative h-36 w-full rounded-2xl overflow-hidden cursor-pointer group border border-white/10 transition-all duration-300 ${
-          dragOver ? "ring-2 ring-[#a855f7]" : ""
+        className={`relative h-36 w-full rounded-xl overflow-hidden cursor-pointer group border border-white/[0.07] transition-all duration-300 ${
+          dragOver ? "ring-2 ring-[#b266ff]" : ""
         }`}
         style={
           preview
@@ -82,18 +91,18 @@ const CoverUpload = ({ currentCover, onUploadSuccess }) => {
         onDrop={onDrop}
       >
         {!preview && (
-          <div className="w-full h-full bg-gradient-to-r from-[#ccff00]/10 to-[#a855f7]/10 flex items-center justify-center">
-            <span className="text-xs text-white/40">No cover photo set</span>
+          <div className="w-full h-full bg-gradient-to-r from-[#ccff00]/10 via-transparent to-[#b266ff]/10 flex items-center justify-center">
+            <span className="text-xs text-[#52525b] font-mono">No cover photo set (gradient banner active)</span>
           </div>
         )}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-xs">
-          <FaCamera className="text-white text-lg" />
-          <span className="text-white text-xs font-semibold">Change Cover</span>
+          <Camera className="text-[#f0f0f0] w-4 h-4" />
+          <span className="text-[#f0f0f0] text-xs font-semibold">Change Cover</span>
         </div>
 
         {uploadState === "uploading" && (
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-[#a855f7] border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[#b266ff] border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
@@ -103,12 +112,12 @@ const CoverUpload = ({ currentCover, onUploadSuccess }) => {
           type="button"
           onClick={() => coverInputRef.current?.click()}
           disabled={uploadState === "uploading"}
-          className="flex items-center gap-1.5 text-xs text-[#a3a3a3] hover:text-white font-semibold transition disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-[#52525b] hover:text-[#f0f0f0] font-semibold transition disabled:opacity-50 cursor-pointer"
         >
-          <FiUploadCloud size={14} />
-          {uploadState === "uploading" ? "Uploading..." : "Upload cover photo"}
+          <UploadCloud size={14} />
+          <span>{uploadState === "uploading" ? "Uploading..." : "Upload cover photo"}</span>
         </button>
-        <p className="text-[10px] text-gray-500">JPG, PNG up to 5 MB</p>
+        <p className="text-[10px] text-[#52525b] font-mono">JPG, PNG up to 5 MB</p>
       </div>
 
       <input
@@ -124,7 +133,7 @@ const CoverUpload = ({ currentCover, onUploadSuccess }) => {
   );
 };
 
-// ── Photo Upload Section ───────────────────────────────────────────
+// Photo Upload Section
 const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
@@ -158,7 +167,7 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
 
       setUploadState("success");
       onUploadSuccess(res.data.photoUrl);
-      toast.success("Photo uploaded!", { style: { background: '#121212', color: '#e5e5e5' } });
+      toast.success("Photo uploaded!");
 
       // Reset success badge after 2.5s
       setTimeout(() => setUploadState("idle"), 2500);
@@ -180,29 +189,28 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
 
   return (
     <div className="flex flex-col items-center gap-3 mb-6">
-      {/* Clickable photo circle */}
+      {/* Clickable photo square (matching 64px rounded-xl design language) */}
       <div
-        className={`relative w-28 h-28 rounded-full cursor-pointer group transition-all duration-300 ${
-          dragOver ? "scale-105 ring-4 ring-[#a855f7]/60" : ""
+        className={`relative w-24 h-24 rounded-xl cursor-pointer group transition-all duration-300 ${
+          dragOver ? "scale-105 ring-2 ring-[#ccff00]" : ""
         }`}
         onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
       >
-        {/* Profile image */}
-        <div className="w-full h-full rounded-full p-[3px] bg-gradient-to-tr from-[#ccff00] to-[#a855f7] shadow-lg group-hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all">
+        <div className="w-full h-full rounded-xl p-[2px] bg-gradient-to-tr from-[#ccff00] to-[#b266ff] shadow-lg group-hover:shadow-[0_0_20px_rgba(204,255,0,0.3)] transition-all">
           <img
-            src={preview || "https://geographyandyou.com/images/user-profile.png"}
+            src={preview || "https://ui-avatars.com/api/?name=User&background=111113&color=ccff00"}
             alt="Profile"
-            className="w-full h-full rounded-full object-cover border-4 border-[#121212] bg-[#0a0a0a]"
+            className="w-full h-full rounded-xl object-cover border-2 border-[#111113] bg-[#09090b]"
           />
         </div>
 
         {/* Hover overlay */}
-        <div className="absolute inset-[3px] rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 backdrop-blur-sm">
-          <FaCamera className="text-white text-xl" />
-          <span className="text-white text-[10px] font-semibold">Change</span>
+        <div className="absolute inset-[2px] rounded-xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 backdrop-blur-xs">
+          <Camera className="text-[#f0f0f0] w-4 h-4" />
+          <span className="text-[#f0f0f0] text-[10px] font-semibold">Change</span>
         </div>
 
         {/* Upload state badge */}
@@ -212,9 +220,9 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#121212] rounded-full flex items-center justify-center border-2 border-[#a855f7]/40"
+              className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#111113] rounded-md flex items-center justify-center border border-[#b266ff]/40"
             >
-              <div className="w-4 h-4 border-2 border-[#a855f7] border-t-transparent rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-2 border-[#b266ff] border-t-transparent rounded-full animate-spin" />
             </Motion.div>
           )}
           {uploadState === "success" && (
@@ -222,9 +230,9 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -bottom-1 -right-1 w-8 h-8 bg-[#ccff00] rounded-full flex items-center justify-center border-2 border-[#121212]"
+              className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#ccff00] rounded-md flex items-center justify-center border border-black shadow-[0_0_10px_rgba(204,255,0,0.5)]"
             >
-              <FiCheck className="text-[#0a0a0a]" size={14} />
+              <Check className="text-black" size={13} />
             </Motion.div>
           )}
           {uploadState === "error" && (
@@ -232,9 +240,9 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -bottom-1 -right-1 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center border-2 border-[#121212]"
+              className="absolute -bottom-1 -right-1 w-7 h-7 bg-red-500 rounded-md flex items-center justify-center border border-black"
             >
-              <FiX className="text-white" size={14} />
+              <X className="text-white" size={13} />
             </Motion.div>
           )}
         </AnimatePresence>
@@ -246,12 +254,12 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploadState === "uploading"}
-          className="flex items-center gap-1.5 text-xs text-[#a3a3a3] hover:text-white font-semibold transition disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-[#52525b] hover:text-[#f0f0f0] font-semibold transition disabled:opacity-50 cursor-pointer"
         >
-          <FiUploadCloud size={14} />
-          {uploadState === "uploading" ? "Uploading..." : "Upload new photo"}
+          <UploadCloud size={14} />
+          <span>{uploadState === "uploading" ? "Uploading..." : "Upload profile photo"}</span>
         </button>
-        <p className="text-[10px] text-gray-500">JPG, PNG, GIF up to 5 MB</p>
+        <p className="text-[10px] text-[#52525b] font-mono">JPG, PNG, GIF up to 5 MB</p>
       </div>
 
       {/* Hidden file input */}
@@ -266,7 +274,7 @@ const PhotoUpload = ({ currentPhoto, onUploadSuccess }) => {
   );
 };
 
-// ── Skills Tag / Chip Input Component ─────────────────────────────
+// Skills Tag / Chip Input Component
 const SkillsTagInput = ({ skills = [], onChange }) => {
   const [skillInput, setSkillInput] = useState("");
 
@@ -293,19 +301,19 @@ const SkillsTagInput = ({ skills = [], onChange }) => {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 p-3 bg-[#0a0a0a] rounded-xl border border-white/10 focus-within:border-[#ccff00] focus-within:ring-1 focus-within:ring-[#ccff00] transition-all min-h-[50px] items-center">
+      <div className="flex flex-wrap gap-2 p-3 bg-[#111113] rounded-lg border border-white/10 focus-within:border-[#ccff00] focus-within:ring-1 focus-within:ring-[#ccff00] transition-all min-h-[50px] items-center">
         {skills.map((skill, index) => (
           <span
             key={index}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-[#e5e5e5] border border-white/10"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-[#ccff00]/10 text-[#ccff00] border border-[#ccff00]/20"
           >
             <span>{skill}</span>
             <button
               type="button"
               onClick={() => removeSkill(index)}
-              className="hover:text-red-400 transition-colors focus:outline-none"
+              className="hover:text-red-400 transition-colors focus:outline-none cursor-pointer"
             >
-              <FiX size={13} />
+              <X size={12} />
             </button>
           </span>
         ))}
@@ -318,21 +326,34 @@ const SkillsTagInput = ({ skills = [], onChange }) => {
             if (skillInput.trim()) handleAddSkill(skillInput);
           }}
           placeholder={skills.length === 0 ? "Type skill & press Enter or comma..." : "Add skill..."}
-          className="flex-1 bg-transparent text-[#e5e5e5] font-semibold text-sm outline-none placeholder:text-gray-600 min-w-[140px]"
+          className="flex-1 bg-transparent text-[#f0f0f0] font-mono text-xs outline-none placeholder:text-[#52525b] min-w-[140px]"
         />
       </div>
-      <p className="text-[10px] text-gray-500 mt-1.5">
-        Press Enter or comma to add multi-word skills like "Machine Learning".
+      <p className="text-[10px] font-mono text-[#52525b] mt-1.5">
+        Press Enter or comma to add multi-word skills like &quot;Machine Learning&quot;.
       </p>
     </div>
   );
 };
 
-// ── Main EditProfile Component ─────────────────────────────────────
+// Main EditProfile Component
 const EditProfile = ({ user }) => {
-  const { firstName, lastName, age, gender, photoUrl, about, skills,
-          headline, location, coverPhoto, twitterUrl, portfolioUrl } = user;
+  const {
+    firstName,
+    lastName,
+    age,
+    gender,
+    photoUrl,
+    about,
+    skills,
+    headline,
+    location,
+    coverPhoto,
+    twitterUrl,
+    portfolioUrl,
+  } = user;
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName,
     lastName,
@@ -363,13 +384,11 @@ const EditProfile = ({ user }) => {
     }));
   };
 
-  // Called by PhotoUpload when Cloudinary returns a URL
   const handlePhotoUploaded = (newPhotoUrl) => {
     setFormData((prev) => ({ ...prev, photoUrl: newPhotoUrl }));
     dispatch(addUser({ ...user, photoUrl: newPhotoUrl }));
   };
 
-  // Called by CoverUpload when Cloudinary returns a URL
   const handleCoverUploaded = (newCoverUrl) => {
     setFormData((prev) => ({ ...prev, coverPhoto: newCoverUrl }));
     dispatch(addUser({ ...user, coverPhoto: newCoverUrl }));
@@ -413,8 +432,13 @@ const EditProfile = ({ user }) => {
       const res = await axios.post(BASE_URL + "/profile/edit", formData, {
         withCredentials: true,
       });
-      dispatch(addUser(res?.data?.data));
-      toast.success("Profile updated successfully!", { style: { background: '#121212', color: '#e5e5e5' } });
+      const updatedUser = res?.data?.data || user;
+      dispatch(addUser(updatedUser));
+      toast.success("Profile updated successfully!");
+      const targetUserId = updatedUser?._id || user?._id;
+      if (targetUserId) {
+        navigate(`/user/${targetUserId}`);
+      }
     } catch (err) {
       toast.error(err?.response?.data?.message || err.message);
     }
@@ -422,58 +446,45 @@ const EditProfile = ({ user }) => {
 
   return (
     <div className="w-full px-4 flex flex-col md:flex-row items-start justify-center gap-10 py-6 max-w-7xl mx-auto">
-      {/* ── Left: Form ───────────────────────────────────────── */}
+      {/* Left: Form */}
       <div className="w-full md:w-2/3 flex justify-center">
         <Motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="bg-[#121212] border border-white/10 shadow-2xl rounded-3xl px-8 py-10 w-full max-w-2xl"
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="glass-card border border-white/[0.07] rounded-xl px-8 py-10 w-full max-w-2xl bg-[#111113]"
         >
           {/* Header */}
-          <Motion.div
-            initial={{ y: -16, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.15, duration: 0.5 }}
-            className="text-center mb-10"
-          >
-            <h2 className="text-3xl font-bold text-white flex justify-center items-center gap-3 tracking-tight">
-              <Motion.span
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 3 }}
-              >
-                <FaUserEdit className="text-[#a855f7]" />
-              </Motion.span>
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#f0f0f0] flex justify-center items-center gap-2.5 tracking-tight">
+              <Edit3 className="text-[#ccff00] w-6 h-6" />
               Edit Profile
             </h2>
-            <p className="text-sm font-medium text-[#a3a3a3] mt-2">Manage your developer identity</p>
-          </Motion.div>
+            <p className="text-xs text-[#52525b] mt-1.5 font-mono">Manage your public developer identity</p>
+          </div>
 
-          {/* ── Cover Photo Upload ────────────────────────────── */}
+          {/* Cover Photo Upload */}
           <CoverUpload
             currentCover={formData.coverPhoto}
             onUploadSuccess={handleCoverUploaded}
           />
 
-          {/* ── Photo Upload ──────────────────────────────────── */}
+          {/* Photo Upload */}
           <PhotoUpload
             currentPhoto={formData.photoUrl}
             onUploadSuccess={handlePhotoUploaded}
           />
 
-          <div className="border-t border-white/10 mb-8 w-2/3 mx-auto" />
+          <div className="border-t border-white/[0.07] mb-8 w-2/3 mx-auto" />
 
-          {/* ── Form Fields ───────────────────────────────────── */}
-          <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {fields.map((field, i) => (
-              <Motion.div
+          {/* Form Fields */}
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={saveProfile}>
+            {fields.map((field) => (
+              <div
                 key={field.name}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + i * 0.07, duration: 0.35 }}
                 className={field.type === "textarea" || field.type === "skills" ? "md:col-span-2" : ""}
               >
-                <label className="block text-xs font-bold text-[#a3a3a3] mb-2 uppercase tracking-wider">
+                <label className="block text-xs font-mono font-bold text-[#52525b] mb-2 uppercase tracking-wider">
                   {field.label}
                 </label>
 
@@ -488,7 +499,7 @@ const EditProfile = ({ user }) => {
                       name={field.name}
                       value={formData[field.name] || ""}
                       onChange={handleChange}
-                      className="w-full bg-[#0a0a0a] text-[#e5e5e5] font-semibold px-4 py-3.5 rounded-xl border border-white/10 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] outline-none transition-all text-sm appearance-none pr-10"
+                      className="w-full bg-[#111113] text-[#f0f0f0] font-medium px-4 py-3 rounded-lg border border-white/10 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] outline-none transition-all text-sm appearance-none pr-10 cursor-pointer"
                     >
                       <option value="">Select Gender</option>
                       {field.options.map((opt) => (
@@ -497,7 +508,7 @@ const EditProfile = ({ user }) => {
                         </option>
                       ))}
                     </select>
-                    <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/50" />
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#52525b] w-4 h-4" />
                   </div>
                 ) : field.type === "textarea" ? (
                   <textarea
@@ -506,7 +517,7 @@ const EditProfile = ({ user }) => {
                     onChange={handleChange}
                     rows={4}
                     placeholder={field.placeholder}
-                    className="w-full bg-[#0a0a0a] text-[#e5e5e5] font-semibold px-4 py-3.5 rounded-xl border border-white/10 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] outline-none transition-all placeholder:text-gray-600 resize-none text-sm"
+                    className="w-full bg-[#111113] text-[#f0f0f0] font-normal px-4 py-3 rounded-lg border border-white/10 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] outline-none transition-all placeholder:text-[#52525b] resize-none text-sm"
                   />
                 ) : (
                   <input
@@ -515,42 +526,37 @@ const EditProfile = ({ user }) => {
                     value={formData[field.name] || ""}
                     onChange={handleChange}
                     placeholder={field.placeholder}
-                    className="w-full bg-[#0a0a0a] text-[#e5e5e5] font-semibold px-4 py-3.5 rounded-xl border border-white/10 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] outline-none transition-all placeholder:text-gray-600 text-sm"
+                    className="w-full bg-[#111113] text-[#f0f0f0] font-normal px-4 py-3 rounded-lg border border-white/10 focus:border-[#ccff00] focus:ring-1 focus:ring-[#ccff00] outline-none transition-all placeholder:text-[#52525b] text-sm"
                   />
                 )}
-              </Motion.div>
+              </div>
             ))}
 
             {/* Save button */}
-            <Motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="md:col-span-2 mt-4"
-            >
+            <div className="md:col-span-2 mt-4">
               <button
                 type="submit"
-                onClick={saveProfile}
-                className="w-full bg-[#ccff00] text-[#0a0a0a] font-bold py-4 rounded-xl hover:bg-[#bbf000] transition-colors shadow-lg shadow-[#ccff00]/10"
+                className="w-full bg-[#ccff00] text-black font-bold font-mono uppercase tracking-wider py-3.5 rounded-lg hover:bg-[#d9ff33] transition-all shadow-[0_0_20px_rgba(204,255,0,0.2)] cursor-pointer text-xs"
               >
                 Save Changes
               </button>
-            </Motion.div>
+            </div>
           </form>
         </Motion.div>
       </div>
 
-      {/* ── Right: Live Preview ───────────────────────────────── */}
+      {/* Right: Live Preview */}
       <div className="w-full md:w-1/3 flex flex-col items-center gap-4 pt-2 sticky top-6">
-        <p className="text-xs text-[#a3a3a3] uppercase tracking-widest font-bold">
+        <p className="text-[11px] text-[#52525b] uppercase tracking-widest font-mono font-bold">
           Live Preview
         </p>
         <UserCard user={formData} />
         <Link
           to={`/user/${user?._id}`}
-          className="w-full text-center py-2.5 px-4 rounded-xl border border-white/10 hover:border-[#ccff00] text-sm text-[#e5e5e5] hover:text-[#ccff00] transition font-medium"
+          className="w-full text-center py-2.5 px-4 rounded-lg border border-white/10 hover:border-[#ccff00] text-xs font-mono font-bold uppercase tracking-wider text-[#f0f0f0] hover:text-[#ccff00] transition-all flex items-center justify-center gap-2 cursor-pointer bg-[#111113]"
         >
-          View my public profile →
+          <span>View my public profile</span>
+          <ArrowRight size={13} />
         </Link>
       </div>
     </div>

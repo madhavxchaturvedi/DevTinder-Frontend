@@ -2,15 +2,51 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <script>
+      (function() {
+        if (window.location.pathname === '/' || window.location.pathname === '') {
+          try {
+            var hasAuth = localStorage.getItem('octopair_auth_hint') === 'true' ||
+                          localStorage.getItem('devtinder_auth_hint') === 'true' ||
+                          localStorage.getItem('octopair_auth') === '1' ||
+                          localStorage.getItem('devtinder_auth') === '1' ||
+                          (document.cookie && document.cookie.indexOf('auth_hint=true') !== -1);
+            if (hasAuth) {
+              sessionStorage.setItem('octopair_from_root', '1');
+              window.location.replace('/feed');
+            }
+          } catch (e) {}
+        }
+      })();
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0a0a0a" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OctoPair — Collaborative Developer IDE & Pair Programming</title>
+    <meta name="description" content="Pick a project. Pair up. Build it live. Real-time collaborative workspace for software engineers with WebRTC video, audio, and conflict-free code synchronization." />
+    
+    <!-- OpenGraph Meta Tags -->
+    <meta property="og:title" content="OctoPair — Collaborative Developer IDE & Pair Programming" />
+    <meta property="og:description" content="Pick a project. Pair up. Build it live. Real-time collaborative workspace for software engineers with WebRTC video, audio, and conflict-free code synchronization." />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://octopair.dev" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="OctoPair" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="OctoPair — Collaborative Developer IDE & Pair Programming" />
+    <meta name="twitter:description" content="Pick a project. Pair up. Build it live. Real-time collaborative workspace for software engineers with WebRTC video, audio, and conflict-free code synchronization." />
+    <meta name="twitter:image" content="/og-image.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <title>DevTinder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   </head>
-  <body class="bg-[#09090b] text-white">
+  <body class="bg-[#09090b] text-[#f0f0f0]">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 

@@ -1,4 +1,4 @@
-# DevTinder Frontend - Vercel Deployment
+# OctoPair Frontend - Vercel Deployment
 
 ## Deploy to Vercel
 

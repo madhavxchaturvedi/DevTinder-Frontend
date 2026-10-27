@@ -1,31 +1,23 @@
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { motion, useMotionValue, useTransform, useAnimation } from "framer-motion";
-import React, { useState, useEffect } from "react";
+import { motion as Motion, useMotionValue, useTransform, useAnimation } from "framer-motion";
 import { BASE_URL } from "../utils/constants";
 import { useDispatch, useSelector } from "react-redux";
 import { removeFeed } from "../redux/feedSlice";
-import { FiX, FiUserPlus, FiEdit3, FiCode, FiLayout, FiFileText } from "react-icons/fi";
+import { X, Heart, Code2, FolderGit2, Sparkles } from "lucide-react";
 
 const UserCard = ({ user, isFront, onMatch }) => {
   const dispatch = useDispatch();
   const currentUser = useSelector((store) => store.user);
   const controls = useAnimation();
   const [hasExited, setHasExited] = useState(false);
+  const [localFeaturedPost, setLocalFeaturedPost] = useState(user?.featuredPost || null);
+  const fetchedUserIdRef = useRef(null);
 
   const x = useMotionValue(0);
-  const rotate = useTransform(x, [-250, 250], [-25, 25]);
-  const likeOpacity = useTransform(x, [10, 100], [0, 1]);
-  const nopeOpacity = useTransform(x, [-10, -100], [0, 1]);
-
-  const boxShadow = useTransform(
-    x,
-    [-150, 0, 150],
-    [
-      "0 0 0px rgba(0,0,0,1)",
-      "0 8px 32px rgba(0,0,0,0.4)",
-      "0 0 0px rgba(0,0,0,1)"
-    ]
-  );
+  const rotate = useTransform(x, [-250, 250], [-20, 20]);
+  const likeOpacity = useTransform(x, [15, 120], [0, 1]);
+  const nopeOpacity = useTransform(x, [-15, -120], [0, 1]);
 
   const handleSendRequest = async (status, userId) => {
     dispatch(removeFeed(userId));
@@ -46,20 +38,30 @@ const UserCard = ({ user, isFront, onMatch }) => {
   const handleDragEnd = async (event, info) => {
     if (!isFront || hasExited) return;
     const swipeThreshold = 100;
-    const velocityThreshold = 500;
+    const velocityThreshold = 450;
     const draggedRight = info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold;
     const draggedLeft = info.offset.x < -swipeThreshold || info.velocity.x < -velocityThreshold;
 
     if (draggedRight) {
       setHasExited(true);
-      await controls.start({ x: window.innerWidth, opacity: 0, transition: { duration: 0.3 } });
+      await controls.start({ 
+        x: window.innerWidth + 100, 
+        rotate: 25, 
+        opacity: 0, 
+        transition: { duration: 0.28, ease: "easeOut" } 
+      });
       handleSendRequest("interested", user._id);
     } else if (draggedLeft) {
       setHasExited(true);
-      await controls.start({ x: -window.innerWidth, opacity: 0, transition: { duration: 0.3 } });
+      await controls.start({ 
+        x: -window.innerWidth - 100, 
+        rotate: -25, 
+        opacity: 0, 
+        transition: { duration: 0.28, ease: "easeOut" } 
+      });
       handleSendRequest("ignored", user._id);
     } else {
-      controls.start({ x: 0, transition: { type: "spring", stiffness: 300, damping: 20 } });
+      controls.start({ x: 0, transition: { type: "spring", stiffness: 350, damping: 25 } });
     }
   };
 
@@ -67,10 +69,20 @@ const UserCard = ({ user, isFront, onMatch }) => {
     if (!isFront || hasExited) return;
     setHasExited(true);
     if (status === "interested") {
-      await controls.start({ x: window.innerWidth, rotate: 20, opacity: 0, transition: { duration: 0.3 } });
+      await controls.start({ 
+        x: window.innerWidth + 100, 
+        rotate: 20, 
+        opacity: 0, 
+        transition: { duration: 0.28, ease: "easeOut" } 
+      });
       handleSendRequest("interested", user._id);
     } else {
-      await controls.start({ x: -window.innerWidth, rotate: -20, opacity: 0, transition: { duration: 0.3 } });
+      await controls.start({ 
+        x: -window.innerWidth - 100, 
+        rotate: -20, 
+        opacity: 0, 
+        transition: { duration: 0.28, ease: "easeOut" } 
+      });
       handleSendRequest("ignored", user._id);
     }
   };
@@ -80,239 +92,212 @@ const UserCard = ({ user, isFront, onMatch }) => {
       controls.start(
         isFront
           ? { scale: 1, y: 0, opacity: 1, zIndex: 10, transition: { type: "spring", stiffness: 350, damping: 25 } }
-          : { scale: 0.94, y: 25, opacity: 0.7, zIndex: 0, transition: { type: "spring", stiffness: 350, damping: 25 } }
+          : { scale: 0.94, y: 16, opacity: 0.65, zIndex: 0, transition: { type: "spring", stiffness: 350, damping: 25 } }
       );
     }
   }, [isFront, hasExited, controls]);
 
-  if (!user) return null;
-
-  const getInitials = (first, last) => {
-    return ((first?.[0] || "") + (last?.[0] || "")).toUpperCase();
-  };
-
-  // Bulletproof Skill Computation (fallbacks if Redux is stale)
-  const mySkills = (currentUser?.skills || []).map(s => s.toLowerCase());
-  const theirSkills = user.skills || [];
-  const sharedSkills = user.sharedSkills || theirSkills.filter(s => mySkills.includes(s.toLowerCase()));
-  const otherSkills = user.otherSkills || theirSkills.filter(s => !mySkills.includes(s.toLowerCase()));
-  const compatibility = user.compatibilityPercent !== undefined 
-    ? user.compatibilityPercent 
-    : (theirSkills.length > 0 ? Math.round((sharedSkills.length / theirSkills.length) * 100) : 0);
-  
-  const postCount = user.activitySignals?.postCountThisWeek || 0;
-  const activeProjects = user.activitySignals?.activeProjectRooms || 0;
-
-  const [localFeaturedPost, setLocalFeaturedPost] = useState(user.featuredPost || null);
-  const [fetchingPost, setFetchingPost] = useState(false);
-
   useEffect(() => {
-    if (user && !user.featuredPost && !fetchingPost && !localFeaturedPost) {
-      setFetchingPost(true);
+    if (user?._id && !user.featuredPost && fetchedUserIdRef.current !== user._id) {
+      fetchedUserIdRef.current = user._id;
       axios.get(`${BASE_URL}/user/${user._id}/latest-post`, { withCredentials: true })
         .then(res => {
           if (res.data?.data) {
             setLocalFeaturedPost(res.data.data);
           }
         })
-        .catch(err => console.log(err))
-        .finally(() => setFetchingPost(false));
+        .catch(err => console.log(err));
     }
-  }, [user]);
+  }, [user?._id, user?.featuredPost]);
+
+  if (!user) return null;
+
+  // Skills & Compatibility Calculation
+  const mySkills = (currentUser?.skills || []).map(s => s.toLowerCase());
+  const theirSkills = user.skills || [];
+  const sharedSkills = user.sharedSkills || theirSkills.filter(s => mySkills.includes(s.toLowerCase()));
+  const compatibility = user.compatibilityPercent !== undefined 
+    ? user.compatibilityPercent 
+    : (theirSkills.length > 0 ? Math.round((sharedSkills.length / theirSkills.length) * 100) : 0);
 
   const displayPost = user.featuredPost || localFeaturedPost;
 
   return (
-    <div className={`${isFront !== undefined ? "absolute top-0 left-0" : "relative"} w-full flex flex-col items-center`}>
-      <motion.div
-        className="relative w-[360px] h-[520px] rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing bg-[#141415] border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex flex-col p-6"
+    <div className={`${isFront !== undefined ? "absolute top-0 left-0" : "relative"} w-full flex flex-col items-center select-none`}>
+      {/* -- Holographic Developer ID Card -- */}
+      <Motion.div
+        className="relative w-[360px] h-[520px] rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing bg-[#111113] border border-white/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.7)] flex flex-col"
         drag={isFront && !hasExited ? "x" : false}
-        dragConstraints={false}
-        dragElastic={1}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.9}
         onDragEnd={handleDragEnd}
-        style={{ x, rotate, boxShadow }}
+        style={{ x, rotate }}
         animate={controls}
         initial={
           isFront 
             ? { scale: 1, y: 0, opacity: 1 } 
-            : { scale: 0.94, y: 25, opacity: 0 }
+            : { scale: 0.94, y: 16, opacity: 0 }
         }
       >
-        {/* ── CONNECT / SKIP Stamps ── */}
-        <motion.div
+        {/* Swipe Right (Interested / Connect) Green/Lime Tint Overlay */}
+        <Motion.div
           style={{ opacity: likeOpacity }}
-          className="absolute top-12 left-6 z-30 pointer-events-none"
+          className="absolute inset-0 bg-[#ccff00]/15 pointer-events-none z-30 border-2 border-[#ccff00] rounded-2xl flex items-center justify-center backdrop-blur-[2px]"
         >
-          <div className="border-[3px] border-[#ccff00] rounded-xl px-4 py-1.5 bg-[#ccff00]/10 backdrop-blur-md transform -rotate-12 shadow-2xl">
-            <span className="text-[#ccff00] text-3xl font-black tracking-widest uppercase">
-              Connect
-            </span>
+          <div className="bg-[#ccff00] text-black px-5 py-2 rounded-xl font-black text-2xl tracking-widest uppercase transform -rotate-12 shadow-2xl">
+            CONNECT
           </div>
-        </motion.div>
+        </Motion.div>
 
-        <motion.div
+        {/* Swipe Left (Ignored / Skip) Red Tint Overlay */}
+        <Motion.div
           style={{ opacity: nopeOpacity }}
-          className="absolute top-12 right-6 z-30 pointer-events-none"
+          className="absolute inset-0 bg-red-500/15 pointer-events-none z-30 border-2 border-red-500 rounded-2xl flex items-center justify-center backdrop-blur-[2px]"
         >
-          <div className="border-[3px] border-red-500 rounded-xl px-4 py-1.5 bg-red-500/10 backdrop-blur-md transform rotate-12 shadow-2xl">
-            <span className="text-red-500 text-3xl font-black tracking-widest uppercase">
-              Skip
-            </span>
+          <div className="bg-red-500 text-white px-5 py-2 rounded-xl font-black text-2xl tracking-widest uppercase transform rotate-12 shadow-2xl">
+            SKIP
           </div>
-        </motion.div>
+        </Motion.div>
 
-        {/* ── Top Bar: Compatibility Indicator ── */}
-        <div className="flex justify-end w-full mb-3">
-          {compatibility > 0 ? (
-            <div className={`px-2 py-1 rounded text-xs font-bold ${
-              compatibility >= 50 
-                ? 'bg-[#ccff00]/10 text-[#ccff00]' 
-                : 'bg-white/5 text-[#a3a3a3]'
-            }`}>
-              {compatibility}%
-            </div>
-          ) : (
-            <div className="h-6"></div>
-          )}
-        </div>
-
-        {/* ── Profile Row (Small Avatar) ── */}
-        <div className="flex items-center gap-4 mb-5">
+        {/* Top Half: Large profile photo filling card top half, object-cover, no borders */}
+        <div className="relative w-full h-[52%] overflow-hidden bg-black/60 shrink-0">
           {user.photoUrl ? (
             <img
               src={user.photoUrl}
               alt={user.firstName}
-              className="w-14 h-14 rounded-full object-cover pointer-events-none border border-white/5"
+              className="w-full h-full object-cover pointer-events-none"
             />
           ) : (
-            <div className="w-14 h-14 rounded-full flex items-center justify-center bg-gradient-to-br from-[#a855f7] to-[#7c3aed] border border-white/5 shadow-inner">
-              <span className="text-xl font-bold text-white pointer-events-none">
-                {getInitials(user.firstName, user.lastName)}
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1a1a1f] to-[#111113] text-[#52525b]">
+              <Sparkles size={36} className="text-[#ccff00]/40 mb-2" />
+              <span className="text-xl font-mono font-bold text-[#f0f0f0]">
+                {user.firstName?.[0]}{user.lastName?.[0]}
               </span>
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-white truncate leading-tight">
+
+          {/* Floating Compatibility Badge */}
+          {compatibility > 0 && (
+            <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-md border border-white/10 rounded-md px-2.5 py-1 text-[11px] font-mono font-bold text-[#ccff00] shadow-lg">
+              {compatibility}% Match
+            </div>
+          )}
+
+          {/* Bottom Gradient Overlay: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 50%) */}
+          <div 
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "linear-gradient(to top, rgba(17,17,19,1) 0%, rgba(0,0,0,0.7) 35%, transparent 60%)"
+            }}
+          />
+        </div>
+
+        {/* Bottom Half (Overlaid on photo gradient): Developer Details */}
+        <div className="flex-1 flex flex-col justify-between px-5 pb-5 pt-1 relative z-10 bg-[#111113]">
+          
+          <div>
+            {/* Developer Name & Headline */}
+            <h2 className="text-[20px] font-bold text-white tracking-tight leading-tight truncate">
               {user.firstName} {user.lastName}
             </h2>
-            <p className="text-sm text-[#a3a3a3] truncate mt-0.5">
-              {user.about || "Developer"}
+            <p className="text-[13px] text-[#a0a0a0] leading-snug truncate mt-0.5 font-normal">
+              {user.about || "Software Developer"}
             </p>
-          </div>
-        </div>
 
-        {/* ── Skills Section (Highlighted vs Muted) ── */}
-        <div className="mb-5">
-          <div className="flex flex-wrap gap-2">
-            {sharedSkills.map((skill, idx) => (
-              <span key={`s-${idx}`} className="bg-[#ccff00]/10 text-[#ccff00] border border-[#ccff00]/20 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide">
-                {skill}
-              </span>
-            ))}
-            {otherSkills.slice(0, 6).map((skill, idx) => (
-              <span key={`o-${idx}`} className="bg-white/5 text-[#a3a3a3] border border-white/5 px-2.5 py-1 rounded-md text-[11px] font-medium">
-                {skill}
-              </span>
-            ))}
-            {otherSkills.length > 6 && (
-              <span className="text-[11px] text-[#525252] px-2 py-1 font-medium">
-                +{otherSkills.length - 6}
-              </span>
-            )}
+            {/* Skill badges: mono, lime border */}
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {theirSkills.slice(0, 4).map((skill, idx) => {
+                const isShared = mySkills.includes(skill.toLowerCase());
+                return (
+                  <span 
+                    key={idx} 
+                    className={`rounded-md px-2 py-0.5 text-[11px] font-mono font-bold ${
+                      isShared 
+                        ? 'bg-[#ccff00]/10 text-[#ccff00] border border-[#ccff00]/40' 
+                        : 'bg-white/5 text-white/70 border border-white/10'
+                    }`}
+                  >
+                    {skill}
+                  </span>
+                );
+              })}
+              {theirSkills.length > 4 && (
+                <span className="rounded-md px-1.5 py-0.5 text-[10px] font-mono text-[#52525b]">
+                  +{theirSkills.length - 4}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* ── Activity Signals ── */}
-        <div className="mb-4 flex flex-col gap-2">
-          {postCount > 0 && (
-            <div className="flex items-center gap-2 text-xs text-[#a3a3a3]">
-              <FiEdit3 className="text-[#a3a3a3]" size={14} /> {postCount} post{postCount > 1 ? 's' : ''} this week
+          {/* Featured Code Snippet if available: inset code block bg-black/60 */}
+          {displayPost && (
+            <div className="bg-black/60 rounded-lg border border-white/[0.06] p-2.5 my-2 overflow-hidden">
+              {displayPost.type === 'snippet' && displayPost.codeSnippet ? (
+                <>
+                  <div className="flex items-center justify-between mb-1 text-[10px] font-mono">
+                    <span className="text-[#ccff00] font-bold flex items-center gap-1">
+                      <Code2 size={11} /> Snippet
+                    </span>
+                    <span className="text-[#52525b] uppercase">{displayPost.codeSnippet.language}</span>
+                  </div>
+                  <pre className="text-[11px] font-mono text-[#d4d4d8] leading-tight line-clamp-2 whitespace-pre-wrap">
+                    {displayPost.codeSnippet.code}
+                  </pre>
+                </>
+              ) : displayPost.type === 'project' ? (
+                <div className="text-xs">
+                  <div className="flex items-center gap-1 text-[10px] font-mono font-bold text-[#b266ff] mb-0.5">
+                    <FolderGit2 size={11} /> Project
+                  </div>
+                  <p className="font-bold text-[#f0f0f0] truncate text-[12px]">{displayPost.project?.title || "Project"}</p>
+                  <p className="text-[11px] text-[#52525b] truncate">{displayPost.content}</p>
+                </div>
+              ) : (
+                <div className="text-xs">
+                  <p className="text-[11px] text-[#d4d4d8] line-clamp-2 leading-snug">
+                    {displayPost.content}
+                  </p>
+                </div>
+              )}
             </div>
           )}
-          {activeProjects > 0 && (
-            <div className="flex items-center gap-2 text-xs text-[#a3a3a3]">
-              <FiCode className="text-[#a3a3a3]" size={14} /> Active in {activeProjects} repo{activeProjects > 1 ? 's' : ''}
-            </div>
-          )}
-        </div>
 
-        {/* ── Featured Work Preview ── */}
-        {displayPost && (
-          <div className="bg-[#0a0a0b] border border-white/5 rounded-lg p-3 relative overflow-hidden mb-4">
-            {displayPost.type === 'snippet' && displayPost.codeSnippet ? (
-              <>
-                 <div className="flex items-center justify-between mb-2">
-                   <span className="flex items-center gap-1.5 text-[#a855f7] text-[10px] font-bold uppercase tracking-wider">
-                     <FiCode size={12} /> Code Snippet
-                   </span>
-                   <span className="text-[9px] text-[#525252] font-mono">{displayPost.codeSnippet.language}</span>
-                 </div>
-                 <pre className="text-[11px] text-[#e5e5e5] font-mono line-clamp-3 leading-relaxed opacity-90 whitespace-pre-wrap">
-                   {displayPost.codeSnippet.code}
-                 </pre>
-              </>
-            ) : displayPost.type === 'project' ? (
-              <>
-                 <div className="flex items-center mb-1.5 text-[#ccff00] text-[10px] font-bold uppercase tracking-wider">
-                   <FiLayout size={12} className="mr-1.5" /> Project Showcase
-                 </div>
-                 <p className="text-[13px] font-bold text-white truncate">{displayPost.project?.title || "New Project"}</p>
-                 <p className="text-[11px] text-[#a3a3a3] line-clamp-1 mt-1 leading-relaxed">{displayPost.content}</p>
-              </>
-            ) : (
-              <>
-                 <div className="flex items-center mb-1.5 text-[#a3a3a3] text-[10px] font-bold uppercase tracking-wider">
-                   <FiFileText size={12} className="mr-1.5" /> Latest Post
-                 </div>
-                 <p className="text-[12px] text-[#e5e5e5] line-clamp-3 leading-relaxed">{displayPost.content}</p>
-              </>
-            )}
-            <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-[#0a0a0b] to-transparent pointer-events-none"></div>
+          {/* Bottom Card Footer / Stack Hint */}
+          <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-[#52525b]">
+            <span>{sharedSkills.length > 0 ? `${sharedSkills.length} shared skills` : "Discover stack"}</span>
+            <span>Swipe or click below</span>
           </div>
-        )}
 
-        {/* ── Why This Card ── */}
-        <div className="mt-auto pt-3 border-t border-white/5">
-          {sharedSkills.length > 0 ? (
-            <p className="text-[11px] text-[#a855f7] italic font-medium">
-              Matches your {sharedSkills.slice(0, 2).join(' + ')} stack
-            </p>
-          ) : (
-            <p className="text-[11px] text-[#525252] italic">
-              Explore new skills
-            </p>
-          )}
         </div>
-      </motion.div>
+      </Motion.div>
 
-      {/* Action Buttons */}
-      <motion.div 
-        className="flex justify-center gap-14 mt-6 pointer-events-auto relative z-20"
-        animate={{ opacity: isFront && !hasExited ? 1 : 0, scale: isFront && !hasExited ? 1 : 0.8 }}
+      {/* Action Buttons: Two large circular buttons at bottom center -- X (ghost, left) and heart/connect (lime fill, right) */}
+      <Motion.div 
+        className="flex items-center justify-center gap-8 mt-5 relative z-20 pointer-events-auto"
+        animate={{ opacity: isFront && !hasExited ? 1 : 0 }}
         transition={{ duration: 0.2 }}
         style={{ pointerEvents: isFront && !hasExited ? "auto" : "none" }}
       >
-        <div className="flex flex-col items-center gap-2 group">
-          <button
-            onClick={() => handleAction("ignored")}
-            disabled={!isFront || hasExited}
-            className="w-16 h-16 bg-[#141415] border-2 border-[#262626] rounded-full flex items-center justify-center hover:border-red-500/50 hover:bg-red-500/10 active:scale-90 transition-all disabled:opacity-50 shadow-xl group-hover:shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-          >
-            <FiX className="text-[#737373] group-hover:text-red-400 transition-colors" size={28} />
-          </button>
-          <span className="text-[11px] text-[#737373] font-bold uppercase tracking-widest group-hover:text-red-400 transition-colors">Skip</span>
-        </div>
-        <div className="flex flex-col items-center gap-2 group">
-          <button
-            onClick={() => handleAction("interested")}
-            disabled={!isFront || hasExited}
-            className="w-16 h-16 bg-[#ccff00] rounded-full flex items-center justify-center hover:bg-[#bbf000] active:scale-90 transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(204,255,0,0.4)] group-hover:shadow-[0_0_30px_rgba(204,255,0,0.6)]"
-          >
-            <FiUserPlus className="text-black" size={26} />
-          </button>
-          <span className="text-[11px] text-[#ccff00] font-bold uppercase tracking-widest opacity-90 group-hover:opacity-100 transition-opacity">Connect</span>
-        </div>
-      </motion.div>
+        {/* X (Ghost, Left) */}
+        <button
+          onClick={() => handleAction("ignored")}
+          disabled={!isFront || hasExited}
+          className="w-14 h-14 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#52525b] hover:text-red-400 hover:border-red-400/40 hover:bg-red-500/10 active:scale-95 transition-all shadow-lg group"
+          title="Skip"
+        >
+          <X size={24} className="group-hover:scale-110 transition-transform" />
+        </button>
+
+        {/* Heart / Connect (Lime Fill, Right) */}
+        <button
+          onClick={() => handleAction("interested")}
+          disabled={!isFront || hasExited}
+          className="w-14 h-14 rounded-full bg-[#ccff00] flex items-center justify-center text-black hover:bg-[#d9ff33] hover:shadow-[0_0_25px_rgba(204,255,0,0.4)] active:scale-95 transition-all shadow-lg group"
+          title="Connect"
+        >
+          <Heart size={24} className="fill-current group-hover:scale-110 transition-transform" />
+        </button>
+      </Motion.div>
     </div>
   );
 };

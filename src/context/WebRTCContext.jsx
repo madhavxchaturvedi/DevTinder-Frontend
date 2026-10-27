@@ -6,6 +6,7 @@ import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneOff, FiMaximize2 } from 'r
 
 const WebRTCContext = createContext(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useWebRTCContext = () => useContext(WebRTCContext);
 
 export const WebRTCProvider = ({ children }) => {
@@ -77,7 +78,7 @@ export const WebRTCProvider = ({ children }) => {
     const sock = getSocket();
     if (!sock || !myUserId || !currentRoomId) return;
     
-    const handleJoin = async ({ from }) => {
+    const handleJoin = async () => {
       if (isInCall && peerConnectionRef.current) {
         try {
           makingOfferRef.current = true;
@@ -201,7 +202,8 @@ export const WebRTCProvider = ({ children }) => {
       try {
         source = audioCtx.createMediaStreamSource(localStream);
         source.connect(analyser);
-      } catch (e) {
+      } catch {
+        // Stream may not have active audio track
       }
 
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -244,7 +246,8 @@ export const WebRTCProvider = ({ children }) => {
       try {
         source = audioCtx.createMediaStreamSource(remoteStream);
         source.connect(analyser);
-      } catch (e) {
+      } catch {
+        // Stream may not have active audio track
       }
 
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
