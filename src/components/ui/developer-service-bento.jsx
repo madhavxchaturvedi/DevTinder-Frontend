@@ -84,7 +84,7 @@ function ArrowCursor({
           className={cn(
             inverted
               ? "fill-white stroke-[#080808]"
-              : "fill-[#edff00] stroke-white dark:stroke-white/70"
+              : "fill-[#ccff00] stroke-white dark:stroke-white/70"
           )}
           strokeWidth="2.1"
           strokeLinejoin="round"
@@ -96,9 +96,9 @@ function ArrowCursor({
           inverted
             ? "rounded-full bg-[#f2f2f2] text-black shadow-[0_5px_18px_rgba(0,0,0,0.28)]"
             : cn(
-                "rounded-[22px] border border-white/60 bg-[#edff00] text-black",
+                "rounded-[22px] border border-white/60 bg-[#ccff00] text-black",
                 active
-                  ? "shadow-[0_5px_18px_rgba(0,0,0,0.24),0_0_14px_rgba(237,255,0,0.18)]"
+                  ? "shadow-[0_5px_18px_rgba(0,0,0,0.24),0_0_14px_rgba(204,255,0,0.18)]"
                   : "shadow-[0_5px_18px_rgba(0,0,0,0.22)]"
               )
         )}
@@ -247,7 +247,7 @@ function DesignsPanel({
               "relative flex aspect-square min-w-0 flex-1 items-center justify-center overflow-hidden rounded-[9px] border sm:rounded-[10px] cursor-pointer",
               "bg-[linear-gradient(145deg,#222_0%,#1a1a1a_48%,#141414_100%)] shadow-[inset_0_1px_rgba(255,255,255,.025),0_10px_22px_rgba(0,0,0,.32)]",
               selected === index
-                ? "border-[#edff00]/25 text-[#edff00] shadow-[inset_0_1px_rgba(255,255,255,.025),0_10px_24px_rgba(0,0,0,.34),0_0_18px_rgba(237,255,0,.045)]"
+                ? "border-[#ccff00]/30 text-[#ccff00] shadow-[inset_0_1px_rgba(255,255,255,.025),0_10px_24px_rgba(0,0,0,.34),0_0_18px_rgba(204,255,0,.08)]"
                 : "border-white/[0.055] text-[#e8e8e8]"
             )}
             animate={
@@ -269,7 +269,7 @@ function DesignsPanel({
             {selected === index && (
               <motion.span
                 aria-hidden
-                className="absolute inset-[12%] rounded-full bg-[#edff00]/[0.15] blur-xl"
+                className="absolute inset-[12%] rounded-full bg-[#ccff00]/[0.18] blur-xl"
                 initial={{ opacity: 0, scale: 0.7 }}
                 animate={{ opacity: [0.35, 0.7, 0.35], scale: [0.9, 1.08, 0.9] }}
                 transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
@@ -349,7 +349,7 @@ function InvoicePanel({
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={invoiceIndex}
-            className="absolute left-[21%] top-5 h-[225px] w-[58%] overflow-hidden rounded-[10px] border border-[#343434]/80 bg-[linear-gradient(145deg,#1c1c1c_0%,#161616_48%,#101010_100%)] p-3.5 shadow-[inset_0_1px_rgba(255,255,255,.02),0_16px_36px_rgba(0,0,0,.38),0_3px_8px_rgba(0,0,0,.25)] sm:left-auto sm:right-4 sm:h-[250px] sm:w-[89%] @min-[520px]:right-7 @min-[520px]:p-5 cursor-pointer hover:border-[#edff00]/40 transition-colors"
+            className="absolute left-[21%] top-5 h-[225px] w-[58%] overflow-hidden rounded-[10px] border border-[#343434]/80 bg-[linear-gradient(145deg,#1c1c1c_0%,#161616_48%,#101010_100%)] p-3.5 shadow-[inset_0_1px_rgba(255,255,255,.02),0_16px_36px_rgba(0,0,0,.38),0_3px_8px_rgba(0,0,0,.25)] sm:left-auto sm:right-4 sm:h-[250px] sm:w-[89%] @min-[520px]:right-7 @min-[520px]:p-5 cursor-pointer hover:border-[#ccff00]/40 transition-colors"
             initial={reduceMotion ? false : { y: 270, opacity: 0, rotate: -1.25 }}
             animate={{ y: 0, opacity: 1, rotate: 0 }}
             exit={reduceMotion ? { opacity: 0 } : { y: 285, opacity: 0, rotate: 1.1 }}
@@ -366,7 +366,7 @@ function InvoicePanel({
                 <span
                   className={cn(
                     "text-[26px] font-medium tracking-[-0.055em] @min-[520px]:text-[30px]",
-                    invoice.accent ? "text-[#edff00]" : "text-[#8e8e8e]"
+                    invoice.accent ? "text-[#ccff00]" : "text-[#8e8e8e]"
                   )}
                 >
                   {formatPrice.format(invoice.price)}
@@ -428,7 +428,7 @@ function InvoicePanel({
         action={
           <Link
             to="/pricing"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#edff00]/40 bg-[#edff00]/10 hover:bg-[#edff00]/20 text-[#edff00] text-xs font-semibold tracking-tight transition-all duration-200 group/btn shadow-[0_0_15px_rgba(237,255,0,0.1)] active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#ccff00]/40 bg-[#ccff00]/10 hover:bg-[#ccff00]/20 text-[#ccff00] text-xs font-semibold tracking-tight transition-all duration-200 group/btn shadow-[0_0_15px_rgba(204,255,0,0.15)] active:scale-95"
           >
             <span>View pricing & plans</span>
             <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5" />
@@ -522,14 +522,14 @@ function PausePanel({
             "relative z-10 flex h-[78px] min-w-[174px] items-center justify-center overflow-hidden rounded-[20px] border px-8 text-[28px] font-semibold tracking-[-0.055em] transition-[border-color,color,box-shadow] duration-500 cursor-pointer",
             "from-[#181818] to-[#0d0d0d] bg-gradient-to-br",
             arrowLit
-              ? "border-[#edff00] text-[#050505] shadow-[0_10px_24px_rgba(0,0,0,.28)]"
+              ? "border-[#ccff00] text-[#050505] shadow-[0_10px_24px_rgba(0,0,0,.28)]"
               : "border-white/[0.14] text-[#f1f1f1] shadow-[inset_0_1px_rgba(255,255,255,.035),0_10px_30px_rgba(0,0,0,.32)]"
           )}
           aria-pressed={paused}
         >
           <motion.span
             aria-hidden
-            className="absolute inset-0 bg-[#edff00]"
+            className="absolute inset-0 bg-[#ccff00]"
             animate={{ opacity: arrowLit ? 1 : 0 }}
             transition={{ duration: arrowLit ? 0.64 : 0.76, ease: arrowLit ? [0.16, 1, 0.3, 1] : [0.22, 1, 0.36, 1] }}
           />
