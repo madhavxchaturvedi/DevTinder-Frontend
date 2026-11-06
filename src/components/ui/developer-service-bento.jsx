@@ -15,11 +15,11 @@ const DEFAULT_COPY = {
   showcaseDescription: "From React UI to backend microservices, pair with engineers using the exact frameworks, databases, and runtimes your codebase already relies on.",
   pricingTitle: (
     <>
-      Real co-builders.<br />
-      Zero agency markups.
+      Always free to pair.<br />
+      Pro is just $9/mo.
     </>
   ),
-  pricingDescription: "Stop burning tens of thousands on dev shops or recruiters. Find a technical co-builder who shares your vision and ship your MVP together for free.",
+  pricingDescription: "Complete access to find collaborators, post projects, and pair live for $0. Upgrade to Pro anytime for unlimited rooms and priority matching.",
   pauseTitle: (
     <>
       Build on your terms.<br />
@@ -307,8 +307,8 @@ function DesignsPanel({
 }
 
 function InvoicePanel({
-  monthlyPrice = 1990,
-  previousPrice = 32000,
+  monthlyPrice = 9,
+  previousPrice = 15,
   currency = "USD",
   locale = "en-US",
   autoPlay = true,
@@ -322,8 +322,8 @@ function InvoicePanel({
     [currency, locale]
   );
   const invoices = [
-    { label: "Invoice", price: previousPrice, previousPrice: null, accent: false },
-    { label: "Invoice", price: monthlyPrice, previousPrice, accent: true },
+    { label: "Starter", price: 0, previousPrice: null, accent: false, cadence: "/ forever" },
+    { label: "Pro Plan", price: monthlyPrice, previousPrice, accent: true, cadence: "/ month" },
   ];
 
   React.useEffect(() => {
@@ -374,6 +374,11 @@ function InvoicePanel({
                 {invoice.previousPrice && (
                   <span className="text-[14px] text-[#767676] line-through @min-[520px]:text-[16px]">
                     {formatPrice.format(invoice.previousPrice)}
+                  </span>
+                )}
+                {invoice.cadence && (
+                  <span className="text-[12px] text-zinc-500 font-medium">
+                    {invoice.cadence}
                   </span>
                 )}
               </div>
@@ -539,8 +544,8 @@ function PausePanel({
 }
 
 export function ResearchBentoGrid({
-  monthlyPrice = 1990,
-  previousPrice = 32000,
+  monthlyPrice = 9,
+  previousPrice = 15,
   currency = "USD",
   locale = "en-US",
   paused,
