@@ -9,6 +9,7 @@ import { OctoPairLogo } from "../brand/OctoPairLogo";
  * - Real external social links: GitHub (github.com), X (x.com), Discord (discord.com)
  * - Real legal internal links: /privacy and /terms
  * - Giant monospace code line <OctoPair /> clipped 20% at the bottom (translate-y-[20%] & overflow-hidden)
+ * - Metallic gradient watermark: bg-gradient-to-b from-white/25 via-white/10 to-white/[0.02] bg-clip-text text-transparent
  * - Two drifting collaborative cursors: "Alex" (driftOne) and "Elena" (driftTwo)
  */
 const LandingFooter = () => {
@@ -26,7 +27,7 @@ const LandingFooter = () => {
               </span>
             </Link>
             <p className="text-xs text-[#a0a0a0] max-w-sm leading-relaxed">
-              The high-performance multiplayer IDE for builders. Pair program with sub-50ms latency, zero local installation, and cryptographically verified proof of work.
+              The high-performance multiplayer IDE for builders. Pair program with real-time sync, zero local installation, and verified proof of work.
             </p>
             <div className="flex items-center gap-4 pt-2">
               <a
@@ -135,7 +136,7 @@ const LandingFooter = () => {
 
         <div className="mt-12 pt-6 border-t border-white/[0.07] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-[#52525b]">
           <p>© {new Date().getFullYear()} OctoPair. Built for real-time collaboration.</p>
-          <p>Sub-50ms peer operational transform.</p>
+          <p>Instant, real-time code synchronization.</p>
         </div>
       </div>
 
@@ -170,7 +171,7 @@ const LandingFooter = () => {
         </div>
 
         {/* Giant Monospace code line clipped 20% at the bottom */}
-        <div className="font-mono font-black text-6xl sm:text-8xl md:text-9xl lg:text-[14rem] tracking-tighter text-white/[0.04] translate-y-[20%] whitespace-nowrap leading-none pb-2">
+        <div className="font-mono font-black text-6xl sm:text-8xl md:text-9xl lg:text-[14rem] tracking-tighter bg-gradient-to-b from-white/25 via-white/10 to-white/[0.02] bg-clip-text text-transparent translate-y-[20%] whitespace-nowrap leading-none pb-2">
           &lt;OctoPair /&gt;
         </div>
       </div>

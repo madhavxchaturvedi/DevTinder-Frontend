@@ -1,13 +1,9 @@
 import React from "react";
 
 /**
- * Feature F17: Tech Stack Infinite Marquee
+ * Tech Stack Infinite Marquee & Transition Divider
  * 
- * - Renders 16+ languages and frameworks:
- *   React, TypeScript, Python, Rust, Go, Node.js, Next.js, Docker,
- *   Tailwind CSS, GraphQL, PostgreSQL, Redis, Kubernetes, WebRTC, Linux, Git
- * - Tailwind v4 infinite marquee animation with pause on hover: hover:[animation-play-state:paused]
- * - Edge mask fades with linear-gradient / mask-image
+ * Bridges Hero Section into Section 2 with smooth infinite scrolling tech stack pills.
  */
 const TECH_STACK = [
   { name: "React", category: "Frontend" },
@@ -28,45 +24,45 @@ const TECH_STACK = [
   { name: "Git", category: "VCS" },
 ];
 
-const TechMarquee = () => {
-  // Duplicate items for continuous seamless loop
+export const TechMarquee = () => {
   const marqueeItems = [...TECH_STACK, ...TECH_STACK];
 
   return (
-    <section className="relative w-full py-12 overflow-hidden bg-[#09090b] border-y border-white/[0.07]">
-      {/* ── Subtitle / Eyebrow ─────────────────────────────────────── */}
-      <div className="text-center mb-6">
-        <p className="text-[11px] font-mono uppercase tracking-widest text-[#52525b]">
-          Supported Stacks & Real-Time Runtimes
+    <div className="relative w-full py-10 overflow-hidden bg-[#09090b] border-y border-white/[0.08]">
+      {/* Subtle Top & Bottom Glowing Divider Lines */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#ccff00]/25 to-transparent" />
+      <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+      {/* Eyebrow Label */}
+      <div className="text-center mb-5">
+        <p className="text-[11px] font-sans uppercase tracking-widest text-neutral-400 font-medium">
+          Supported Stacks &amp; Real-Time Environments
         </p>
       </div>
 
-      {/* ── Edge Mask Wrapper ───────────────────────────────────────── */}
+      {/* Infinite Scrolling Track with Edge Gradient Fade */}
       <div 
-        className="relative w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]"
+        className="relative w-full overflow-hidden"
         style={{
-          maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
-          WebkitMaskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
+          maskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
+          WebkitMaskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
         }}
       >
-        <div className="flex w-max items-center gap-4 py-2 animate-marquee hover:[animation-play-state:paused]">
+        <div className="flex w-max items-center gap-3.5 py-1.5 animate-marquee hover:[animation-play-state:paused]">
           {marqueeItems.map((tech, idx) => (
             <div
               key={`${tech.name}-${idx}`}
-              className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-[#111113] border border-white/10 hover:border-[#ccff00]/40 transition-colors duration-200 select-none group shadow-sm"
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#111113] border border-white/10 hover:border-white/25 transition-colors select-none group shadow-sm"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ccff00]/70 group-hover:bg-[#ccff00] transition-colors" />
-              <span className="font-mono text-xs font-medium text-[#f0f0f0] group-hover:text-white transition-colors">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#ccff00]/80 group-hover:bg-[#ccff00] transition-colors" />
+              <span className="font-sans text-xs font-medium text-neutral-300 group-hover:text-white transition-colors">
                 {tech.name}
-              </span>
-              <span className="text-[10px] font-mono text-[#52525b] group-hover:text-[#a0a0a0] transition-colors">
-                {tech.category}
               </span>
             </div>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

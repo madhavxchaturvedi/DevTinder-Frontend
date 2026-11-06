@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { Terminal } from "lucide-react";
+import { Terminal, Check, Zap } from "lucide-react";
 import MultiplayerCursor from "./MultiplayerCursor";
 
 /**
@@ -216,21 +216,27 @@ function countTotalChars(lines) {
 const TOTAL_ALEX_CHARS = countTotalChars(ALEX_LINES); // 59
 const TOTAL_ELENA_CHARS = countTotalChars(ELENA_LINES); // 67
 
-// Render individual token slices with active cursor badge
+// Skiper UI dual cursor badge with angled pointer head and floating presence pill
 const CursorElement = ({ color, name }) => (
   <span className="relative inline-flex items-center mx-[1px] select-none pointer-events-none align-middle">
+    {/* Caret Line */}
     <span
-      className="inline-block w-[2px] h-[16px] animate-pulse rounded-full"
+      className="inline-block w-[2px] h-[18px] animate-pulse rounded-full"
       style={{ backgroundColor: color }}
     />
+    {/* Skiper Presence Pill with Pointer Head */}
     <span
-      className="absolute -top-4 left-0 px-1 py-[1px] rounded text-[9px] font-mono font-bold leading-none shadow-md z-10 whitespace-nowrap"
+      className="absolute -top-6 -left-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold leading-none shadow-lg z-20 whitespace-nowrap flex items-center gap-1"
       style={{
         backgroundColor: color,
         color: color === "#ccff00" ? "#000000" : "#ffffff",
+        boxShadow: `0 2px 10px ${color}40`,
       }}
     >
-      {name}
+      <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
+        <path d="M3.5 2.5L19.5 12.5L11.5 14L8.5 21.5L3.5 2.5Z" />
+      </svg>
+      <span>{name}</span>
     </span>
   </span>
 );
@@ -499,9 +505,9 @@ export default function HeroMockEditor({
           </button>
         </div>
 
-        {/* Live Peer Status & Collaborators */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ccff00]/10 border border-[#ccff00]/30 text-[#ccff00] text-[10px] sm:text-[11px] font-mono font-bold tracking-wider">
+        {/* Skiper Presence Pill & Collaborator Badges */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ccff00]/10 border border-[#ccff00]/30 text-[#ccff00] text-[10px] sm:text-[11px] font-mono font-bold tracking-wider shadow-[0_0_10px_rgba(204,255,0,0.15)]">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ccff00] opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ccff00]" />
@@ -509,13 +515,13 @@ export default function HeroMockEditor({
             <span>LIVE PEERS (2)</span>
           </div>
 
-          {/* Collaborator Avatars */}
+          {/* Collaborator Presence Chips */}
           <div className="hidden sm:flex items-center gap-1.5">
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/40 border border-[#ccff00]/30 text-[#ccff00] text-[10px]">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ccff00]/10 border border-[#ccff00]/30 text-[#ccff00] text-[10px] font-mono font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-[#ccff00]" />
               Alex
             </span>
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/40 border border-[#b266ff]/30 text-[#b266ff] text-[10px]">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#b266ff]/10 border border-[#b266ff]/30 text-[#b266ff] text-[10px] font-mono font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-[#b266ff]" />
               Elena
             </span>
@@ -544,7 +550,7 @@ export default function HeroMockEditor({
             ))}
 
             {/* Line 7 (Alex typing line 1) */}
-            <div className="flex items-center h-6">
+            <div className={`flex items-center h-6 transition-colors duration-150 ${isLine7Cursor ? "bg-[#ccff00]/[0.04] border-l-2 border-[#ccff00]" : ""}`}>
               <span className="w-7 sm:w-8 text-right pr-3 sm:pr-4 text-[#52525b] select-none text-xs">
                 7
               </span>
@@ -567,7 +573,7 @@ export default function HeroMockEditor({
             </div>
 
             {/* Line 8 (Alex typing line 2) */}
-            <div className="flex items-center h-6">
+            <div className={`flex items-center h-6 transition-colors duration-150 ${isLine8Cursor ? "bg-[#ccff00]/[0.04] border-l-2 border-[#ccff00]" : ""}`}>
               <span className="w-7 sm:w-8 text-right pr-3 sm:pr-4 text-[#52525b] select-none text-xs">
                 8
               </span>
@@ -583,7 +589,7 @@ export default function HeroMockEditor({
             </div>
 
             {/* Line 9 (Alex typing line 3) */}
-            <div className="flex items-center h-6">
+            <div className={`flex items-center h-6 transition-colors duration-150 ${isLine9Cursor ? "bg-[#ccff00]/[0.04] border-l-2 border-[#ccff00]" : ""}`}>
               <span className="w-7 sm:w-8 text-right pr-3 sm:pr-4 text-[#52525b] select-none text-xs">
                 9
               </span>
@@ -599,7 +605,7 @@ export default function HeroMockEditor({
             </div>
 
             {/* Line 10 (Elena typing line 1) */}
-            <div className="flex items-center h-6">
+            <div className={`flex items-center h-6 transition-colors duration-150 ${isLine10Cursor ? "bg-[#b266ff]/[0.04] border-l-2 border-[#b266ff]" : ""}`}>
               <span className="w-7 sm:w-8 text-right pr-3 sm:pr-4 text-[#52525b] select-none text-xs">
                 10
               </span>
@@ -622,7 +628,7 @@ export default function HeroMockEditor({
             </div>
 
             {/* Line 11 (Elena typing line 2) */}
-            <div className="flex items-center h-6">
+            <div className={`flex items-center h-6 transition-colors duration-150 ${isLine11Cursor ? "bg-[#b266ff]/[0.04] border-l-2 border-[#b266ff]" : ""}`}>
               <span className="w-7 sm:w-8 text-right pr-3 sm:pr-4 text-[#52525b] select-none text-xs">
                 11
               </span>
@@ -689,24 +695,27 @@ export default function HeroMockEditor({
         {/* Terminal Output Stream */}
         <div className="flex flex-col gap-1 text-zinc-400">
           <div className="flex items-center gap-2">
-            <span className="text-[#ccff00] font-bold">⚡ [Sync]</span>
+            <span className="text-[#ccff00] font-bold inline-flex items-center gap-1">
+              <Zap className="w-3 h-3 text-[#ccff00]" />
+              <span>[Sync]</span>
+            </span>
             <span>Peer connected: 18ms latency</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-emerald-400">✓</span>
+            <Check className="w-3 h-3 text-emerald-400 shrink-0" />
             <span>WebRTC DataChannel established (p2p-mesh)</span>
           </div>
 
           {showTests ? (
             <div className="flex items-center gap-2 text-emerald-400 font-bold transition-all duration-300">
-              <span className="text-emerald-400">✓</span>
+              <Check className="w-3 h-3 text-emerald-400 shrink-0" />
               <span>Tests passing: 12/12</span>
               <span className="text-zinc-500 font-normal text-[10px] ml-1">(24ms)</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-zinc-500">
-              <span className="animate-spin inline-block">⠋</span>
+              <span className="w-2 h-2 rounded-full bg-[#ccff00] animate-pulse inline-block" />
               <span>Compiling AST delta...</span>
             </div>
           )}

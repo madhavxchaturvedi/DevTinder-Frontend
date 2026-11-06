@@ -53,12 +53,12 @@ export const MARKETING_ROUTES = [
   {
     path: "/",
     outputPath: "index.html",
-    title: "OctoPair — Collaborative Developer IDE & Pair Programming",
-    description: "Pick a project. Pair up. Build it live. Real-time collaborative workspace for software engineers with WebRTC video, audio, and conflict-free code synchronization.",
+    title: "OctoPair — The Multiplayer IDE for Builders",
+    description: "Pick a project. Pair up. Build it live. Real-time collaborative workspace for software engineers with WebRTC video, audio, and instant, real-time code synchronization.",
     eyebrow: "THE MULTIPLAYER IDE FOR BUILDERS",
     headline: "Pick a project. Pair up. Build it live.",
     isRoot: true,
-    subhead: "Real-time collaborative workspace for software engineers with WebRTC video, audio, and conflict-free code synchronization.",
+    subhead: "Real-time collaborative workspace for software engineers with WebRTC video, audio, and instant, real-time code synchronization.",
     primaryCta: { label: "Start Pairing Free", href: "/login?mode=signup" },
     secondaryCta: { label: "Watch a Session", href: "/features/collab" },
     highlights: ["Sub-50ms Peer Sync", "Curated Project Graph", "Verified Proof of Work"],
@@ -80,14 +80,14 @@ export const MARKETING_ROUTES = [
     path: "/features/collab",
     outputPath: "features/collab/index.html",
     title: "Live Multiplayer Collaboration — OctoPair",
-    description: "Sub-50ms multiplayer IDE with WebRTC audio/video mesh, operational transforms, and shared cloud terminals.",
+    description: "Sub-50ms multiplayer IDE with WebRTC audio/video mesh, instant, real-time code synchronization, and shared cloud terminals.",
     eyebrow: "REAL-TIME MULTIPLAYER IDE",
     headline: "Sub-50ms Live Collaboration",
     isRoot: false,
-    subhead: "Multiplayer IDE with WebRTC operational transforms, shared cloud terminals, and synced previews.",
+    subhead: "Multiplayer IDE with instant, real-time code synchronization, shared cloud terminals, and synced previews.",
     primaryCta: { label: "Start Pairing Free", href: "/login?mode=signup" },
     secondaryCta: { label: "Explore Developer Feed", href: "/features/feed" },
-    highlights: ["WebRTC P2P Mesh", "Operational Transforms", "Shared Cloud Terminals"],
+    highlights: ["WebRTC P2P Mesh", "Instant, Real-Time Code Sync", "Shared Cloud Terminals"],
   },
   {
     path: "/features/feed",
@@ -145,7 +145,7 @@ export const MARKETING_ROUTES = [
 
 /**
  * Prerendered SSR Shell Component
- * Emits semantic markup conforming to the single <h1> invariant (only on root /)
+ * Emits semantic markup conforming to the single <h1> invariant per document across all marketing routes
  */
 const RoutePrerenderShell = ({ route }) => {
   return React.createElement(
@@ -199,9 +199,9 @@ const RoutePrerenderShell = ({ route }) => {
         route.eyebrow
       ),
 
-      // Semantic Heading (h1 on root, h2 on sub-pages)
+      // Semantic Heading (h1 across all marketing routes)
       React.createElement(
-        route.isRoot ? "h1" : "h2",
+        "h1",
         { className: "text-4xl sm:text-6xl font-black tracking-tight text-[#f0f0f0] max-w-4xl leading-tight mb-6" },
         route.headline
       ),

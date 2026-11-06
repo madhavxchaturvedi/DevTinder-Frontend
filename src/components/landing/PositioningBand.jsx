@@ -5,9 +5,9 @@ import { Zap, GitBranch, ShieldCheck } from "lucide-react";
  * Feature F18: Positioning Band
  * 
  * High-contrast 3-pillar value statement:
- * 1. Sub-50ms Peer Sync (WebRTC)
+ * 1. Instant Sync (WebRTC)
  * 2. Curated Project Graph (Live repositories)
- * 3. Verified Proof of Work (Co-author attribution)
+ * 3. Verified Proof of Work (GitHub Co-Author Credit)
  */
 const PositioningBand = () => {
   const pillars = [
@@ -15,11 +15,12 @@ const PositioningBand = () => {
       icon: Zap,
       accent: "#ccff00",
       accentBg: "bg-[#ccff00]/10 border-[#ccff00]/25 text-[#ccff00]",
-      title: "Sub-50ms Peer Sync",
+      title: "Instant Sync",
       technology: "WebRTC Data Channels",
       description:
-        "Direct browser-to-browser operational transform engine eliminates server lag. Type, debug, and execute code simultaneously with sub-50ms round-trip latency.",
+        "Direct browser-to-browser code sync eliminates server lag. Type, debug, and execute code simultaneously with instant real-time updates.",
       badge: "Real-Time Engine",
+      caption: "Instant Sync",
     },
     {
       icon: GitBranch,
@@ -30,16 +31,18 @@ const PositioningBand = () => {
       description:
         "Explore a curated project graph connected to active open-source and hackathon codebases. Find rooms needing your exact language and framework skills in seconds.",
       badge: "Discovery Network",
+      caption: "Active Repositories",
     },
     {
       icon: ShieldCheck,
       accent: "#f0f0f0",
       accentBg: "bg-white/10 border-white/20 text-[#f0f0f0]",
       title: "Verified Proof of Work",
-      technology: "Co-author Attribution",
+      technology: "GitHub Co-Author Credit",
       description:
-        "Every shared session produces cryptographically verifiable co-author attribution. Turn pair programming hours into demonstrable portfolio proof of work.",
+        "Every shared session produces verified GitHub co-author credit on every commit. Turn pair programming hours into demonstrable portfolio proof of work.",
       badge: "Career Signal",
+      caption: "Verified Commits",
     },
   ];
 
@@ -92,7 +95,7 @@ const PositioningBand = () => {
               </div>
 
               <div className="mt-8 pt-4 border-t border-white/[0.07] flex items-center justify-between text-xs font-mono text-[#52525b]">
-                <span>Zero Latency Bottlenecks</span>
+                <span>{pillar.caption}</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-[#ccff00]" />
               </div>
             </div>

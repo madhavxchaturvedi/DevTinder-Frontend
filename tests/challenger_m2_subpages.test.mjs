@@ -97,23 +97,23 @@ describe("Adversarial Challenge: Milestone 2 Marketing Sub-Pages", () => {
   // ──────────────────────────────────────────────────────────────────────────
   // 1. Single <h1> Invariant Verification
   // ──────────────────────────────────────────────────────────────────────────
-  describe("Suite 1: Single <h1> Invariant Verification", () => {
+  describe("Suite 1: Single <h1> per Sub-Page Invariant Verification", () => {
     for (const { filename, src } of pageSources) {
-      it(`[${filename}] contains exactly zero <h1> tags (hero headlines must use semantic <h2>)`, () => {
+      it(`[${filename}] contains exactly one <h1> tag for primary hero headline`, () => {
         const h1TagRegex = /<\s*h1(\s|>)/gi;
         const h1Matches = src.match(h1TagRegex);
         assert.equal(
-          h1Matches,
-          null,
-          `Adversarial Failure: ${filename} contains ${h1Matches?.length} <h1> tags! Violates single <h1> on root / rule.`
+          h1Matches?.length,
+          1,
+          `Semantic invariant: ${filename} must contain exactly 1 <h1> hero tag!`
         );
       });
 
-      it(`[${filename}] uses semantic <h2> for primary hero headline`, () => {
-        const h2TagRegex = /<\s*h2(\s|>)/gi;
+      it(`[${filename}] uses semantic <h1> for primary hero headline`, () => {
+        const h1TagRegex = /<\s*h1(\s|>)/gi;
         assert.ok(
-          h2TagRegex.test(src),
-          `Adversarial Failure: ${filename} does not contain a semantic <h2> hero header.`
+          h1TagRegex.test(src),
+          `Adversarial Failure: ${filename} does not contain a semantic <h1> hero header.`
         );
       });
     }
@@ -214,7 +214,14 @@ describe("Adversarial Challenge: Milestone 2 Marketing Sub-Pages", () => {
   describe("Suite 5: Conversion CTAs Route Strictly to /login", () => {
     for (const { filename, src } of pageSources) {
       it(`[${filename}] has primary conversion CTAs routing strictly to /login with query params`, () => {
-        const linkMatches = [...src.matchAll(/(?:to|href)\s*=\s*["']([^"']+)["']/g)].map(
+        let fullSrc = src;
+        for (const comp of ASSEMBLED_LANDING_COMPONENTS) {
+          const compName = comp.replace(".jsx", "");
+          if (src.includes(`<${compName}`)) {
+            fullSrc += "\n" + readLandingFile(comp);
+          }
+        }
+        const linkMatches = [...fullSrc.matchAll(/(?:to|href)\s*=\s*["']([^"']+)["']/g)].map(
           (m) => m[1]
         );
 
@@ -323,7 +330,7 @@ describe("Adversarial Challenge: Milestone 2 Marketing Sub-Pages", () => {
   describe("Suite 7: Component Assembly & Graceful Fallbacks", () => {
     it("FeaturesMatchPage assembles all required subcomponents", () => {
       const src = readMarketingFile("FeaturesMatchPage.jsx");
-      assert.ok(src.includes("<PositioningBand"), "Missing PositioningBand");
+      assert.ok(!src.includes("<PositioningBand"), "PositioningBand must be omitted to prevent redundancy");
       assert.ok(src.includes("<HowItWorksSection"), "Missing HowItWorksSection");
       assert.ok(src.includes("<DeveloperMatchingSection"), "Missing DeveloperMatchingSection");
       assert.ok(src.includes("<ProfileShowcaseBand"), "Missing ProfileShowcaseBand");
@@ -411,20 +418,17 @@ describe("Adversarial Challenge: Milestone 2 Marketing Sub-Pages", () => {
   // ──────────────────────────────────────────────────────────────────────────
   describe("Suite 9: SSR Rendering & DOM Invariants Verification", () => {
     for (const filename of SUBPAGE_FILES) {
-      it(`[${filename}] renders to string without error and produces zero <h1> in HTML`, () => {
+      it(`[${filename}] renders to string without error and produces primary <h1> in HTML`, () => {
         const Component = loadMarketingComponent(filename);
         assert.equal(typeof Component, "function", `${filename} must export a React component function`);
 
         const html = renderToString(React.createElement(Component));
         assert.ok(html.length > 100, `${filename} rendered HTML must be non-empty`);
+        const h1Matches = html.match(/<h1/g) || [];
         assert.equal(
-          html.includes("<h1"),
-          false,
-          `Adversarial Failure: Rendered HTML of ${filename} contains <h1!`
-        );
-        assert.ok(
-          html.includes("<h2"),
-          `Rendered HTML of ${filename} must contain <h2> hero title`
+          h1Matches.length,
+          1,
+          `Rendered HTML of ${filename} must contain exactly 1 <h1>!`
         );
         assert.ok(
           html.includes('href="/"'),

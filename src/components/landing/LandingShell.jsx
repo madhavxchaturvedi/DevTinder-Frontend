@@ -18,12 +18,37 @@ const LandingShell = ({ children }) => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    }
-  }, [location?.pathname]);
+      if (location?.hash) {
+        const targetId = location.hash.replace(/^#/, "");
+        let attempts = 0;
+        const maxAttempts = 8;
+        let timerId;
 
+        const tryScroll = () => {
+          const el = document.getElementById(targetId);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            timerId = setTimeout(tryScroll, 50);
+          }
+        };
+
+        // Frame delay to allow lazy / Suspense route components to commit DOM
+        timerId = setTimeout(tryScroll, 60);
+
+        return () => {
+          if (timerId) clearTimeout(timerId);
+        };
+      } else {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
+    }
+  }, [location?.pathname, location?.hash]);
+
+  // overflow-x-hidden upgraded to overflow-x-clip to prevent breaking sticky positioning
   return (
-    <div className="w-full min-h-screen bg-[#09090b] text-[#f0f0f0] font-sans selection:bg-[#ccff00] selection:text-black overflow-x-hidden flex flex-col justify-between">
+    <div className="w-full min-h-screen bg-[#09090b] text-[#f0f0f0] font-sans selection:bg-[#ccff00] selection:text-black overflow-x-clip flex flex-col justify-between">
       {/* Sticky Header with Desktop Mega-Menu & Mobile Drawer */}
       <LandingNav />
 

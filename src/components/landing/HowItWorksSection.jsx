@@ -54,8 +54,8 @@ const session = await octopair.match({
       icon: Terminal,
       subtitle: "Zero-latency in-browser collaborative editor",
       description:
-        "Jump directly into an interactive editor room with sub-50ms peer operational transform, multiplayer cursors, shared cloud terminal shell, and synchronized port forwarding. No local tools to configure.",
-      codeSnippet: `// 3. Operational transform synchronizing
+        "Jump directly into an interactive editor room with instant real-time code synchronization, multiplayer cursors, shared cloud terminal shell, and synchronized port forwarding. No local tools to configure.",
+      codeSnippet: `// 3. Real-time code synchronizing
 room.on("peerCursor", (cursor) => renderPointer(cursor));
 room.terminal.spawn("pnpm run dev --port 3000");
 // Live WebRTC stream connected: 60 FPS`,
@@ -68,10 +68,10 @@ room.terminal.spawn("pnpm run dev --port 3000");
       icon: CheckCircle2,
       subtitle: "Verified git co-authorship for every contributor",
       description:
-        "Once your pull request is merged, OctoPair signs verified Co-authored-by git attribution into commits. Build an unshakeable proof-of-work timeline that stands alongside your GitHub profile.",
-      codeSnippet: `// 4. Cryptographic Proof of Work
+        "Once your pull request is merged, OctoPair records verified GitHub co-author credit on every commit. Build an unshakeable proof-of-work timeline that stands alongside your GitHub profile.",
+      codeSnippet: `// 4. Verified GitHub Proof of Work
 git.commit({
-  message: "feat: implement WebRTC operational transform",
+  message: "feat: implement real-time code synchronization",
   coAuthors: ["alex@octopair.dev", "elena@octopair.dev"],
   signature: "OP-VERIFIED-POW-9941"
 });`,

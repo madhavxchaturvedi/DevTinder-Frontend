@@ -42,7 +42,7 @@ const FeatureBentoGrid = () => {
               Sub-50ms WebRTC Peer Engine
             </h3>
             <p className="text-sm text-[#a0a0a0] leading-relaxed max-w-xl mb-6">
-              Conflict-free operational transformation runs directly over WebRTC data channels. Typing, selection bounds, and file switching occur in real time without waiting for centralized server round-trips.
+              Conflict-free real-time code synchronization runs directly between browser peers. Typing, selection bounds, and file switching occur instantly without waiting for centralized server round-trips.
             </p>
           </div>
 
@@ -123,7 +123,7 @@ const FeatureBentoGrid = () => {
               Verified Proof of Work
             </h3>
             <p className="text-sm text-[#a0a0a0] leading-relaxed mb-6">
-              Cryptographically signed commit co-authorship. Showcase real collaboration track records with zero resume fluff or unverified claims.
+              Verified commit co-authorship. Showcase real collaboration track records with zero resume fluff or unverified claims.
             </p>
           </div>
 

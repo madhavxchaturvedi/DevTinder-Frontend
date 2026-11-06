@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/prerender.mjs",
+    "test": "node --test tests/challenger_m4_empirical.test.mjs tests/challenger_m4_adversarial_empirical.test.mjs tests/e2e_expanded_landing.test.mjs tests/challenger_m2_subpages.test.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

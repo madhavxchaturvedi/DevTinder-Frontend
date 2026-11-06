@@ -56,7 +56,7 @@ const FeatureTeasersSection = () => {
               Developer Discovery &amp; Matching
             </h3>
             <p className="text-sm text-[#a0a0a0] leading-relaxed mb-6">
-              Algorithmic developer pairing scored by verified tech stack overlap, proof of work, and real-time collaboration telemetry.
+              Algorithmic developer pairing scored by verified tech stack overlap, proof of work, and real-time collaboration history.
             </p>
 
             {/* Interactive Preview: Compatibility Meter */}
@@ -105,7 +105,7 @@ const FeatureTeasersSection = () => {
               Sub-50ms Live Collaboration
             </h3>
             <p className="text-sm text-[#a0a0a0] leading-relaxed mb-6">
-              In-browser multiplayer IDE with WebRTC audio/video mesh, cloud terminals, synchronized editor state, and zero latency lag.
+              In-browser multiplayer IDE with crystal-clear audio/video, cloud terminals, synchronized editor state, and zero lag.
             </p>
 
             {/* Interactive Preview: Scripted IDE & Mesh Latency */}

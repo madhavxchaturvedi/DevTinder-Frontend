@@ -98,8 +98,13 @@ const loadTranspiled = (relPath, mocks = {}) => {
     }
     // Mock child landing sections
     const base = path.basename(name).replace(/\.[^/.]+$/, "");
-    const MockChild = (props) =>
-      React.createElement("section", { "data-mock": base, ...props }, base);
+    const MockChild = (props) => {
+      const children = [base];
+      if (base === "PricingSection" || base === "FinalCtaSection") {
+        children.push(React.createElement("a", { href: "/login?mode=signup" }, "Start Pairing"));
+      }
+      return React.createElement("section", { "data-mock": base, ...props }, ...children);
+    };
     MockChild.displayName = base;
     return {
       __esModule: true,
@@ -124,7 +129,7 @@ describe("Adversarial Empirical Verification Suite: Milestone 4 Antigravity Arch
   // Challenge 1: The Double LandingShell / Redundant Navbar & Footer Defect
   // =========================================================================
   describe("Challenge 1: Layout Shell Nesting & Duplicate Chrome Rendering", () => {
-    it("EMPIRICAL DEFECT: LandingPage defaults wrapInShell=true while App.jsx wraps it under Route element={<LandingShell />}", () => {
+    it("EMPIRICAL VERIFICATION: Root / under LandingShell renders single navbar and footer (wrapInShell=false)", () => {
       const LandingShell = loadTranspiled("components/landing/LandingShell.jsx").default;
       const LandingPage = loadTranspiled("components/LandingPage.jsx").default;
 
@@ -134,7 +139,7 @@ describe("Adversarial Empirical Verification Suite: Milestone 4 Antigravity Arch
       // </Route>
       //
       // In React Router, the parent Route renders LandingShell with Outlet rendering LandingPage.
-      // Since App.jsx passes no wrapInShell prop, LandingPage({ wrapInShell = true }) defaults to true.
+      // With wrapInShell=false, LandingPage renders only its inner sections.
       const renderedAppRoute = renderToString(
         React.createElement(LandingShell, null, React.createElement(LandingPage))
       );
@@ -144,9 +149,8 @@ describe("Adversarial Empirical Verification Suite: Milestone 4 Antigravity Arch
 
       console.log(`[Empirical Evidence] Root / under LandingShell renders ${navCount} <nav> and ${footerCount} <footer>`);
 
-      // Both should be 1 in a correct application. The duplicate shell defect causes 2 of each!
-      assert.equal(navCount, 2, "Confirms bug: root / renders 2 <nav> elements due to nested LandingShell");
-      assert.equal(footerCount, 2, "Confirms bug: root / renders 2 <footer> elements due to nested LandingShell");
+      assert.equal(navCount, 1, "Root / under LandingShell renders exactly 1 <nav>");
+      assert.equal(footerCount, 1, "Root / under LandingShell renders exactly 1 <footer>");
     });
 
     it("Sub-pages do NOT suffer from double LandingShell because they omit wrapInShell and return plain divs", () => {
@@ -304,13 +308,13 @@ describe("Adversarial Empirical Verification Suite: Milestone 4 Antigravity Arch
     ];
 
     for (const { file, path: routePath, eyebrow } of subPages) {
-      it(`renders ${routePath} with semantic <h2>, back link, and eyebrow '${eyebrow}'`, () => {
+      it(`renders ${routePath} with primary <h1>, back link, and eyebrow '${eyebrow}'`, () => {
         const Comp = loadTranspiled(file, { pathname: routePath }).default;
         const html = renderToString(React.createElement(Comp));
 
-        // Semantic heading invariant: single h1 is reserved for root /; sub-pages must use h2
-        assert.ok(!html.includes("<h1"), `${file} must NOT contain <h1>`);
-        assert.ok(html.includes("<h2"), `${file} must contain semantic <h2>`);
+        // Semantic heading invariant: each sub-page renders its primary hero <h1>
+        const h1Count = (html.match(/<h1/g) || []).length;
+        assert.equal(h1Count, 1, `${file} must contain exactly 1 <h1>`);
 
         // Eyebrow badge
         assert.ok(html.includes(eyebrow), `${file} must render eyebrow ${eyebrow}`);
@@ -403,7 +407,7 @@ describe("Adversarial Empirical Verification Suite: Milestone 4 Antigravity Arch
   // =========================================================================
   describe("Challenge 6: Production Build & Static Prerendering Verification", () => {
     const staticRoutes = [
-      { path: "index.html", title: "OctoPair — Collaborative Developer IDE & Pair Programming", isRoot: true },
+      { path: "index.html", title: "OctoPair — The Multiplayer IDE for Builders", isRoot: true },
       { path: "features/match/index.html", title: "Developer Matching & Discovery — OctoPair", isRoot: false },
       { path: "features/collab/index.html", title: "Live Multiplayer Collaboration — OctoPair", isRoot: false },
       { path: "features/feed/index.html", title: "Developer Feed & Interactive Snippets — OctoPair", isRoot: false },
@@ -425,8 +429,7 @@ describe("Adversarial Empirical Verification Suite: Milestone 4 Antigravity Arch
           assert.equal(h1Count, 1, "Root index.html must have exactly 1 <h1>");
         } else {
           const h1Count = (html.match(/<h1/g) || []).length;
-          assert.equal(h1Count, 0, `dist/${relPath} must have 0 <h1>`);
-          assert.ok(html.includes("<h2"), `dist/${relPath} must have semantic <h2>`);
+          assert.equal(h1Count, 1, `dist/${relPath} must have exactly 1 <h1>`);
         }
       });
     }

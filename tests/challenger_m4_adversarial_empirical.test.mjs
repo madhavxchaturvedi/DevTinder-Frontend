@@ -22,7 +22,7 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
     {
       path: "/",
       file: "index.html",
-      expectedTitle: "OctoPair — Collaborative Developer IDE & Pair Programming",
+      expectedTitle: "OctoPair — The Multiplayer IDE for Builders",
       expectedDesc: "Pick a project. Pair up. Build it live.",
       expectedOgUrl: "https://octopair.dev",
       expectH1: 1,
@@ -33,7 +33,7 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
       expectedTitle: "Developer Matching & Discovery — OctoPair",
       expectedDesc: "Algorithmic developer pairing scored by tech stack overlap",
       expectedOgUrl: "https://octopair.dev/features/match",
-      expectH1: 0,
+      expectH1: 1,
     },
     {
       path: "/features/collab",
@@ -41,7 +41,7 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
       expectedTitle: "Live Multiplayer Collaboration — OctoPair",
       expectedDesc: "Sub-50ms multiplayer IDE with WebRTC audio/video mesh",
       expectedOgUrl: "https://octopair.dev/features/collab",
-      expectH1: 0,
+      expectH1: 1,
     },
     {
       path: "/features/feed",
@@ -49,7 +49,7 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
       expectedTitle: "Developer Feed & Interactive Snippets — OctoPair",
       expectedDesc: "Interactive code snippets, sandboxed runtimes",
       expectedOgUrl: "https://octopair.dev/features/feed",
-      expectH1: 0,
+      expectH1: 1,
     },
     {
       path: "/features/projects",
@@ -57,7 +57,7 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
       expectedTitle: "Open Developer Projects & Sprints — OctoPair",
       expectedDesc: "Curated open-source codebases, project rooms",
       expectedOgUrl: "https://octopair.dev/features/projects",
-      expectH1: 0,
+      expectH1: 1,
     },
     {
       path: "/pricing",
@@ -65,7 +65,7 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
       expectedTitle: "Transparent Pricing Plans — OctoPair",
       expectedDesc: "Predictable, transparent plans for individual builders",
       expectedOgUrl: "https://octopair.dev/pricing",
-      expectH1: 0,
+      expectH1: 1,
     },
     {
       path: "/community",
@@ -73,7 +73,7 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
       expectedTitle: "Global Developer Community & Telemetry — OctoPair",
       expectedDesc: "Live builder telemetry, global peer-to-peer network metrics",
       expectedOgUrl: "https://octopair.dev/community",
-      expectH1: 0,
+      expectH1: 1,
     },
   ];
 
@@ -130,7 +130,7 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
       }
     });
 
-    it("heading semantics: exactly 1 <h1> on root /, strictly 0 <h1> and semantic <h2> on all 6 sub-pages", () => {
+    it("heading semantics: exactly 1 <h1> on each marketing route (root / and all 6 sub-pages)", () => {
       for (const r of routes) {
         const content = readDist(r.file);
         const h1Matches = content.match(/<h1[^>]*>/gi) || [];
@@ -140,9 +140,7 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
           `dist/${r.file} expected ${r.expectH1} <h1>, but found ${h1Matches.length}`
         );
 
-        if (!r.expectH1) {
-          assert.ok(content.includes("<h2"), `dist/${r.file} must include semantic <h2> tag`);
-        }
+        assert.ok(content.includes("<h1"), `dist/${r.file} must include semantic <h1> tag`);
       }
     });
 
@@ -389,8 +387,8 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
   // =========================================================================
   // 4. Adversarial Edge Case: Nested LandingShell on Root /
   // =========================================================================
-  describe("4. Adversarial Discovery: Redundant LandingShell Nesting on Root /", () => {
-    it("empirically demonstrates that LandingPage defaults wrapInShell=true causing 2 navbars and 2 footers when hosted in App.jsx LandingShell", async () => {
+  describe("4. Adversarial Verification: Single LandingShell on Root /", () => {
+    it("empirically verifies that LandingPage under App.jsx LandingShell renders exactly 1 navbar and 1 footer without duplicate nesting", async () => {
       const script = `
         import React from "react";
         import { renderToString } from "react-dom/server";
@@ -478,10 +476,10 @@ describe("Milestone 4 Adversarial Stress Suite (Empirical Challenger)", () => {
       assert.equal(counts.subNavCount, 1, `Expected 1 navbar on sub-pages, found ${counts.subNavCount}`);
       assert.equal(counts.subFooterCount, 1, `Expected 1 footer on sub-pages, found ${counts.subFooterCount}`);
 
-      // On root /, double nesting occurs because LandingPage has wrapInShell=true by default!
-      console.log(`[Adversarial Finding Verified] Root / renders ${counts.rootNavCount} <nav> elements and ${counts.rootFooterCount} <footer> elements in React DOM`);
-      assert.equal(counts.rootNavCount, 2, "Confirmed double navbar on root /");
-      assert.equal(counts.rootFooterCount, 2, "Confirmed double footer on root /");
+      // On root /, exactly 1 navbar and 1 footer is rendered
+      console.log(`[Single Shell Verified] Root / renders ${counts.rootNavCount} <nav> elements and ${counts.rootFooterCount} <footer> elements in React DOM`);
+      assert.equal(counts.rootNavCount, 1, "Root / renders exactly 1 navbar under App.jsx");
+      assert.equal(counts.rootFooterCount, 1, "Root / renders exactly 1 footer under App.jsx");
     });
   });
 });

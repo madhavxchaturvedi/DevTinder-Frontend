@@ -41,7 +41,7 @@ const FAQS = [
   {
     question: "How does peer synchronization work without central server lag?",
     answer:
-      "OctoPair leverages WebRTC data channels directly between browser peers for operational transform synchronization. State mutations bypass centralized compute servers, resulting in sub-50ms round-trip latency.",
+      "OctoPair connects browser peers directly for real-time code synchronization. State updates sync instantly without waiting for centralized server round-trips.",
   },
   {
     question: "Do I need to configure or install local runtime dependencies?",
@@ -51,7 +51,7 @@ const FAQS = [
   {
     question: "How is Git attribution and co-authorship verified?",
     answer:
-      "When a session concludes, our engine cryptographically registers both participants. Commits pushed from the container include verified Co-authored-by trailers recognized natively by GitHub.",
+      "When a session concludes, commits pushed from the container include verified Co-authored-by trailers recognized natively by GitHub.",
   },
   {
     question: "What programming languages and runtimes are currently supported?",
@@ -61,7 +61,7 @@ const FAQS = [
   {
     question: "Can I invite teammates or do I only match with random engineers?",
     answer:
-      "Both modes are supported. You can generate a private cryptographic invite URL to pair directly with existing colleagues, or broadcast your room to the community graph for skill-based peer matchmaking.",
+      "Both modes are supported. You can generate a private secure invite link to pair directly with existing colleagues, or broadcast your room to the community graph for skill-based peer matchmaking.",
   },
   {
     question: "Is my repository code secure and private during pairing sessions?",

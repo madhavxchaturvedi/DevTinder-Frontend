@@ -84,18 +84,25 @@ const FALLBACK_SHOWCASE_PROJECTS = [
   },
 ];
 
+const TECH_FILTERS = ["All", "Rust", "Go", "TypeScript", "Python"];
+
 /**
  * FeaturesProjectsPage (/features/projects)
  *
  * Dedicated marketing sub-page for Open Developer Projects & Codebase Sprints.
- * Assembles:
- * - Hero header with FolderGit2 eyebrow badge, back navigation, and action CTAs
- * - ShowcaseBand: Dynamic showcase of active public repositories
+ * Visual Archetype: Repo Explorer
+ * Features:
+ * - Interactive Tech Stack Filter Bar in hero (All, Rust, Go, TypeScript, Python)
+ * - Animated active pill indicator with lime glow
+ * - Dynamic live filtering of sprint cards directly in the hero viewport
+ * - Semantic h1 heading hierarchy
+ * - ShowcaseBand dynamic API integration
  * - Graceful fallback showcase grid if API returns empty array / fails
  * - Inter-feature CTA link to /pricing
  * - Closing signup CTA banner routing to /login?mode=signup
  */
 const FeaturesProjectsPage = () => {
+  const [selectedFilter, setSelectedFilter] = useState("All");
   const [apiHasProjects, setApiHasProjects] = useState(null);
 
   useEffect(() => {
@@ -124,14 +131,22 @@ const FeaturesProjectsPage = () => {
     };
   }, []);
 
+  // Filter projects by matching tech stack tag (case-insensitive)
+  const filteredHeroProjects =
+    selectedFilter === "All"
+      ? FALLBACK_SHOWCASE_PROJECTS
+      : FALLBACK_SHOWCASE_PROJECTS.filter((proj) =>
+          proj.techStack.some((tech) => tech.toLowerCase() === selectedFilter.toLowerCase())
+        );
+
   return (
-    <div className="w-full bg-[#09090b] text-[#f0f0f0] overflow-x-hidden">
-      {/* ── Hero Header ────────────────────────────────────────────── */}
-      <section className="relative w-full pt-16 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+    <div className="w-full bg-[#09090b] text-[#f0f0f0] overflow-x-clip">
+      {/* ── Repo Explorer Hero Section ─────────────────────────────── */}
+      <section className="relative w-full pt-16 pb-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
         {/* Ambient Top Glow */}
         <div
           aria-hidden="true"
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] max-w-full h-[280px] bg-[#b266ff]/[0.08] blur-[130px] pointer-events-none rounded-full"
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[650px] max-w-full h-[300px] bg-[#b266ff]/[0.08] blur-[140px] pointer-events-none rounded-full"
         />
 
         {/* Breadcrumb / Back Link */}
@@ -151,10 +166,13 @@ const FeaturesProjectsPage = () => {
           <span>CURATED CODEBASES</span>
         </div>
 
-        {/* Semantic Title (h2 to preserve single h1 invariant on root /) */}
-        <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#f0f0f0] max-w-4xl mx-auto mb-6 leading-tight relative z-10">
-          Open Developer Projects &amp; Sprints
-        </h2>
+        {/* Primary Semantic Title (h1) */}
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#f0f0f0] max-w-4xl mx-auto mb-6 leading-tight relative z-10">
+          Open Developer Projects &amp;{" "}
+          <span className="bg-gradient-to-r from-[#b266ff] via-[#ffffff] to-[#ccff00] bg-clip-text text-transparent">
+            Sprints
+          </span>
+        </h1>
 
         {/* Descriptive Subtitle */}
         <p className="text-base sm:text-lg text-[#a0a0a0] max-w-2xl mx-auto leading-relaxed mb-8 relative z-10 font-normal">
@@ -162,7 +180,7 @@ const FeaturesProjectsPage = () => {
         </p>
 
         {/* Hero CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10 mb-12">
           <Link
             to="/login?mode=signup"
             className="w-full sm:w-auto bg-[#ccff00] hover:bg-[#d9ff33] text-black font-bold font-mono text-sm px-6 py-3.5 rounded-xl transition-all duration-200 inline-flex items-center justify-center gap-2 group shadow-[0_0_20px_rgba(204,255,0,0.25)]"
@@ -177,6 +195,111 @@ const FeaturesProjectsPage = () => {
             <span>View Pricing Plans</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
+        </div>
+
+        {/* ── Interactive Tech Stack Filter Bar ──────────────────────── */}
+        <div className="relative z-10 mb-8 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#111113] border border-white/10 shadow-2xl flex-wrap justify-center">
+            {TECH_FILTERS.map((tech) => {
+              const isActive = selectedFilter === tech;
+              const count =
+                tech === "All"
+                  ? FALLBACK_SHOWCASE_PROJECTS.length
+                  : FALLBACK_SHOWCASE_PROJECTS.filter((p) =>
+                      p.techStack.some((t) => t.toLowerCase() === tech.toLowerCase())
+                    ).length;
+
+              return (
+                <button
+                  key={tech}
+                  type="button"
+                  onClick={() => setSelectedFilter(tech)}
+                  className={`relative px-4 sm:px-5 py-2 rounded-xl text-xs font-mono font-semibold transition-all duration-200 cursor-pointer flex items-center gap-2 ${
+                    isActive
+                      ? "bg-[#ccff00] text-black shadow-[0_0_20px_rgba(204,255,0,0.35)] scale-105"
+                      : "text-[#a0a0a0] hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <span>{tech}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                      isActive ? "bg-black/20 text-black" : "bg-white/5 text-[#52525b]"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Live Filtered Sprint Cards In Hero Viewport ─────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left relative z-10 max-w-7xl mx-auto mt-6">
+          {filteredHeroProjects.map((project) => (
+            <div
+              key={project._id}
+              className="p-6 sm:p-7 rounded-2xl bg-[#111113] border border-white/10 hover:border-[#ccff00]/40 transition-all duration-300 flex flex-col justify-between group shadow-xl"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[11px] font-mono text-[#ccff00] bg-[#ccff00]/10 border border-[#ccff00]/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                    {project.stage}
+                  </span>
+                  <span className="text-xs font-mono text-[#52525b]">
+                    {project.commitment}
+                  </span>
+                </div>
+
+                <h3 className="text-lg sm:text-xl font-bold text-[#f0f0f0] mb-2 group-hover:text-white transition-colors">
+                  {project.title}
+                </h3>
+
+                <p className="text-xs text-[#a0a0a0] mb-4">
+                  Seeking: <span className="text-[#f0f0f0] font-mono font-medium">{project.roleNeeded}</span>
+                </p>
+
+                <div className="flex flex-wrap gap-1.5 mb-6">
+                  {project.techStack.map((tech) => {
+                    const isMatched =
+                      selectedFilter !== "All" &&
+                      tech.toLowerCase() === selectedFilter.toLowerCase();
+                    return (
+                      <span
+                        key={tech}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-mono transition-colors ${
+                          isMatched
+                            ? "bg-[#ccff00]/15 border border-[#ccff00]/40 text-[#ccff00] font-bold"
+                            : "bg-white/5 border border-white/10 text-[#a0a0a0]"
+                        }`}
+                      >
+                        {tech}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-white/[0.07] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-mono text-[#a0a0a0] font-bold">
+                    {project.author.firstName[0]}
+                  </div>
+                  <span className="text-xs text-[#a0a0a0] font-mono">
+                    {project.author.firstName}
+                  </span>
+                </div>
+
+                <Link
+                  to="/login?redirect=project"
+                  className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#ccff00] hover:text-[#d4ff33] group-hover:translate-x-1 transition-all"
+                >
+                  <span>Pair on this</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
