@@ -106,37 +106,8 @@ function getScrollParent(node) {
   return null;
 }
 
-/** Calculate Antigravity-inspired stepped upward float for display typography */
-function getAntigravityOffset(word, index) {
-  const clean = String(word).trim();
-  if (clean.toLowerCase() === "octopair") {
-    // "Octo" = 0..3 (grounded), "Pair" = 4..7 (ascending into anti-gravity)
-    switch (index) {
-      case 0: return { y: "0em", rotate: "0deg" };
-      case 1: return { y: "0em", rotate: "0deg" };
-      case 2: return { y: "0em", rotate: "0deg" };
-      case 3: return { y: "0em", rotate: "0deg" };
-      case 4: return { y: "-0.08em", rotate: "-1deg" };
-      case 5: return { y: "-0.18em", rotate: "0.5deg" };
-      case 6: return { y: "-0.30em", rotate: "-1deg" };
-      case 7: return { y: "-0.44em", rotate: "1.5deg" };
-      default: return { y: "0em", rotate: "0deg" };
-    }
-  }
-  // Generic: last 45% of letters float upward into anti-gravity
-  const splitPoint = Math.floor(clean.length * 0.55);
-  if (index >= splitPoint) {
-    const progress = (index - splitPoint + 1) / (clean.length - splitPoint);
-    return {
-      y: `${-progress * 0.42}em`,
-      rotate: `${(index % 2 === 0 ? -1 : 1) * progress * 1.5}deg`,
-    };
-  }
-  return { y: "0em", rotate: "0deg" };
-}
-
 export function AnimatedFooter({
-  headingLines = ["<OctoPair />"],
+  headingLines = ["OctoPair"],
   leftImage = "/animated-footer/hand-left.jpg",
   rightImage = "/animated-footer/hand-right.jpg",
   background = "#09090b",
@@ -685,39 +656,28 @@ export function AnimatedFooter({
       {/* Display headings along the bottom edge / Antigravity kinetic product title */}
       <div
         ref={headingWrapRef}
-        className="relative z-10 w-full flex items-end justify-center px-4 pt-12 pb-6 sm:pb-8 pointer-events-none select-none will-change-transform overflow-visible"
+        className="relative z-10 w-full flex items-end justify-center px-4 pt-10 pb-6 sm:pb-8 pointer-events-none select-none will-change-transform overflow-visible"
       >
         {headingLines.map((word, wi) => (
           <h2
             key={`${word}-${wi}`}
             aria-label={word}
-            className="flex items-end justify-center leading-none tracking-tight pt-14 pb-2 transition-opacity duration-300 overflow-visible"
+            className="flex items-end justify-center leading-none tracking-[-0.04em] pt-8 pb-2 transition-opacity duration-300 overflow-visible"
           >
-            {Array.from(word).map((ch, ci) => {
-              const antigravity = getAntigravityOffset(word, ci);
-              return (
-                <span
-                  key={ci}
-                  className="inline-block overflow-visible will-change-transform"
-                  style={{
-                    transform: `translateY(${antigravity.y}) rotate(${antigravity.rotate})`,
-                    transformOrigin: "bottom center",
-                  }}
-                >
-                  <span
-                    data-af-char
-                    aria-hidden="true"
-                    className={cn(
-                      "inline-block font-sans font-black tracking-[-0.04em] leading-none will-change-transform transition-colors duration-200",
-                      titleClassName || "bg-gradient-to-b from-white via-[#f4f4f5] to-[#a1a1aa] bg-clip-text text-transparent"
-                    )}
-                    style={{ fontSize: "clamp(3rem, 15cqw, 11rem)" }}
-                  >
-                    {ch === " " ? "\u00A0" : ch}
-                  </span>
-                </span>
-              );
-            })}
+            {Array.from(word).map((ch, ci) => (
+              <span
+                key={ci}
+                data-af-char
+                aria-hidden="true"
+                className={cn(
+                  "inline-block font-sans font-black tracking-[-0.04em] leading-none will-change-transform",
+                  titleClassName || "bg-gradient-to-b from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent"
+                )}
+                style={{ fontSize: "clamp(3rem, 14cqw, 10.5rem)" }}
+              >
+                {ch === " " ? "\u00A0" : ch}
+              </span>
+            ))}
           </h2>
         ))}
       </div>
