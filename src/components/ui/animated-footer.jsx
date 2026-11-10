@@ -629,20 +629,20 @@ export function AnimatedFooter({
       style={{ backgroundColor: background, color: textColor, containerType: "inline-size" }}
     >
       {/* ASCII hands — positioned in the lower display area around the title, strictly below navigation links */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-16 sm:bottom-20 md:bottom-24 h-[260px] sm:h-[340px] md:h-[400px] flex items-center justify-between z-0 overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 bottom-16 sm:bottom-20 md:bottom-24 h-[280px] sm:h-[360px] md:h-[420px] flex items-center justify-between z-0">
         <div
           ref={leftWrapRef}
-          className="relative w-2/5 max-w-[420px] min-w-[130px] sm:min-w-[180px] md:min-w-[200px] will-change-transform"
-          style={{ transform: `translateX(-${offEdge}%)` }}
+          className="relative w-2/5 max-w-[440px] min-w-[140px] sm:min-w-[180px] md:min-w-[220px] will-change-transform"
+          style={{ transform: `translateX(-${offEdge}%)`, transformOrigin: "left center" }}
         >
-          <canvas ref={leftCanvasRef} className="block h-auto w-full opacity-75" />
+          <canvas ref={leftCanvasRef} className="block h-auto w-full opacity-80" />
         </div>
         <div
           ref={rightWrapRef}
-          className="relative w-2/5 max-w-[420px] min-w-[130px] sm:min-w-[180px] md:min-w-[200px] will-change-transform"
-          style={{ transform: `translateX(${offEdge}%)` }}
+          className="relative w-2/5 max-w-[440px] min-w-[140px] sm:min-w-[180px] md:min-w-[220px] will-change-transform"
+          style={{ transform: `translateX(${offEdge}%)`, transformOrigin: "right center" }}
         >
-          <canvas ref={rightCanvasRef} className="block h-auto w-full opacity-75" />
+          <canvas ref={rightCanvasRef} className="block h-auto w-full opacity-80" />
         </div>
       </div>
 
@@ -656,13 +656,13 @@ export function AnimatedFooter({
       {/* Display headings along the bottom edge / Antigravity kinetic product title */}
       <div
         ref={headingWrapRef}
-        className="relative z-10 w-full flex items-end justify-center px-4 pt-10 pb-6 sm:pb-8 pointer-events-none select-none will-change-transform overflow-visible"
+        className="relative z-10 w-full flex items-end justify-center px-4 pt-10 pb-6 sm:pb-8 pointer-events-none select-none will-change-transform"
       >
         {headingLines.map((word, wi) => (
           <h2
             key={`${word}-${wi}`}
             aria-label={word}
-            className="flex items-end justify-center leading-none tracking-[-0.04em] pt-8 pb-2 transition-opacity duration-300 overflow-visible"
+            className="flex items-end justify-center leading-none tracking-[-0.03em] pt-8 pb-2 transition-opacity duration-300"
           >
             {Array.from(word).map((ch, ci) => (
               <span
@@ -670,10 +670,10 @@ export function AnimatedFooter({
                 data-af-char
                 aria-hidden="true"
                 className={cn(
-                  "inline-block font-sans font-black tracking-[-0.04em] leading-none will-change-transform",
-                  titleClassName || "bg-gradient-to-b from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent"
+                  "inline-block font-sans font-medium md:font-semibold tracking-[-0.03em] leading-none will-change-transform text-white",
+                  titleClassName
                 )}
-                style={{ fontSize: "clamp(3rem, 14cqw, 10.5rem)" }}
+                style={{ fontSize: "clamp(3.5rem, 15cqw, 11.5rem)" }}
               >
                 {ch === " " ? "\u00A0" : ch}
               </span>
