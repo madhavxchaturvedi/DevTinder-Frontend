@@ -2,26 +2,38 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Github, Twitter, MessageSquare } from "lucide-react";
 import { OctoPairLogo } from "../brand/OctoPairLogo";
+import { AnimatedFooter } from "../ui/animated-footer";
 
 /**
- * Feature F27: Footer & Giant Clipped <OctoPair />
+ * Feature F27: Vengeance UI Animated Footer & Developer Navigation
  * 
- * - Real external social links: GitHub (github.com), X (x.com), Discord (discord.com)
+ * - Real external social links: GitHub, X (Twitter), Discord
  * - Real legal internal links: /privacy and /terms
- * - Giant monospace code line <OctoPair /> clipped 20% at the bottom (translate-y-[20%] & overflow-hidden)
- * - Metallic gradient watermark: bg-gradient-to-b from-white/25 via-white/10 to-white/[0.02] bg-clip-text text-transparent
- * - Two drifting collaborative cursors: "Alex" (driftOne) and "Elena" (driftTwo)
+ * - Dynamic ASCII art hands rendered via dual HTML5 canvases with cursor hover cluster ripples
+ * - Soft parallax drift reacting to mouse movement
+ * - Scroll-reveal unmasking character-by-character for "<OctoPair />"
+ * - Brand lime (#ccff00) reactive cell highlight on dark void (#09090b)
  */
 const LandingFooter = () => {
   return (
-    <footer className="relative w-full bg-[#09090b] border-t border-white/10 pt-16 overflow-hidden">
+    <AnimatedFooter
+      headingLines={["<OctoPair />"]}
+      leftImage="/animated-footer/hand-left.jpg"
+      rightImage="/animated-footer/hand-right.jpg"
+      background="#09090b"
+      textColor="#ffffff"
+      charColor="#3f3f46"
+      hoverColor="#ccff00"
+      hoverCharColor="#09090b"
+      className="border-t border-white/10 pt-16"
+    >
       {/* ── Main Footer Navigation ─────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand Info */}
           <div className="md:col-span-2 space-y-4">
-            <Link to="/" className="flex items-center gap-2 group">
-              <OctoPairLogo className="h-7 w-auto text-[#f0f0f0] hover:text-[#ccff00] group-hover:text-[#ccff00] transition-colors" />
+            <Link to="/" className="flex items-center gap-2 group inline-flex">
+              <OctoPairLogo className="h-7 w-auto text-[#f0f0f0] group-hover:text-[#ccff00] transition-colors" />
               <span className="font-mono font-bold text-lg text-[#f0f0f0] group-hover:text-white transition-colors">
                 OctoPair
               </span>
@@ -139,43 +151,7 @@ const LandingFooter = () => {
           <p>Instant, real-time code synchronization.</p>
         </div>
       </div>
-
-      {/* ── Giant Monospace <OctoPair /> Tag Clipped 20% ──────────── */}
-      <div className="relative w-full overflow-hidden flex justify-center items-end select-none pointer-events-none">
-        {/* Drifting cursor 1: Alex */}
-        <div 
-          aria-hidden="true"
-          className="absolute top-4 left-1/4 animate-drift-one flex items-center gap-1.5 z-10 opacity-80"
-          style={{ animationName: "driftOne" }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#ccff00">
-            <path d="M3.5 2.5L19.5 12.5L11.5 14L8.5 21.5L3.5 2.5Z" />
-          </svg>
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#ccff00] text-black">
-            Alex
-          </span>
-        </div>
-
-        {/* Drifting cursor 2: Elena */}
-        <div 
-          aria-hidden="true"
-          className="absolute top-12 right-1/4 animate-drift-two flex items-center gap-1.5 z-10 opacity-80"
-          style={{ animationName: "driftTwo" }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#b266ff">
-            <path d="M3.5 2.5L19.5 12.5L11.5 14L8.5 21.5L3.5 2.5Z" />
-          </svg>
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#b266ff] text-white">
-            Elena
-          </span>
-        </div>
-
-        {/* Giant Monospace code line clipped 20% at the bottom */}
-        <div className="font-mono font-black text-6xl sm:text-8xl md:text-9xl lg:text-[14rem] tracking-tighter bg-gradient-to-b from-white/25 via-white/10 to-white/[0.02] bg-clip-text text-transparent translate-y-[20%] whitespace-nowrap leading-none pb-2">
-          &lt;OctoPair /&gt;
-        </div>
-      </div>
-    </footer>
+    </AnimatedFooter>
   );
 };
 
