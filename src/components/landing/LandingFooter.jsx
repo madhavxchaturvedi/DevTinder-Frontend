@@ -17,7 +17,7 @@ import { AnimatedFooter } from "../ui/animated-footer";
 const LandingFooter = () => {
   return (
     <AnimatedFooter
-      headingLines={["<OctoPair />"]}
+      headingLines={["OctoPair"]}
       leftImage="/animated-footer/hand-left.jpg"
       rightImage="/animated-footer/hand-right.jpg"
       background="#09090b"
@@ -26,7 +26,7 @@ const LandingFooter = () => {
       leftHoverColor="#ccff00"
       rightHoverColor="#b266ff"
       hoverCharColor="#09090b"
-      titleClassName="bg-gradient-to-b from-white/25 via-white/10 to-white/[0.02] bg-clip-text text-transparent opacity-80"
+      titleClassName="bg-gradient-to-b from-white via-[#f4f4f5] to-[#a1a1aa] bg-clip-text text-transparent font-sans font-black tracking-[-0.04em]"
       className="border-t border-white/10 pt-16"
       bottomContent={
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

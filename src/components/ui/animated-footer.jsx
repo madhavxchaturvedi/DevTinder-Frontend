@@ -106,6 +106,35 @@ function getScrollParent(node) {
   return null;
 }
 
+/** Calculate Antigravity-inspired stepped upward float for display typography */
+function getAntigravityOffset(word, index) {
+  const clean = String(word).trim();
+  if (clean.toLowerCase() === "octopair") {
+    // "Octo" = 0..3 (grounded), "Pair" = 4..7 (ascending into anti-gravity)
+    switch (index) {
+      case 0: return { y: "0em", rotate: "0deg" };
+      case 1: return { y: "0em", rotate: "0deg" };
+      case 2: return { y: "0em", rotate: "0deg" };
+      case 3: return { y: "0em", rotate: "0deg" };
+      case 4: return { y: "-0.08em", rotate: "-1deg" };
+      case 5: return { y: "-0.18em", rotate: "0.5deg" };
+      case 6: return { y: "-0.30em", rotate: "-1deg" };
+      case 7: return { y: "-0.44em", rotate: "1.5deg" };
+      default: return { y: "0em", rotate: "0deg" };
+    }
+  }
+  // Generic: last 45% of letters float upward into anti-gravity
+  const splitPoint = Math.floor(clean.length * 0.55);
+  if (index >= splitPoint) {
+    const progress = (index - splitPoint + 1) / (clean.length - splitPoint);
+    return {
+      y: `${-progress * 0.42}em`,
+      rotate: `${(index % 2 === 0 ? -1 : 1) * progress * 1.5}deg`,
+    };
+  }
+  return { y: "0em", rotate: "0deg" };
+}
+
 export function AnimatedFooter({
   headingLines = ["<OctoPair />"],
   leftImage = "/animated-footer/hand-left.jpg",
@@ -509,6 +538,14 @@ export function AnimatedFooter({
     } else if (revealOnScroll && typeof IntersectionObserver !== "undefined") {
       maskAll();
 
+      const scrollParent = getScrollParent(root);
+      const obsRoot =
+        scrollParent &&
+        scrollParent !== document.documentElement &&
+        scrollParent !== document.body
+          ? scrollParent
+          : null;
+
       let isRevealed = false;
       observer = new IntersectionObserver(
         (entries) => {
@@ -522,9 +559,18 @@ export function AnimatedFooter({
             }
           }
         },
-        { root: getScrollParent(root), threshold: 0.25 },
+        { root: obsRoot, threshold: [0.01, 0.08] },
       );
       observer.observe(root);
+
+      // Fast check if already visible on mount
+      if (typeof window !== "undefined") {
+        const rect = root.getBoundingClientRect();
+        if (rect.top < (window.innerHeight || 800) && rect.bottom > 0) {
+          isRevealed = true;
+          animateIn();
+        }
+      }
     } else {
       showAll();
     }
@@ -613,28 +659,39 @@ export function AnimatedFooter({
       {/* Display headings along the bottom edge / Antigravity kinetic product title */}
       <div
         ref={headingWrapRef}
-        className="relative z-10 w-full flex items-end justify-center gap-4 px-4 pt-8 pb-8 sm:pb-10 pointer-events-none select-none will-change-transform"
+        className="relative z-10 w-full flex items-end justify-center px-4 pt-12 pb-6 sm:pb-8 pointer-events-none select-none will-change-transform overflow-visible"
       >
         {headingLines.map((word, wi) => (
           <h2
             key={`${word}-${wi}`}
             aria-label={word}
-            className={cn(
-              "overflow-hidden font-mono font-bold leading-none tracking-tight pb-[0.2em] transition-opacity duration-300",
-              titleClassName || "bg-gradient-to-b from-white/25 via-white/10 to-white/[0.02] bg-clip-text text-transparent"
-            )}
-            style={{ fontSize: "clamp(1.75rem, 11cqw, 8.5rem)" }}
+            className="flex items-end justify-center leading-none tracking-tight pt-14 pb-2 transition-opacity duration-300 overflow-visible"
           >
-            {Array.from(word).map((ch, ci) => (
-              <span
-                key={ci}
-                data-af-char
-                aria-hidden="true"
-                className="inline-block will-change-transform"
-              >
-                {ch === " " ? "\u00A0" : ch}
-              </span>
-            ))}
+            {Array.from(word).map((ch, ci) => {
+              const antigravity = getAntigravityOffset(word, ci);
+              return (
+                <span
+                  key={ci}
+                  className="inline-block overflow-visible will-change-transform"
+                  style={{
+                    transform: `translateY(${antigravity.y}) rotate(${antigravity.rotate})`,
+                    transformOrigin: "bottom center",
+                  }}
+                >
+                  <span
+                    data-af-char
+                    aria-hidden="true"
+                    className={cn(
+                      "inline-block font-sans font-black tracking-[-0.04em] leading-none will-change-transform transition-colors duration-200",
+                      titleClassName || "bg-gradient-to-b from-white via-[#f4f4f5] to-[#a1a1aa] bg-clip-text text-transparent"
+                    )}
+                    style={{ fontSize: "clamp(3rem, 15cqw, 11rem)" }}
+                  >
+                    {ch === " " ? "\u00A0" : ch}
+                  </span>
+                </span>
+              );
+            })}
           </h2>
         ))}
       </div>
