@@ -7,7 +7,6 @@ import HeroSection from "./landing/HeroSection";
 import TechMarquee from "./landing/TechMarquee";
 import WhyUsBentoGrid from "./ui/why-us-bento-grid";
 import DeveloperServiceBento from "./ui/developer-service-bento";
-import FaqAccordion from "./ui/faq-accordion";
 import FinalCtaSection from "./landing/FinalCtaSection";
 
 /**
@@ -49,9 +48,6 @@ const LandingPage = ({ wrapInShell = false }) => {
 
       {/* ── 3. Developer Service Bento (Screenshot-Accurate Edition) ── */}
       <DeveloperServiceBento />
-
-      {/* ── 4. Technical FAQ Accordion (Vengeance UI Edition) ───────── */}
-      <FaqAccordion />
 
       {/* ── Closing CTA ────────────────────────────────────────────── */}
       <FinalCtaSection />
