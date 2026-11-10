@@ -107,14 +107,19 @@ function getScrollParent(node) {
 }
 
 export function AnimatedFooter({
-  headingLines = ["OctoPair"],
+  headingLines = ["<OctoPair />"],
   leftImage = "/animated-footer/hand-left.jpg",
   rightImage = "/animated-footer/hand-right.jpg",
   background = "#09090b",
   textColor = "#ffffff",
-  charColor = "#3f3f46",
-  hoverColor = "#ccff00",
+  charColor,
+  leftCharColor = "#ccff00",
+  rightCharColor = "#b266ff",
+  hoverColor,
+  leftHoverColor = "#ccff00",
+  rightHoverColor = "#b266ff",
   hoverCharColor = "#09090b",
+  titleClassName = "bg-gradient-to-b from-white/25 via-white/10 to-white/[0.02] bg-clip-text text-transparent",
   asciiChars = DEFAULT_ASCII_CHARS,
   columns = 80,
   cellSize = 20,
@@ -125,12 +130,15 @@ export function AnimatedFooter({
   revealed,
   className,
   children,
+  bottomContent,
 }) {
   const rootRef = useRef(null);
   const leftWrapRef = useRef(null);
   const rightWrapRef = useRef(null);
   const leftCanvasRef = useRef(null);
   const rightCanvasRef = useRef(null);
+  const headingWrapRef = useRef(null);
+  const handsRef = useRef([]);
 
   // Reveal animations, published by the main effect so the controlled-`revealed`
   // effect below can play them without rebuilding the ASCII scene.
@@ -141,15 +149,45 @@ export function AnimatedFooter({
   const isDark = resolvedTheme !== "light";
 
   const cc = charColor ?? (isDark ? "#3f3f46" : "#71717a");
+  const lcc = leftCharColor ?? cc;
+  const rcc = rightCharColor ?? cc;
   const hc = hoverColor ?? "#ccff00";
+  const lhc = leftHoverColor ?? hc;
+  const rhc = rightHoverColor ?? "#b266ff";
   const hcc = hoverCharColor ?? "#09090b";
 
   // Live-tunable values read inside the animation loop, so tweaking a color or
   // the parallax strength never tears down and rebuilds the ASCII scene.
-  const liveRef = useRef({ charColor: cc, hoverColor: hc, hoverCharColor: hcc, parallaxStrength, hoverRadius });
+  const liveRef = useRef({
+    charColor: cc,
+    leftCharColor: lcc,
+    rightCharColor: rcc,
+    hoverColor: hc,
+    leftHoverColor: lhc,
+    rightHoverColor: rhc,
+    hoverCharColor: hcc,
+    parallaxStrength,
+    hoverRadius,
+  });
   useEffect(() => {
-    liveRef.current = { charColor: cc, hoverColor: hc, hoverCharColor: hcc, parallaxStrength, hoverRadius };
-  }, [cc, hc, hcc, parallaxStrength, hoverRadius]);
+    liveRef.current = {
+      charColor: cc,
+      leftCharColor: lcc,
+      rightCharColor: rcc,
+      hoverColor: hc,
+      leftHoverColor: lhc,
+      rightHoverColor: rhc,
+      hoverCharColor: hcc,
+      parallaxStrength,
+      hoverRadius,
+    };
+    // Immediately mark active hands dirty so color changes redraw on next frame
+    if (handsRef.current) {
+      for (const h of handsRef.current) {
+        h.dirty = true;
+      }
+    }
+  }, [cc, lcc, rcc, hc, lhc, rhc, hcc, parallaxStrength, hoverRadius]);
 
   // A signature of the structural inputs — the scene rebuilds only when one of
   // these changes (images, grid resolution, content, reveal mode).
@@ -175,10 +213,11 @@ export function AnimatedFooter({
     if (!root || !leftWrap || !rightWrap) return;
 
     const hands = [];
+    handsRef.current = hands;
     const wrappers = [leftWrap, rightWrap];
 
     // ── ASCII hands ──────────────────────────────────────────────────────
-    const setupHand = (image, canvas, direction) => {
+    const setupHand = (image, canvas, direction, side) => {
       const { rows, cells } = buildHandCells(image, columns, asciiChars);
       if (cells.size === 0) return;
 
@@ -207,10 +246,13 @@ export function AnimatedFooter({
         cellSize,
         baselineOffset,
         direction,
+        side,
+        dirty: true,
+        lastActiveHighlights: 0,
       });
     };
 
-    const loadHand = (src, canvas, direction) => {
+    const loadHand = (src, canvas, direction, side) => {
       if (!src || !canvas) return;
       const image = new Image();
       image.crossOrigin = "anonymous";
@@ -218,18 +260,38 @@ export function AnimatedFooter({
       const init = () => {
         if (initialized) return;
         initialized = true;
-        setupHand(image, canvas, direction);
+        setupHand(image, canvas, direction, side);
       };
       image.onload = init;
       image.src = src;
       if (image.complete && image.naturalWidth) init();
     };
-    if (leftCanvasRef.current) loadHand(leftImage, leftCanvasRef.current, 1);
-    if (rightCanvasRef.current) loadHand(rightImage, rightCanvasRef.current, -1);
+    if (leftCanvasRef.current) loadHand(leftImage, leftCanvasRef.current, 1, "left");
+    if (rightCanvasRef.current) loadHand(rightImage, rightCanvasRef.current, -1, "right");
 
     const renderHand = (hand, now) => {
-      const { ctx, cellList, cellSize: cs, baselineOffset, columns: cols, rows } = hand;
-      const { charColor: cc, hoverColor: hc, hoverCharColor: hcc } = liveRef.current;
+      const { ctx, cellList, cellSize: cs, baselineOffset, columns: cols, rows, side } = hand;
+      const isLeft = side === "left";
+      const live = liveRef.current;
+      const handCharColor = isLeft
+        ? (live.leftCharColor || live.charColor || "#ccff00")
+        : (live.rightCharColor || live.charColor || "#b266ff");
+      const handHoverColor = isLeft
+        ? (live.leftHoverColor || live.hoverColor || "#ccff00")
+        : (live.rightHoverColor || live.hoverColor || "#b266ff");
+      const hcc = live.hoverCharColor || "#09090b";
+
+      let activeHighlights = 0;
+      for (let i = 0; i < cellList.length; i++) {
+        if (cellList[i].highlightEndTime > now) activeHighlights++;
+      }
+
+      if (!hand.dirty && activeHighlights === 0 && hand.lastActiveHighlights === 0) {
+        return;
+      }
+      hand.dirty = false;
+      hand.lastActiveHighlights = activeHighlights;
+
       ctx.clearRect(0, 0, cols * cs, rows * cs);
 
       for (const cell of cellList) {
@@ -238,10 +300,10 @@ export function AnimatedFooter({
         const isHighlighted = cell.highlightEndTime > now;
 
         if (isHighlighted) {
-          ctx.fillStyle = hc;
+          ctx.fillStyle = handHoverColor;
           ctx.fillRect(x, y, cs, cs);
         }
-        ctx.fillStyle = isHighlighted ? hcc : cc;
+        ctx.fillStyle = isHighlighted ? hcc : handCharColor;
         ctx.fillText(cell.char, x + cs / 2, y + baselineOffset);
       }
     };
@@ -258,19 +320,42 @@ export function AnimatedFooter({
       const mouseCol = ((clientX - rect.left) / rect.width) * hand.columns;
       const mouseRow = ((clientY - rect.top) / rect.height) * hand.rows;
 
+      const hr = liveRef.current.hoverRadius;
+      if (
+        mouseCol < -hr ||
+        mouseCol > hand.columns + hr ||
+        mouseRow < -hr ||
+        mouseRow > hand.rows + hr
+      ) {
+        return;
+      }
+
+      const hrSq = hr * hr;
       let closest = null;
-      let closestDist = Infinity;
-      for (const cell of hand.cellList) {
-        const dx = mouseCol - cell.col;
-        const dy = mouseRow - cell.row;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < closestDist) {
-          closestDist = dist;
-          closest = cell;
+      let closestDistSq = hrSq;
+
+      const minCol = Math.max(0, Math.floor(mouseCol - hr));
+      const maxCol = Math.min(hand.columns - 1, Math.ceil(mouseCol + hr));
+      const minRow = Math.max(0, Math.floor(mouseRow - hr));
+      const maxRow = Math.min(hand.rows - 1, Math.ceil(mouseRow + hr));
+
+      for (let r = minRow; r <= maxRow; r++) {
+        for (let c = minCol; c <= maxCol; c++) {
+          const cell = hand.cells.get(`${c},${r}`);
+          if (!cell) continue;
+          const dx = mouseCol - c;
+          const dy = mouseRow - r;
+          const dSq = dx * dx + dy * dy;
+          if (dSq < closestDistSq) {
+            closestDistSq = dSq;
+            closest = cell;
+          }
         }
       }
-      if (closest && closestDist <= liveRef.current.hoverRadius) {
+
+      if (closest) {
         highlightCluster(hand.cells, closest);
+        hand.dirty = true;
       }
     };
 
@@ -279,40 +364,97 @@ export function AnimatedFooter({
       const rect = root.getBoundingClientRect();
       const w = rect.width || 1;
       const h = rect.height || 1;
-      pointer.x = ((event.clientX - rect.left) / w - 0.5) * strength * 2;
-      pointer.y = ((event.clientY - rect.top) / h - 0.5) * strength * 2;
+      // Clamp normalized coordinates strictly within [0, 1] to prevent runaway drift
+      const normX = Math.max(0, Math.min(1, (event.clientX - rect.left) / w));
+      const normY = Math.max(0, Math.min(1, (event.clientY - rect.top) / h));
+      pointer.x = (normX - 0.5) * strength * 2;
+      pointer.y = (normY - 0.5) * strength * 2;
       for (const hand of hands) hoverHand(hand, event.clientX, event.clientY);
     };
+
+    const onMouseLeave = () => {
+      // Gently return to resting center equilibrium when cursor departs
+      pointer.x = 0;
+      pointer.y = 0;
+    };
+
+    const onTouchMove = (event) => {
+      if (!event.touches || event.touches.length === 0) return;
+      const touch = event.touches[0];
+      onMouseMove(touch);
+    };
+
     window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    root.addEventListener("mouseleave", onMouseLeave);
+    const onWindowOut = (e) => {
+      if (!e.relatedTarget && !e.toElement) onMouseLeave();
+    };
+    window.addEventListener("mouseout", onWindowOut);
 
     // ── Unified render loop: ASCII + parallax + reveal curtain ───────────
     let rafId = 0;
+    let lastTime = 0;
+    const safeRaf = typeof window !== "undefined" && window.requestAnimationFrame ? window.requestAnimationFrame : (cb) => setTimeout(cb, 16);
+    const safeCaf = typeof window !== "undefined" && window.cancelAnimationFrame ? window.cancelAnimationFrame : clearTimeout;
+    const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     const frame = () => {
       const now = Date.now();
       for (const hand of hands) renderHand(hand, now);
 
-      drift.x += (pointer.x - drift.x) * PARALLAX_EASE;
-      drift.y += (pointer.y - drift.y) * PARALLAX_EASE;
+      if (!prefersReducedMotion) {
+        const dt = lastTime ? Math.min((now - lastTime) / 1000, 0.1) : 1 / 60;
+        lastTime = now;
+        const ease = 1 - Math.pow(1 - PARALLAX_EASE, dt * 60);
+
+        drift.x += (pointer.x - drift.x) * ease;
+        drift.y += (pointer.y - drift.y) * ease;
+      } else {
+        drift.x = 0;
+        drift.y = 0;
+      }
+
       const strength = liveRef.current.parallaxStrength;
-      const scale = 1 + (strength * 2) / 200;
+      const rect = root.getBoundingClientRect();
+      const isNarrow = (rect.width || 1) < 640;
+      // Tighten scale multiplier to prevent hands occupying >90% container width on mobile
+      const scale = isNarrow ? 1.05 : 1 + (strength * 2) / 300;
 
       wrappers.forEach((wrapper, i) => {
         const dir = i === 0 ? 1 : -1;
         const revealX = i === 0 ? -curtain.offset : curtain.offset;
-        const x = drift.x * dir || 0;
+        const x = (isNarrow ? drift.x * 0.4 : drift.x) * dir || 0;
         const y = -drift.y || 0;
         // Apply reveal via translateX, then apply parallax via translate, avoiding calc() mixed-unit bugs
         wrapper.style.transform = `translateX(${revealX}%) translate(${x}px, ${y}px) scale(${scale})`;
       });
 
-      rafId = requestAnimationFrame(frame);
+      // Antigravity-inspired kinetic parallax drift for the product title
+      if (headingWrapRef.current) {
+        if (!prefersReducedMotion) {
+          const floatY = Math.sin(now * 0.0015) * 2;
+          const titleX = -drift.x * 0.35;
+          const titleY = -drift.y * 0.25 + floatY;
+          headingWrapRef.current.style.transform = `translate(${titleX}px, ${titleY}px)`;
+        } else {
+          headingWrapRef.current.style.transform = "none";
+        }
+      }
+
+      rafId = safeRaf(frame);
     };
-    rafId = requestAnimationFrame(frame);
+    rafId = safeRaf(frame);
 
     // ── Reveal (chars + curtain) ─────────────────────────
     const chars = gsap.utils.toArray(root.querySelectorAll("[data-af-char]"));
 
     const animateIn = () => {
+      if (prefersReducedMotion) {
+        curtain.offset = 0;
+        gsap.set(chars, { yPercent: 0 });
+        return;
+      }
       gsap.to(curtain, { offset: 0, duration: 1, ease: "power3.out", overwrite: true });
       gsap.to(chars, {
         yPercent: 0,
@@ -324,6 +466,11 @@ export function AnimatedFooter({
     };
 
     const animateOut = () => {
+      if (prefersReducedMotion) {
+        curtain.offset = 125;
+        gsap.set(chars, { yPercent: 125 });
+        return;
+      }
       gsap.to(curtain, { offset: 125, duration: 0.4, ease: "power2.in", overwrite: true });
       gsap.to(chars, {
         yPercent: 125,
@@ -339,6 +486,11 @@ export function AnimatedFooter({
     animateOutRef.current = animateOut;
 
     const maskAll = () => {
+      if (prefersReducedMotion) {
+        curtain.offset = 0;
+        gsap.set(chars, { yPercent: 0 });
+        return;
+      }
       gsap.set(chars, { yPercent: 125 });
     };
     const showAll = () => {
@@ -347,11 +499,14 @@ export function AnimatedFooter({
 
     let observer = null;
 
-    if (revealed !== undefined) {
+    if (prefersReducedMotion) {
+      curtain.offset = 0;
+      showAll();
+    } else if (revealed !== undefined) {
       curtain.offset = revealed ? 0 : 125;
       if (revealed) showAll();
       else maskAll();
-    } else if (revealOnScroll) {
+    } else if (revealOnScroll && typeof IntersectionObserver !== "undefined") {
       maskAll();
 
       let isRevealed = false;
@@ -374,10 +529,37 @@ export function AnimatedFooter({
       showAll();
     }
 
+    // High-DPI screen change listener (e.g. moving window between 1x and 2x retina display)
+    const updateDpr = () => {
+      if (typeof window === "undefined") return;
+      for (const hand of hands) {
+        hand.dirty = true;
+      }
+    };
+    let dprMatcher = null;
+    if (typeof window !== "undefined" && window.matchMedia) {
+      dprMatcher = window.matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`);
+      try {
+        dprMatcher.addEventListener("change", updateDpr);
+      } catch {
+        dprMatcher.addListener?.(updateDpr);
+      }
+    }
+
     // ── Cleanup ──────────────────────────────────────────────────────────
     return () => {
-      cancelAnimationFrame(rafId);
+      safeCaf(rafId);
       window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("touchmove", onTouchMove);
+      root.removeEventListener("mouseleave", onMouseLeave);
+      window.removeEventListener("mouseout", onWindowOut);
+      if (dprMatcher) {
+        try {
+          dprMatcher.removeEventListener("change", updateDpr);
+        } catch {
+          dprMatcher.removeListener?.(updateDpr);
+        }
+      }
       observer?.disconnect();
       gsap.killTweensOf([curtain, ...chars]);
     };
@@ -396,28 +578,28 @@ export function AnimatedFooter({
     <footer
       ref={rootRef}
       className={cn(
-        "relative w-full overflow-hidden",
+        "relative w-full overflow-hidden isolate",
         !background && "bg-white dark:bg-black",
         !textColor && "text-black dark:text-white",
         className
       )}
       style={{ backgroundColor: background, color: textColor, containerType: "inline-size" }}
     >
-      {/* ASCII hands */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-between z-0">
+      {/* ASCII hands — constrained vertically to prevent collision with bottom bar */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 bottom-24 flex items-center justify-between z-0 overflow-hidden">
         <div
           ref={leftWrapRef}
-          className="relative w-2/5 min-w-[200px] will-change-transform"
+          className="relative w-2/5 min-w-[130px] sm:min-w-[180px] md:min-w-[200px] will-change-transform"
           style={{ transform: `translateX(-${offEdge}%)` }}
         >
-          <canvas ref={leftCanvasRef} className="block h-auto w-full opacity-80" />
+          <canvas ref={leftCanvasRef} className="block h-auto w-full opacity-75" />
         </div>
         <div
           ref={rightWrapRef}
-          className="relative w-2/5 min-w-[200px] will-change-transform"
+          className="relative w-2/5 min-w-[130px] sm:min-w-[180px] md:min-w-[200px] will-change-transform"
           style={{ transform: `translateX(${offEdge}%)` }}
         >
-          <canvas ref={rightCanvasRef} className="block h-auto w-full opacity-80" />
+          <canvas ref={rightCanvasRef} className="block h-auto w-full opacity-75" />
         </div>
       </div>
 
@@ -428,21 +610,27 @@ export function AnimatedFooter({
         </div>
       )}
 
-      {/* Display headings along the bottom edge */}
-      <div className="relative z-10 w-full flex items-end justify-center gap-4 px-4 pt-12 pb-8 pointer-events-none select-none">
+      {/* Display headings along the bottom edge / Antigravity kinetic product title */}
+      <div
+        ref={headingWrapRef}
+        className="relative z-10 w-full flex items-end justify-center gap-4 px-4 pt-8 pb-8 sm:pb-10 pointer-events-none select-none will-change-transform"
+      >
         {headingLines.map((word, wi) => (
           <h2
             key={`${word}-${wi}`}
             aria-label={word}
-            className="overflow-hidden font-mono font-bold leading-none tracking-tight pb-[0.15em] -mb-[0.15em]"
-            style={{ fontSize: "clamp(2.5rem, 13cqw, 10rem)" }}
+            className={cn(
+              "overflow-hidden font-mono font-bold leading-none tracking-tight pb-[0.2em] transition-opacity duration-300",
+              titleClassName || "bg-gradient-to-b from-white/25 via-white/10 to-white/[0.02] bg-clip-text text-transparent"
+            )}
+            style={{ fontSize: "clamp(1.75rem, 11cqw, 8.5rem)" }}
           >
             {Array.from(word).map((ch, ci) => (
               <span
                 key={ci}
                 data-af-char
                 aria-hidden="true"
-                className="inline-block"
+                className="inline-block will-change-transform"
               >
                 {ch === " " ? "\u00A0" : ch}
               </span>
@@ -450,6 +638,16 @@ export function AnimatedFooter({
           </h2>
         ))}
       </div>
+
+      {/* Bottom content slot (copyright notice, subtitle) isolated at z-20 */}
+      {bottomContent && (
+        <div
+          className="relative z-20 w-full"
+          style={{ backgroundColor: background || "#09090b" }}
+        >
+          {bottomContent}
+        </div>
+      )}
     </footer>
   );
 }
