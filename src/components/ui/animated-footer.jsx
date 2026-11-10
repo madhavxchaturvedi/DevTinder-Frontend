@@ -452,6 +452,7 @@ export function AnimatedFooter({
         const revealX = i === 0 ? -curtain.offset : curtain.offset;
         const x = (isNarrow ? drift.x * 0.4 : drift.x) * dir || 0;
         const y = -drift.y || 0;
+        wrapper.style.transformOrigin = i === 0 ? "left center" : "right center";
         // Apply reveal via translateX, then apply parallax via translate, avoiding calc() mixed-unit bugs
         wrapper.style.transform = `translateX(${revealX}%) translate(${x}px, ${y}px) scale(${scale})`;
       });
@@ -632,14 +633,14 @@ export function AnimatedFooter({
       <div className="pointer-events-none absolute inset-x-0 bottom-16 sm:bottom-20 md:bottom-24 h-[280px] sm:h-[360px] md:h-[420px] flex items-center justify-between z-0">
         <div
           ref={leftWrapRef}
-          className="relative w-2/5 max-w-[440px] min-w-[140px] sm:min-w-[180px] md:min-w-[220px] will-change-transform"
+          className="relative w-[36%] max-w-[395px] min-w-[140px] sm:min-w-[180px] md:min-w-[210px] will-change-transform"
           style={{ transform: `translateX(-${offEdge}%)`, transformOrigin: "left center" }}
         >
           <canvas ref={leftCanvasRef} className="block h-auto w-full opacity-80" />
         </div>
         <div
           ref={rightWrapRef}
-          className="relative w-2/5 max-w-[440px] min-w-[140px] sm:min-w-[180px] md:min-w-[220px] will-change-transform"
+          className="relative w-[48%] max-w-[530px] min-w-[190px] sm:min-w-[240px] md:min-w-[280px] will-change-transform"
           style={{ transform: `translateX(${offEdge}%)`, transformOrigin: "right center" }}
         >
           <canvas ref={rightCanvasRef} className="block h-auto w-full opacity-80" />
