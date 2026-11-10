@@ -42,7 +42,7 @@ const LandingFooter = () => {
       }
     >
       {/* ── Main Footer Navigation ─────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+      <div data-footer-nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand Info */}
           <div className="md:col-span-2 space-y-4">

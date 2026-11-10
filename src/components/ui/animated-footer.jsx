@@ -346,6 +346,17 @@ export function AnimatedFooter({
     const hoverHand = (hand, clientX, clientY) => {
       const rect = hand.canvas.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
+
+      // Strict bounding check: cursor must be near the canvas itself
+      if (
+        clientX < rect.left - 10 ||
+        clientX > rect.right + 10 ||
+        clientY < rect.top - 10 ||
+        clientY > rect.bottom + 10
+      ) {
+        return;
+      }
+
       const mouseCol = ((clientX - rect.left) / rect.width) * hand.columns;
       const mouseRow = ((clientY - rect.top) / rect.height) * hand.rows;
 
@@ -398,6 +409,21 @@ export function AnimatedFooter({
       const normY = Math.max(0, Math.min(1, (event.clientY - rect.top) / h));
       pointer.x = (normX - 0.5) * strength * 2;
       pointer.y = (normY - 0.5) * strength * 2;
+
+      // If cursor is within navigation links or interactive controls, skip hand hover highlighting
+      const navEl = root.querySelector("[data-footer-nav]");
+      if (navEl) {
+        const nr = navEl.getBoundingClientRect();
+        if (
+          event.clientY >= nr.top - 10 &&
+          event.clientY <= nr.bottom + 10 &&
+          event.clientX >= nr.left - 10 &&
+          event.clientX <= nr.right + 10
+        ) {
+          return;
+        }
+      }
+
       for (const hand of hands) hoverHand(hand, event.clientX, event.clientY);
     };
 
@@ -631,18 +657,18 @@ export function AnimatedFooter({
       )}
       style={{ backgroundColor: background, color: textColor, containerType: "inline-size" }}
     >
-      {/* ASCII hands — constrained vertically to prevent collision with bottom bar */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 bottom-24 flex items-center justify-between z-0 overflow-hidden">
+      {/* ASCII hands — positioned in the lower display area around the title, strictly below navigation links */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-16 sm:bottom-20 md:bottom-24 h-[260px] sm:h-[340px] md:h-[400px] flex items-center justify-between z-0 overflow-hidden">
         <div
           ref={leftWrapRef}
-          className="relative w-2/5 min-w-[130px] sm:min-w-[180px] md:min-w-[200px] will-change-transform"
+          className="relative w-2/5 max-w-[420px] min-w-[130px] sm:min-w-[180px] md:min-w-[200px] will-change-transform"
           style={{ transform: `translateX(-${offEdge}%)` }}
         >
           <canvas ref={leftCanvasRef} className="block h-auto w-full opacity-75" />
         </div>
         <div
           ref={rightWrapRef}
-          className="relative w-2/5 min-w-[130px] sm:min-w-[180px] md:min-w-[200px] will-change-transform"
+          className="relative w-2/5 max-w-[420px] min-w-[130px] sm:min-w-[180px] md:min-w-[200px] will-change-transform"
           style={{ transform: `translateX(${offEdge}%)` }}
         >
           <canvas ref={rightCanvasRef} className="block h-auto w-full opacity-75" />
@@ -651,7 +677,7 @@ export function AnimatedFooter({
 
       {/* Children content (Navigation, Brand links, Socials) */}
       {children && (
-        <div className="relative z-10 w-full">
+        <div className="relative z-20 w-full pointer-events-auto">
           {children}
         </div>
       )}
