@@ -113,8 +113,8 @@ export function AnimatedFooter({
   background = "#09090b",
   textColor = "#ffffff",
   charColor,
-  leftCharColor = "#ccff00",
-  rightCharColor = "#b266ff",
+  leftCharColor,
+  rightCharColor,
   hoverColor,
   leftHoverColor = "#ccff00",
   rightHoverColor = "#b266ff",
@@ -274,8 +274,8 @@ export function AnimatedFooter({
       const isLeft = side === "left";
       const live = liveRef.current;
       const handCharColor = isLeft
-        ? (live.leftCharColor || live.charColor || "#ccff00")
-        : (live.rightCharColor || live.charColor || "#b266ff");
+        ? (live.leftCharColor || live.charColor || cc)
+        : (live.rightCharColor || live.charColor || cc);
       const handHoverColor = isLeft
         ? (live.leftHoverColor || live.hoverColor || "#ccff00")
         : (live.rightHoverColor || live.hoverColor || "#b266ff");
