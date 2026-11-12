@@ -26,7 +26,7 @@ const LandingFooter = () => {
       leftHoverColor="#ccff00"
       rightHoverColor="#b266ff"
       hoverCharColor="#09090b"
-      titleClassName="text-white font-['Google_Sans_Flex','Google_Sans','Product_Sans',sans-serif] font-medium md:font-semibold tracking-[-0.03em]"
+      titleClassName="text-white font-antigravity font-medium tracking-[-0.035em]"
       className="border-t border-white/10 pt-16"
       bottomContent={
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

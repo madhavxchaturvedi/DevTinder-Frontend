@@ -633,14 +633,14 @@ export function AnimatedFooter({
       <div className="pointer-events-none absolute inset-x-0 bottom-16 sm:bottom-20 md:bottom-24 h-[280px] sm:h-[360px] md:h-[420px] flex items-center justify-between z-0">
         <div
           ref={leftWrapRef}
-          className="relative w-[36%] max-w-[395px] min-w-[140px] sm:min-w-[180px] md:min-w-[210px] will-change-transform"
+          className="relative w-[38%] max-w-[420px] min-w-[140px] sm:min-w-[180px] md:min-w-[210px] will-change-transform"
           style={{ transform: `translateX(-${offEdge}%)`, transformOrigin: "left center" }}
         >
           <canvas ref={leftCanvasRef} className="block h-auto w-full opacity-80" />
         </div>
         <div
           ref={rightWrapRef}
-          className="relative w-[48%] max-w-[530px] min-w-[190px] sm:min-w-[240px] md:min-w-[280px] will-change-transform"
+          className="relative w-[38%] max-w-[420px] min-w-[140px] sm:min-w-[180px] md:min-w-[210px] will-change-transform"
           style={{ transform: `translateX(${offEdge}%)`, transformOrigin: "right center" }}
         >
           <canvas ref={rightCanvasRef} className="block h-auto w-full opacity-80" />
@@ -663,7 +663,7 @@ export function AnimatedFooter({
           <h2
             key={`${word}-${wi}`}
             aria-label={word}
-            className="flex items-end justify-center leading-none tracking-[-0.03em] pt-8 pb-2 transition-opacity duration-300"
+            className="flex items-end justify-center leading-none tracking-[-0.035em] pt-8 pb-2 transition-opacity duration-300"
           >
             {Array.from(word).map((ch, ci) => (
               <span
@@ -671,10 +671,13 @@ export function AnimatedFooter({
                 data-af-char
                 aria-hidden="true"
                 className={cn(
-                  "inline-block font-sans font-medium md:font-semibold tracking-[-0.03em] leading-none will-change-transform text-white",
+                  "inline-block font-antigravity font-medium tracking-[-0.035em] leading-none will-change-transform text-white",
                   titleClassName
                 )}
-                style={{ fontSize: "clamp(3.5rem, 15cqw, 11.5rem)" }}
+                style={{
+                  fontSize: "clamp(3.5rem, 15.5cqw, 12rem)",
+                  fontFamily: '"Google Sans Flex", "Google Sans", "Product Sans", sans-serif',
+                }}
               >
                 {ch === " " ? "\u00A0" : ch}
               </span>
